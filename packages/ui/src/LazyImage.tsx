@@ -19,7 +19,7 @@ export function LazyImage({ src, alt, placeholder, style, ...rest }: LazyImagePr
           observer.disconnect();
         }
       },
-      { rootMargin: '200px' },
+      { rootMargin: '400px' },
     );
     observer.observe(el);
     return () => observer.disconnect();

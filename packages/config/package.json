@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.0",
-    "postcss-px-to-viewport": "^1.1.1"
+    "postcss-mobile-forever": "^5.0.0"
   }
 }

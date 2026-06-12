@@ -17,9 +17,6 @@ importers:
       postcss:
         specifier: ^8.4.0
         version: 8.5.15
-      postcss-px-to-viewport:
-        specifier: ^1.1.1
-        version: 1.1.1
       prettier:
         specifier: ^3.0.0
         version: 3.8.4
@@ -44,9 +41,6 @@ importers:
       '@new-type/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
-      '@new-type/campaign-core':
-        specifier: workspace:*
-        version: link:../../packages/campaign-core
       '@new-type/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
@@ -106,24 +100,23 @@ importers:
         specifier: ^6.0.0
         version: 6.4.3(@types/node@25.9.3)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
 
-  packages/campaign-core:
-    dependencies:
-      '@new-type/utils':
-        specifier: workspace:*
-        version: link:../utils
-    devDependencies:
-      vite:
-        specifier: ^6.0.0
-        version: 6.4.3(@types/node@25.9.3)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
-
   packages/config:
     dependencies:
       '@vitejs/plugin-react':
         specifier: ^4.3.0
         version: 4.7.0(vite@6.4.3(@types/node@25.9.3)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0))
-      postcss-px-to-viewport:
-        specifier: ^1.1.1
-        version: 1.1.1
+      postcss-mobile-forever:
+        specifier: ^5.0.0
+        version: 5.0.0(postcss@8.5.15)
+
+  packages/headless:
+    devDependencies:
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(@types/node@25.9.3)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0)
+      vite-plugin-dts:
+        specifier: ^4.0.0
+        version: 4.5.4(@types/node@25.9.3)(rollup@4.61.1)(typescript@5.9.3)(vite@6.4.3(@types/node@25.9.3)(jiti@1.21.7)(tsx@4.22.4)(yaml@2.9.0))
 
   packages/hooks:
     devDependencies:
@@ -1692,14 +1685,16 @@ packages:
       yaml:
         optional: true
 
+  postcss-mobile-forever@5.0.0:
+    resolution: {integrity: sha512-/kkhxMAd8kNZYeOFaTjhOx7hdfKE7AhJNU7SmlrxJV9fYqbLGrcGQMwXO4aWUvtxBseXwF2+qSMv3j/AZhitNA==}
+    peerDependencies:
+      postcss: ^8.0.0
+
   postcss-nested@6.2.0:
     resolution: {integrity: sha512-HQbt28KulC5AJzG+cZtj9kvKB93CFCdLvog1WFLf1D+xmMvPGlBstkpTEZfK5+AN9hfJocyBFCNiqyS48bpgzQ==}
     engines: {node: '>=12.0'}
     peerDependencies:
       postcss: ^8.2.14
-
-  postcss-px-to-viewport@1.1.1:
-    resolution: {integrity: sha512-2x9oGnBms+e0cYtBJOZdlwrFg/mLR4P1g2IFu7jYKvnqnH/HLhoKyareW2Q/x4sg0BgklHlP1qeWo2oCyPm8FQ==}
 
   postcss-selector-parser@6.1.4:
     resolution: {integrity: sha512-bIoJLOmjCO1S9XdY/DcnR5hJxvrDir1PbGChrzXG3vw0/FOliy/fA3dmdhQ441kah4gKv+TwckGzex6wNS5cnQ==}
@@ -3419,15 +3414,14 @@ snapshots:
       tsx: 4.22.4
       yaml: 2.9.0
 
+  postcss-mobile-forever@5.0.0(postcss@8.5.15):
+    dependencies:
+      postcss: 8.5.15
+
   postcss-nested@6.2.0(postcss@8.5.15):
     dependencies:
       postcss: 8.5.15
       postcss-selector-parser: 6.1.4
-
-  postcss-px-to-viewport@1.1.1:
-    dependencies:
-      object-assign: 4.1.1
-      postcss: 8.5.15
 
   postcss-selector-parser@6.1.4:
     dependencies:

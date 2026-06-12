@@ -1,6 +1,6 @@
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import postcssPxToViewport from 'postcss-px-to-viewport';
+import mobile from 'postcss-mobile-forever';
 
 interface CampaignViteOptions {
   port?: number;
@@ -14,14 +14,12 @@ export function defineCampaignConfig(options: CampaignViteOptions = {}): UserCon
     css: {
       postcss: {
         plugins: [
-          postcssPxToViewport({
-            viewportWidth: 375,
+          mobile({
+            viewportWidth: 750,
+            appSelector: '#app',
+            maxDisplayWidth: 580,
             unitPrecision: 5,
-            viewportUnit: 'vw',
-            fontViewportUnit: 'vw',
             selectorBlackList: [],
-            minPixelValue: 1,
-            mediaQuery: false,
           }),
         ],
       },

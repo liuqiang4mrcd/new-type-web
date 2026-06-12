@@ -26,7 +26,7 @@ export function FlowInspector({
       {/* 标题栏 */}
       <div className="px-4 py-2.5 bg-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 shrink-0">
+          <span className="text-[20px] uppercase tracking-wider text-gray-400 shrink-0">
             流程
           </span>
           <span className="text-sm font-medium truncate">

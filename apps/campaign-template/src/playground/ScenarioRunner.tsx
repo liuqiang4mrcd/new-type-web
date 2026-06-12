@@ -143,7 +143,7 @@ export function ScenarioRunner() {
               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
                 Store 数据
               </h4>
-              <pre className="text-[10px] bg-gray-50 border border-gray-200 rounded-lg p-3 overflow-auto max-h-48 text-gray-600">
+              <pre className="text-[20px] bg-gray-50 border border-gray-200 rounded-lg p-3 overflow-auto max-h-48 text-gray-600">
                 {JSON.stringify(currentStep.store, null, 2)}
               </pre>
             </div>
@@ -165,7 +165,7 @@ export function ScenarioRunner() {
                 </span>
               </div>
               {currentStep.sectionId && (
-                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-600">
+                <span className="text-[20px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-600">
                   {currentStep.sectionId}
                 </span>
               )}
@@ -176,7 +176,7 @@ export function ScenarioRunner() {
               {stepRenderer ? (
                 stepRenderer
               ) : (
-                <div className="flex items-center justify-center min-h-[200px] text-gray-400 text-sm">
+                <div className="flex items-center justify-center min-h-[400px] text-gray-400 text-sm">
                   此步骤未指定要渲染的 section
                 </div>
               )}

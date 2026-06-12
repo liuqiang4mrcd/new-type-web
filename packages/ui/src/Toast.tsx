@@ -30,32 +30,16 @@ export function ToastContainer() {
 
   if (messages.length === 0) return null;
 
+  const bgClass =
+    (t: ToastMessage['type']) =>
+      t === 'success' ? 'bg-emerald-500' : t === 'error' ? 'bg-red-500' : 'bg-blue-500';
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 60,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
+    <div className="fixed top-[60px] left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2">
       {messages.map((msg) => (
         <div
           key={msg.id}
-          style={{
-            padding: '10px 20px',
-            borderRadius: 8,
-            color: '#fff',
-            fontSize: 14,
-            textAlign: 'center',
-            whiteSpace: 'nowrap',
-            backgroundColor:
-              msg.type === 'success' ? '#10b981' : msg.type === 'error' ? '#ef4444' : '#3b82f6',
-          }}
+          className={`px-5 py-2.5 rounded-lg text-white text-sm text-center whitespace-nowrap ${bgClass(msg.type)}`}
         >
           {msg.text}
         </div>

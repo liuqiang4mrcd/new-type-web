@@ -1,7 +1,7 @@
 # AI Framework Map
 
 > AI 辅助开发时的共享包引用指南
-> 最后更新：2026-06-12（campaign-core → headless）
+> 最后更新：2026-06-12（viewport: 750 约定 + vw() 工具函数）
 
 ## 包引用速查
 
@@ -21,6 +21,7 @@
 | URL 参数解析 | `@new-type/utils` | `import { parseUrlParams } from '@new-type/utils'` |
 | 防抖/节流 | `@new-type/utils` | `import { debounce, throttle } from '@new-type/utils'` |
 | 本地存储 | `@new-type/utils` | `import { storage } from '@new-type/utils'` |
+| 设计稿 px → vw | `@new-type/utils` | `import { vw } from '@new-type/utils'` — 用于 JS 动画等 PostCSS 无法处理的场景，传设计稿 px 值（viewportWidth: 750），返回 `vw` 字符串 |
 | 埋点 | `@new-type/analytics` | `import { pageView, click, track } from '@new-type/analytics'` |
 | 无样式 Tab | `@new-type/headless` | `import { Tab } from '@new-type/headless'` |
 
@@ -30,6 +31,14 @@
 2. **不要修改共享包**：如果你缺少某个功能，在 `packages/*` 中添加而不是修改现有导出
 3. **react-router-dom 直接使用**：路由库直接依赖，不封装
 4. **zustand 直接使用**：状态管理库直接使用
+
+## viewport 适配约定
+
+- **设计稿基准宽度：750px（@2x）**
+- CSS 中的 px 由 `postcss-mobile-forever`（`viewportWidth: 750`）在构建时自动转换为 vw
+- JS 中使用 px 的地方（如 framer-motion 动画、IntersectionObserver rootMargin 等）不会经过 PostCSS 编译，需手动处理：
+  - 用 `vw()` 工具函数：`vw(100)` → `13.333vw`
+  - IntersectionObserver 的 `rootMargin`：直接翻倍（如设计稿 200px → 代码写 `400px`，因为 observer 是逻辑像素）
 
 ## 在活动页中使用
 

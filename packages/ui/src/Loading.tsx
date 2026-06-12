@@ -6,27 +6,19 @@ interface LoadingProps {
 
 export function Loading({ size = 32, color = '#3b82f6', text }: LoadingProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-      }}
-    >
+    <div className="flex flex-col items-center justify-center gap-2">
       <div
+        className="border-[3px] rounded-full"
         style={{
           width: size,
           height: size,
-          border: '3px solid #e5e7eb',
+          borderColor: '#e5e7eb',
           borderTopColor: color,
-          borderRadius: '50%',
           animation: 'spin 0.8s linear infinite',
         }}
       />
       {text && (
-        <span style={{ fontSize: 14, color: '#6b7280' }}>{text}</span>
+        <span className="text-sm text-gray-500">{text}</span>
       )}
       <style>{`
         @keyframes spin {

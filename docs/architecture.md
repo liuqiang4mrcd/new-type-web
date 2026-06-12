@@ -13,7 +13,7 @@
 | 构建编排 | Nx（缓存 + affected builds）            |
 | 构建工具 | Vite（library mode 构建共享包）         |
 | 框架     | React 18                                |
-| 样式     | TailwindCSS + postcss-px-to-viewport    |
+| 样式     | TailwindCSS + postcss-mobile-forever（px → vw，桌面端 580px 封顶居中） |
 | 状态     | Zustand                                 |
 | 动效     | framer-motion                           |
 | 测试     | Vitest                                  |
@@ -227,7 +227,7 @@ packages/config/
 ├── tailwind/
 │   └── preset.js              # Tailwind 预设（主题色、移动端断点配置）
 ├── vite/
-│   └── campaign-base.ts       # Vite 共享配置（含 postcss-px-to-viewport）
+│   └── campaign-base.ts       # Vite 共享配置（含 postcss-mobile-forever）
 └── package.json
 ```
 

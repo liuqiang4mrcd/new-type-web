@@ -221,7 +221,7 @@ strict-peer-dependencies=false
   - name: `@new-type/config`
   - exports: tsconfig/base, tsconfig/react, eslint/base, eslint/react, tailwind/preset, vite/campaign-base
   - peerDependencies: typescript, eslint, tailwindcss, vite
-  - dependencies: @vitejs/plugin-react, postcss-px-to-viewport
+  - dependencies: @vitejs/plugin-react, postcss-mobile-forever
 
 - [ ] **Step 2: 创建 `packages/config/tsconfig/base.json`**
   - target: ES2020, strict: true, moduleResolution: bundler
@@ -242,7 +242,7 @@ strict-peer-dependencies=false
 
 - [ ] **Step 7: 创建 `packages/config/vite/campaign-base.ts`**
   - `defineCampaignConfig()` 函数
-  - 集成 @vitejs/plugin-react + postcss-px-to-viewport（viewportWidth: 375）
+  - 集成 @vitejs/plugin-react + postcss-mobile-forever（viewportWidth: 750, maxDisplayWidth: 580）
   - 返回 UserConfig
 
 > **参考 `docs/architecture.md` 第 6 节获取各文件的完整代码**
