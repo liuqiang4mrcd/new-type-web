@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.turbo/
+nx.log
+*.tsbuildinfo
+.DS_Store
+*.local
+.nx/

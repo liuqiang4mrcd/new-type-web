@@ -1,0 +1,15 @@
+{
+  "name": "@new-type/scripts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "fs-extra": "^11.0.0",
+    "prompts": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.0",
+    "@types/prompts": "^2.4.0",
+    "tsx": "^4.0.0"
+  }
+}
