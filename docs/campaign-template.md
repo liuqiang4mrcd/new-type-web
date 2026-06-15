@@ -96,7 +96,7 @@ import { toast } from '@new-type/ui';
 import { Tab } from '@new-type/headless';
 ```
 
-详见 `docs/ai-framework-map.md`。
+详见 `docs/ai/framework-map.md`。
 
 ## 运行方式
 

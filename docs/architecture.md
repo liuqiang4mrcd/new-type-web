@@ -40,8 +40,9 @@ new-type-web/
 │   └── build-campaign.ts          # 构建指定活动页
 ├── docs/                          # 文档
 │   ├── architecture.md            # 本架构文档
-│   ├── ai-rules.md                # AI 开发规则（AI 读取）
-│   ├── ai-framework-map.md        # 共享包引用地图（AI 读取）
+│   └── ai/
+│       ├── development-rules.md   # AI 开发规则（AI 读取）
+│       └── framework-map.md       # 共享包引用地图（AI 读取）
 │   └── campaign-template.md       # 活动页模板说明
 ├── pnpm-workspace.yaml
 ├── nx.json                        # Nx 配置
@@ -253,8 +254,8 @@ packages/config/
 | 文件                           | 读者      | 用途                             |
 | ------------------------------ | --------- | -------------------------------- |
 | `docs/architecture.md`         | 人类 + AI | 项目整体架构理解                 |
-| `docs/ai-rules.md`             | AI        | AI 辅助开发时的约束规则          |
-| `docs/ai-framework-map.md`     | AI        | 共享包引用地图（什么功能用哪个包） |
+| `docs/ai/development-rules.md` | AI        | AI 辅助开发时的约束规则          |
+| `docs/ai/framework-map.md`     | AI        | 共享包引用地图（什么功能用哪个包） |
 | `docs/campaign-template.md`    | AI + 人类 | 活动页模板说明                   |
 
 ---
