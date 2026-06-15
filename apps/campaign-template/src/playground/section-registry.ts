@@ -10,7 +10,11 @@ import {
 
 import { RuleSection } from '../designer/sections/RuleSection';
 import { defaultContent as ruleContent } from '../designer/sections/RuleSection/content';
-import { RuleLoading } from '../designer/sections/RuleSection/states';
+import {
+  RuleLoading,
+  RuleEmpty,
+  RuleError,
+} from '../designer/sections/RuleSection/states';
 
 import { PrizeSection } from '../designer/sections/PrizeSection';
 import { defaultContent as prizeContent } from '../designer/sections/PrizeSection/content';
@@ -19,6 +23,14 @@ import {
   PrizeEmpty,
   PrizeError,
 } from '../designer/sections/PrizeSection/states';
+
+import { CountdownTimer } from '../designer/sections/CountdownTimer';
+import { defaultContent as timerContent } from '../designer/sections/CountdownTimer/content';
+import {
+  CountdownTimerLoading,
+  CountdownTimerEmpty,
+  CountdownTimerError,
+} from '../designer/sections/CountdownTimer/states';
 
 export function registerSections(): PlaygroundSection[] {
   return [
@@ -40,6 +52,8 @@ export function registerSections(): PlaygroundSection[] {
       defaultContent: ruleContent as unknown as Record<string, unknown>,
       stateViews: {
         loading: RuleLoading,
+        empty: RuleEmpty,
+        error: RuleError,
       },
     },
     {
@@ -51,6 +65,17 @@ export function registerSections(): PlaygroundSection[] {
         loading: PrizeLoading,
         empty: PrizeEmpty,
         error: PrizeError,
+      },
+    },
+    {
+      id: 'timer',
+      name: 'CountdownTimer',
+      component: CountdownTimer,
+      defaultContent: timerContent as unknown as Record<string, unknown>,
+      stateViews: {
+        loading: CountdownTimerLoading,
+        empty: CountdownTimerEmpty,
+        error: CountdownTimerError,
       },
     },
   ];

@@ -7,6 +7,8 @@
     "test": "nx affected:test",
     "lint": "nx affected:lint",
     "create-campaign": "tsx scripts/create-campaign.ts",
+    "validate-section": "tsx scripts/validate-section.ts",
+    "validate-all": "tsx scripts/validate-section.ts --all",
     "format": "prettier --write '**/*.{ts,tsx,js,json,css,md}'"
   },
   "dependencies": {

@@ -3,6 +3,16 @@ import type { ComponentType, ReactNode } from 'react';
 /** 组件状态 */
 export type SectionStatus = 'loading' | 'empty' | 'ready' | 'error';
 
+/** 状态类型：ui=独立视觉组件（states.tsx），business=业务数据（stateData） */
+export type StateType = 'ui' | 'business';
+
+/** 单个状态声明 */
+export interface StateDeclaration {
+  key: string;
+  type: StateType;
+  required: boolean;
+}
+
 /** 组件状态数据模型 */
 export interface SectionState<TContent = unknown> {
   status: SectionStatus;

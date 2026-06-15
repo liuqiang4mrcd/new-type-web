@@ -34,26 +34,69 @@ temperature: 0.3
 
 ## 工作流程
 
+> **反馈系统**：以下每个步骤有明确的完成标准，AI 完成后必须自检通过才可进入下一步。验证工具：`pnpm validate-section <SectionName>`。
+
 ### 第 1 步：需求收集
 - 明确活动类型（抽奖/充值/排行榜/品牌宣传等）
 - 明确是否有原型图、视觉参考图、文字描述
 - 明确是否有品牌色/字体/风格约束
 - 明确目标受众和终端（默认移动端 H5）
+- ✅ **产出**：需求摘要文档（`.feedback/demand.md`）
+- ✅ **完成标准**：需求摘要覆盖 5 项信息，设计师已书面确认
 
 ### 第 2 步：结构规划
 - 按 `DESIGN.md` 的页面结构规范划分模块
 - 输出「结构锁定表」：原型图结构、可借鉴内容、禁止改动项（遵循 `DESIGN_INPUT.md` 要求）
-- 与设计师确认后再进入下一步
+- ✅ **产出**：结构锁定表（`.feedback/structure.md`）
+- ✅ **完成标准**：产出结构锁定表即可，无需设计师确认（如有问题后续 Code Review 修正）
 
 ### 第 3 步：视觉细化
-- 根据参考图或文字描述确定配色、字体、质感
+- 根据参考图或文字描述确定配色、字体、间距、圆角、组件尺寸、质感方向
 - 遵守 `DESIGN.md` 的色彩/字体/间距/组件规范
-- 每一步输出给设计师确认
+- **多轮迭代**：设计师可多次提出修改意见，AI 修改后重新确认，直到设计师说 OK
+- ✅ **产出**：完整设计说明（`.feedback/design.md`）
+- ✅ **完成标准**：设计师已书面确认设计说明
 
 ### 第 4 步：方案输出
-- 输出完整的设计方案（含组件尺寸、间距、颜色值）
-- 如需生成图片资源，使用 `DESIGN_INPUT.md` 中指定的工具和规范
-- 如需生成前端代码，按 `DESIGN.md` 的开发约定输出
+- 输出完整的前端代码实现（Section 四文件 + Playground 注册 + Runtime Container）
+- 遵守 `DESIGN_OUTPUT.md` 操作范围规则
+- ✅ **自动验证**：运行 `pnpm validate-section <SectionName>` 必须全部通过
+- ✅ **Code Review**：开发者审查代码
+  - 级别 1（lint/类型错误）：AI 自修，无需人工
+  - 级别 2（状态缺失/边界违规）：AI 修复 + 人工确认
+  - 级别 3（设计不一致）：退回第 3 步，重新确认设计
+
+### 反馈系统核心约定
+
+每个 Section 的 `content.ts` 必须包含以下状态声明：
+
+```typescript
+import type { StateDeclaration } from '../../../contracts/section';
+
+// 声明组件支持的全部状态，供验证工具检查
+export const supportedStates: StateDeclaration[] = [
+  // UI 状态（对应 states.tsx 中独立组件）
+  { key: 'loading', type: 'ui', required: true },
+  { key: 'empty',   type: 'ui', required: true },
+  { key: 'error',   type: 'ui', required: true },
+  // 业务状态（复用主组件，仅换数据）
+  { key: 'beforeStart', type: 'business', required: true },
+  { key: 'inProgress',  type: 'business', required: true },
+  { key: 'ended',       type: 'business', required: true },
+] as const;
+
+// 各状态的 mock 数据
+export const stateData = { /* ... */ };
+```
+
+验证脚本 `scripts/validate-section.ts` 自动检查：
+1. 四文件完整性（types/content/index/states）
+2. `supportedStates` 和 `stateData` 声明
+3. UI 状态组件覆盖（states.tsx 中组件导出）
+4. 业务状态数据覆盖（stateData 中 Key 完整性）
+5. Playground 注册和 stateViews 对齐
+6. Runtime Container 存在性和路由完整性
+7. Store 对齐
 
 ## 设计输出规则
 

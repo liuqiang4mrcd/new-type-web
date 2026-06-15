@@ -13,3 +13,20 @@ export const RuleLoading: ComponentType<{ message?: string }> = () => (
     </div>
   </section>
 );
+
+export const RuleEmpty: ComponentType<{ message?: string }> = ({ message }) => (
+  <section className="px-6 py-10 bg-gray-50">
+    <div className="text-center text-gray-400 py-8">
+      <p className="text-lg">{message || '暂无活动规则'}</p>
+    </div>
+  </section>
+);
+
+export const RuleError: ComponentType<{ message?: string }> = ({ message }) => (
+  <section className="px-6 py-10 bg-red-50">
+    <div className="text-center py-8">
+      <p className="text-lg font-bold text-red-500 mb-2">规则加载失败</p>
+      <p className="text-sm text-red-400">{message || '请稍后重试'}</p>
+    </div>
+  </section>
+);

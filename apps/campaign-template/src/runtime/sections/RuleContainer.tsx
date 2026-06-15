@@ -1,6 +1,10 @@
 import { useStore } from '../../integrations/store';
 import { RuleSection } from '../../designer/sections/RuleSection';
-import { RuleLoading } from '../../designer/sections/RuleSection/states';
+import {
+  RuleLoading,
+  RuleEmpty,
+  RuleError,
+} from '../../designer/sections/RuleSection/states';
 
 export function RuleContainer() {
   const rules = useStore((s) => s.rules);
@@ -9,8 +13,9 @@ export function RuleContainer() {
     case 'loading':
       return <RuleLoading />;
     case 'error':
+      return <RuleError message={rules.error} />;
     case 'empty':
-      return null;
+      return <RuleEmpty />;
     case 'ready':
       return <RuleSection content={rules.content!} />;
   }

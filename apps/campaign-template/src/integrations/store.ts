@@ -4,6 +4,7 @@ import type { SectionState } from '../contracts/section';
 import type { HeroContent } from '../designer/sections/HeroSection/types';
 import type { RuleContent } from '../designer/sections/RuleSection/types';
 import type { PrizeContent } from '../designer/sections/PrizeSection/types';
+import type { CountdownTimerContent } from '../designer/sections/CountdownTimer/types';
 import { CAMPAIGN_CONFIG } from './constants';
 
 /* ── Store 类型 ── */
@@ -20,6 +21,7 @@ export interface AppStore {
   hero: SectionState<HeroContent>;
   rules: SectionState<RuleContent>;
   prize: SectionState<PrizeContent>;
+  countdownTimer: SectionState<CountdownTimerContent>;
 
   // 抽奖状态
   lottery: LotteryInfo;
@@ -51,6 +53,7 @@ export const useStore = create<AppStore>((set, get) => ({
   hero: { status: 'loading' },
   rules: { status: 'loading' },
   prize: { status: 'loading' },
+  countdownTimer: { status: 'loading' },
   lottery: defaultLottery,
   drawing: false,
   showPrizeModal: false,
@@ -97,12 +100,22 @@ export const useStore = create<AppStore>((set, get) => ({
             winRate: 0.2,
           },
         },
+        countdownTimer: {
+          status: 'ready',
+          content: {
+            days: 3,
+            hours: 12,
+            minutes: 30,
+            seconds: 45,
+          },
+        },
       });
     } catch {
       set({
         hero: { status: 'error', error: '活动数据加载失败' },
         rules: { status: 'error', error: '活动规则加载失败' },
         prize: { status: 'error', error: '奖品信息加载失败' },
+        countdownTimer: { status: 'error', error: '倒计时加载失败' },
       });
     }
   },
