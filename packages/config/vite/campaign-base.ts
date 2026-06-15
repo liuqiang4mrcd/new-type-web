@@ -1,5 +1,7 @@
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 import mobile from 'postcss-mobile-forever';
 
 interface CampaignViteOptions {
@@ -14,6 +16,7 @@ export function defineCampaignConfig(options: CampaignViteOptions = {}): UserCon
     css: {
       postcss: {
         plugins: [
+          tailwindcss(),
           mobile({
             viewportWidth: 750,
             appSelector: '#app',
@@ -21,6 +24,7 @@ export function defineCampaignConfig(options: CampaignViteOptions = {}): UserCon
             unitPrecision: 5,
             selectorBlackList: [],
           }),
+          autoprefixer(),
         ],
       },
     },
