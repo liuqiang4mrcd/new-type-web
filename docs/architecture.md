@@ -1,7 +1,7 @@
 # new-type-web 项目架构设计
 
 > 基于 [需求.md](../需求.md) 生成的项目架构文档
-> 日期：2026-06-12（v3，campaign-core → headless 重构）
+> 日期：2026-06-12（v4，通用依赖提至根 package.json 共享）
 
 ---
 
@@ -15,7 +15,7 @@
 | 框架     | React 18                                |
 | 样式     | TailwindCSS + postcss-mobile-forever（px → vw，桌面端 580px 封顶居中） |
 | 状态     | Zustand                                 |
-| 动效     | framer-motion                           |
+| 动效     | framer-motion（根 package.json 共享）   |
 | 测试     | Vitest                                  |
 | 语言     | TypeScript                              |
 

@@ -388,7 +388,7 @@ strict-peer-dependencies=false
 ### Task 9: 活动页模板 (apps/campaign-template)
 
 **Files:**
-- Create: `apps/campaign-template/package.json` — 依赖所有 @new-type/* 包 + react-router-dom + framer-motion
+- Create: `apps/campaign-template/package.json` — 仅依赖 @new-type/* 包（react/react-dom/react-router-dom/zustand/framer-motion 等通用库在根 package.json 共享）
 - Create: `apps/campaign-template/index.html` — viewport: 禁止缩放
 - Create: `apps/campaign-template/tsconfig.json` — extends react.json, paths: @/*, references 各 packages
 - Create: `apps/campaign-template/vite.config.ts` — 使用 defineCampaignConfig()
