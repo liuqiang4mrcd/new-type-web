@@ -54,6 +54,17 @@ agents/
 
 以下场景必须自动调用对应的 agent，无需用户手动 @指定：
 
+## 新建活动项目强约束
+
+当用户需求包含“新建项目 / 新活动 / 创建活动 / 生成新项目”时：
+
+- 必须在 `apps/<campaign-name>/` 下创建独立项目。
+- `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
+- 写代码前必须先确认目标 app 目录；如果目标 app 不存在，先复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
+- 推荐使用 `pnpm create-campaign <campaign-name>` 创建项目，避免手动落错目录。
+- 业务 Section、runtime、store、playground 注册都只能写入目标 app。
+- 完成前必须检查 `apps/campaign-template` 无非预期 diff。
+
 ### designer — H5 活动页设计与修改
 
 当用户需求涉及 H5 活动页的**创建、修改或视觉调整**时，自动调用 `designer` agent：
@@ -65,6 +76,8 @@ agents/
 | 调整布局/结构 | "把排行榜移到下面"、"增加一个奖品区" |
 | 视觉细节调整 | "标题字体再大一点"、"背景换成金色" |
 | 活动模板相关 | "创建新的活动模板"、"基于这个模板改" |
+
+> **新项目创建门禁**：当触发场景为**"创建新活动页面"**（含基于图片/原型图创建）时，`designer` agent 必须先输出完整的设计方案提案（包含项目目录、Section 拆分方案、结构锁定表、视觉方向），**等待用户书面确认后**，才能进入代码实现阶段。禁止跳过方案确认直接写代码。
 
 设计依据：
 - `agents/designer.md` — designer agent 定义
