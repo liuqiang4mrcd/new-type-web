@@ -37,6 +37,31 @@ designer/sections/<Name>/
 - `types.ts` 中接口名以 `Content` 结尾
 - `content.ts` 导出名为 `defaultContent`
 
+### 状态声明要求
+
+每个 Section 的 `content.ts` 必须通过 `supportedStates` 声明所有状态：
+
+```typescript
+export const supportedStates: StateDeclaration[] = [
+  // UI 状态（对应 states.tsx 中独立组件）
+  { key: 'loading', type: 'ui', required: true },
+  { key: 'empty',   type: 'ui', required: true },
+  { key: 'error',   type: 'ui', required: true },
+  // 业务状态（复用主组件，仅换数据）
+  { key: 'beforeStart', type: 'business', required: true },
+  { key: 'inProgress',  type: 'business', required: true },
+  { key: 'ended',       type: 'business', required: true },
+  // 交互状态（组件内部 useState 管理的 UI 状态机）
+  { key: 'idle',     type: 'ui', required: true },
+  { key: 'spinning', type: 'ui', required: true },
+  { key: 'result',   type: 'ui', required: true },
+] as const;
+```
+
+- **UI 状态**：对应 `states.tsx` 中导出的独立组件（loading/empty/error）
+- **业务状态**：输入数据不同但复用主组件（beforeStart/inProgress/ended）
+- **交互状态**：组件内部 `useState` 管理的动态 UI 阶段（idle/spinning/result 等），必须声明到 `supportedStates` 中以供验证和 Playground 识别
+
 ## Playground 注册
 
 创建 section 后，必须在 `playground/section-registry.ts` 中注册：
