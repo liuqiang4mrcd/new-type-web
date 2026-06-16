@@ -36,6 +36,16 @@ packages/
 
 # 项目 Agent 调用规则
 
+## 优先级规则
+
+当多个 skill 或 agent 同时命中同一触发场景时，优先级从高到低为：
+
+1. **本仓库声明的 agent 和 skill**（`agents/*.md`）— 最高优先级
+2. 工作区配置（项目根目录 `.opencode/` 与用户 `~/.config/opencode/` 中的 skill）
+3. 内置 / 插件提供的 skill 和 agent
+
+> **覆盖规则**：对于 Designer agent（`agents/designer.md`），当用户需求明确定义了**设计方向（视觉风格、布局偏好、色彩方案）**时，以用户的显式输入为准，覆盖本仓库任何默认设定。非设计类 agent 依然遵循本优先级规则。
+
 ## 项目 Agents 体系
 
 ```
