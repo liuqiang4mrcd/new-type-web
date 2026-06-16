@@ -47,6 +47,7 @@ temperature: 0.3
 - 明确目标受众和终端（默认移动端 H5）
 - ✅ **产出**：需求摘要文档（`.feedback/demand.md`）
 - ✅ **完成标准**：需求摘要覆盖 5 项信息，设计师已书面确认
+- ⚠️ **写入要求**：产出确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/demand.md`（此时项目 `apps/<campaign>/` 尚未创建）。禁止仅在对话中输出内容而不写入文件。下一步开始前必须确认文件已存盘。
 
 ### 第 2 步：结构规划
 - 按 `DESIGN.md` 的页面结构规范划分模块
@@ -60,6 +61,7 @@ temperature: 0.3
   - 将分析结果以表格形式记入结构锁定表，`stateTransitions` 以 JSON 代码块形式附在表后
 - ✅ **产出**：结构锁定表（`.feedback/structure.md`），含各 Section 交互状态表
 - ✅ **新项目模式完成标准**：设计师已确认结构锁定表；**修改模式完成标准**：产出即可，无需确认
+- ⚠️ **写入要求**：确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/structure.md`。进入第 3 步前必须确认文件已存盘。
 
 ### 第 3 步：视觉细化
 - 根据参考图或文字描述确定配色、字体、间距、圆角、组件尺寸、质感方向
@@ -67,6 +69,7 @@ temperature: 0.3
 - **多轮迭代**：设计师可多次提出修改意见，AI 修改后重新确认，直到设计师说 OK
 - ✅ **产出**：完整设计说明（`.feedback/design.md`）
 - ✅ **完成标准**：设计师已书面确认设计说明
+- ⚠️ **写入要求**：最终确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/design.md`。
 
 ### 第 3.5 步：设计方案审批（新项目模式必须）
 - 将第 1-3 步的结论整合为一份**完整设计方案摘要**，包含：
@@ -85,6 +88,7 @@ temperature: 0.3
 - 输出完整的前端代码实现（Section 四文件 + Playground 注册 + Runtime Container）
 - 遵守 `DESIGN_OUTPUT.md` 操作范围规则
 - **交互 Section 额外输出**：对于含交互状态的 Section，还需在 `content.ts` 中生成 `stateTransitions`（声明视觉状态转换图），并在 `playground/section-registry.ts` 中注册 `defaultActions`（提供 console.log 桩函数使 Playground 可点击测试）
+- **移动 .feedback 文件**：项目创建后（`pnpm create-campaign` 或 `cp -r`），将根目录 `.feedback/` 整个移动到 `apps/<campaign>/.feedback/`。使用 `mv .feedback apps/<campaign>/.feedback`。移动前确认根目录 `.feedback/` 存在，移动后确认目标路径文件完整。
 - ✅ **自动验证**：运行 `pnpm validate-section --campaign <campaign-name> <SectionName>` 必须全部 16 项检查通过
 - ✅ **Code Review**：开发者审查代码
   - 级别 1（lint/类型错误）：AI 自修，无需人工

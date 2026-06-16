@@ -1,6 +1,6 @@
 # AI 开发规则
 
-> 最后更新：2026-06-16（反馈机制 Phase 1 — 交互状态机 + Actions Props + 三层验证）
+> 最后更新：2026-06-16（引用即断言规则 + designer 工作流写入要求）
 
 ## 目录边界
 
@@ -178,6 +178,18 @@ index.tsx (纯视觉 + 本地 useState 状态机)
 - `index.tsx` 管理的是**视觉状态机**（spinning 动画、slide 动效等），数据状态由 `content` 驱动
 - 复杂交互（如 API 调用、数据变更）通过 `actions` 回调通知 Container 层
 - `content.ts` 中 `stateTransitions` 声明完整的视觉状态转换图，供验证工具三向校验
+
+## 引用即断言（文件存盘规则）
+
+**任何在对话摘要、Relevant Files、状态记录中列出的文件路径，都必须是已确认存在于磁盘上的真实文件。**
+
+- 在引用文件路径时，必须先用 `write` / `edit` 等工具写入，或确认文件已存在
+- 禁止在摘要中列出"计划要创建"或"对话中提到过"但未写入的文件路径
+- 违反此规则等同于记录不存在的证据
+
+违反案例：
+- 对话中输出了 `.feedback/*.md` 的完整内容，但从未用 `write` 工具写入 → ❌ 文件不存在
+- 在 Relevant Files 中列出 `apps/money-rain/.feedback/demand.md`，但该文件从未被创建 → ❌ 引用不存在文件
 
 ## 活动页创建流程
 
