@@ -4,6 +4,7 @@ import { useStore } from '../integrations/store';
 import { HeroContainer } from '../runtime/sections/HeroContainer';
 import { RuleContainer } from '../runtime/sections/RuleContainer';
 import { PrizeContainer } from '../runtime/sections/PrizeContainer';
+import { CountdownTimerContainer } from '../runtime/sections/CountdownTimerContainer';
 import { trackPageView } from '../integrations/tracking';
 
 export function App() {
@@ -20,6 +21,7 @@ export function App() {
   return (
     <main className="min-h-screen bg-white">
       <HeroContainer />
+      <CountdownTimerContainer />
       <RuleContainer />
       <PrizeContainer />
 

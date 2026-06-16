@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: TypeScript 编译检查
+        run: pnpm exec tsc --noEmit --pretty
+
+      - name: Layer 0 静态验证（template）
+        run: pnpm validate-section --campaign campaign-template HeroSection
+
+      - name: Layer 0 静态验证（money-rain）
+        run: |
+          pnpm validate-section --campaign campaign-2026-money-rain WheelSection
+          pnpm validate-section --campaign campaign-2026-money-rain CritSection
+          pnpm validate-section --campaign campaign-2026-money-rain RewardTierSection
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Layer 1 单元测试
+        run: pnpm test:unit
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright
+        run: npx playwright install chromium
+
+      - name: Layer 2 集成测试
+        run: pnpm test:e2e

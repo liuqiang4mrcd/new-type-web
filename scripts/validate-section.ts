@@ -1,21 +1,38 @@
 #!/usr/bin/env tsx
 import { join } from 'path';
-import { readFileSafe } from './section-validator/discovery';
-import { discoverSectionNames } from './section-validator/discovery';
+import { existsSync } from 'fs';
+import { readFileSafe, discoverSectionNames } from './section-validator/discovery';
 import { validateSection } from './section-validator/checks';
 import { buildReport, printReport } from './section-validator/report';
 import type { CliOptions } from './section-validator/types';
 
-const CAMPAIGN_SRC = join(process.cwd(), 'apps', 'campaign-template', 'src');
+function parseArgs(argv: string[]): CliOptions & { campaign?: string } {
+  let campaign = 'campaign-template';
+  const remaining: string[] = [];
 
-function parseArgs(argv: string[]): CliOptions {
-  if (argv.length === 0) {
-    return { all: false, rootDir: CAMPAIGN_SRC };
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--campaign' && i + 1 < argv.length) {
+      campaign = argv[i + 1];
+      i++;
+    } else {
+      remaining.push(argv[i]);
+    }
   }
-  if (argv[0] === '--all') {
-    return { all: true, rootDir: CAMPAIGN_SRC };
+
+  const CAMPAIGN_SRC = join(process.cwd(), 'apps', campaign, 'src');
+
+  if (!existsSync(CAMPAIGN_SRC)) {
+    process.stderr.write(`ERROR: 活动目录不存在: ${CAMPAIGN_SRC}\n`);
+    process.exit(2);
   }
-  return { all: false, sectionName: argv[0], rootDir: CAMPAIGN_SRC };
+
+  if (remaining.length === 0) {
+    return { all: false, rootDir: CAMPAIGN_SRC, campaign };
+  }
+  if (remaining[0] === '--all') {
+    return { all: true, rootDir: CAMPAIGN_SRC, campaign };
+  }
+  return { all: false, sectionName: remaining[0], rootDir: CAMPAIGN_SRC, campaign };
 }
 
 function fatal(message: string): never {
@@ -26,7 +43,6 @@ function fatal(message: string): never {
 async function main(argv = process.argv.slice(2)): Promise<void> {
   const options = parseArgs(argv);
 
-  // Determine section names to validate
   let sectionNames: string[];
   if (options.all) {
     sectionNames = discoverSectionNames(options.rootDir);
@@ -39,7 +55,6 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
     fatal('请指定 Section 名称（如 HeroSection）或使用 --all 验证全部');
   }
 
-  // Read global files once
   const registryPath = join(options.rootDir, 'playground', 'section-registry.ts');
   const storePath = join(options.rootDir, 'integrations', 'store.ts');
 
@@ -55,19 +70,16 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
   const registrySource = registryResult.ok ? registryResult.text : '';
   const storeSource = storeResult.ok ? storeResult.text : '';
 
-  // Validate each section
   const results = sectionNames.map((name) =>
     validateSection(name, options.rootDir, registrySource, storeSource),
   );
 
-  // Build and print report
   const report = buildReport(
     options.all ? 'all' : options.sectionName!,
     results,
   );
   process.stdout.write(printReport(report) + '\n');
 
-  // Exit code
   if (report.summary.failedSections > 0 || report.summary.failedChecks > 0) {
     process.exit(1);
   }

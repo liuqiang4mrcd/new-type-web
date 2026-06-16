@@ -1,11 +1,14 @@
 import type { ComponentType } from 'react';
 import type { SectionStatus } from '../contracts/section';
 
+export type PreviewMode = 'full' | 'single' | 'flow';
+
 export interface PlaygroundSection {
   id: string;
   name: string;
   component: ComponentType<any>;
   defaultContent: Record<string, unknown>;
+  defaultActions?: Record<string, unknown>;
   stateViews: Partial<
     Record<SectionStatus, ComponentType<{ message?: string }>>
   >;

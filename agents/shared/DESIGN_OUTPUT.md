@@ -51,16 +51,37 @@ export const supportedStates: StateDeclaration[] = [
   { key: 'beforeStart', type: 'business', required: true },
   { key: 'inProgress',  type: 'business', required: true },
   { key: 'ended',       type: 'business', required: true },
-  // 交互状态（组件内部 useState 管理的 UI 状态机）
-  { key: 'idle',     type: 'ui', required: true },
-  { key: 'spinning', type: 'ui', required: true },
-  { key: 'result',   type: 'ui', required: true },
+  // 交互状态（本地 useState 管理的视觉阶段，受 stateTransitions 驱动）
+  { key: 'idle',     type: 'interaction', required: true },
+  { key: 'spinning', type: 'interaction', required: true },
+  { key: 'result',   type: 'interaction', required: true },
 ] as const;
 ```
 
 - **UI 状态**：对应 `states.tsx` 中导出的独立组件（loading/empty/error）
 - **业务状态**：输入数据不同但复用主组件（beforeStart/inProgress/ended）
-- **交互状态**：组件内部 `useState` 管理的动态 UI 阶段（idle/spinning/result 等），必须声明到 `supportedStates` 中以供验证和 Playground 识别
+- **交互状态**：组件内部 `useState` 管理的动态 UI 阶段（idle/spinning/result 等），由 `stateTransitions` 驱动转换，必须在 `supportedStates` 中以 `type: 'interaction'` 声明
+
+### 状态转换声明 (stateTransitions)
+
+交互类 Section 必须在 `content.ts` 中声明视觉状态转换图：
+
+```typescript
+import type { StateTransition } from '../../../contracts/section';
+
+export const stateTransitions: StateTransition[] = [
+  { from: 'idle', to: 'spinning', trigger: { type: 'click', handler: 'onSpin' } },
+  { from: 'spinning', to: 'result', trigger: { type: 'timeout', handler: 'onSpinComplete', duration: 3000 } },
+  { from: 'result', to: 'idle', trigger: { type: 'click', handler: 'onReset' } },
+  { from: 'spinning', to: 'idle', trigger: { type: 'click', handler: 'onReset' } },
+];
+```
+
+- `from` / `to` 必须对应 `supportedStates` 中 `type: 'interaction'` 的状态 key
+- `trigger.type` 支持: `click`（用户点击）、`timeout`（自动定时）、`swipe`（滑动）、`scroll`（滚动）
+- `trigger.handler` 对应 `actions` props 中的回调函数名
+- `trigger.duration` 仅用于 `type: 'timeout'`，单位 ms
+- 可选 `animation` 字段：`animation?: { type: 'slide' | 'fade' | 'scale', duration: number, timing: string }`，用于声明状态转换时的动效
 
 ## Playground 注册
 
@@ -68,10 +89,18 @@ export const supportedStates: StateDeclaration[] = [
 
 ```ts
 {
-  id: '<name>',
-  name: '<Name>Section',
-  component: <Name>Section,
+  id: 'wheel',
+  name: 'WheelSection',
+  component: WheelSection,
   defaultContent,
-  stateViews: { loading: <Name>Loading, empty: <Name>Empty, error: <Name>Error },
+  defaultActions: {                 // ← 交互事件桩函数，使 Playground 可测试
+    onSpin: () => console.log('[Playground] 点击抽奖'),
+    onSpinComplete: () => console.log('[Playground] 动画结束'),
+    onReset: () => console.log('[Playground] 重置'),
+  },
+  stateViews: { loading: WheelLoading, empty: WheelEmpty, error: WheelError, spinning: WheelSpinning },
 }
 ```
+
+- `defaultActions`: 为交互 Section 提供 Playground 环境中的 console.log 桩函数。纯展示 Section 不需要此字段。
+- `stateViews`: 覆盖 `supportedStates` 中所有 `type: 'ui'` 的状态。`type: 'interaction'` 的状态有独立视图组件时也建议注册。

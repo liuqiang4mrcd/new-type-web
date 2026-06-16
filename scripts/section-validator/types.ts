@@ -1,6 +1,26 @@
 export type UiStateKey = 'loading' | 'empty' | 'error';
 export type RuntimeStatus = 'loading' | 'empty' | 'ready' | 'error';
-export type SupportedStateType = 'ui' | 'business';
+export type SupportedStateType = 'ui' | 'business' | 'interaction';
+
+export interface ParsedTransition {
+  from: string;
+  to: string;
+  trigger: {
+    type: string;
+    handler?: string;
+    duration?: number;
+  };
+  animation?: {
+    type: string;
+    duration: number;
+    easing?: string;
+  };
+}
+
+export interface RuntimeAppInfo {
+  containerImports: string[];
+  containerTags: string[];
+}
 
 export interface CliOptions {
   all: boolean;

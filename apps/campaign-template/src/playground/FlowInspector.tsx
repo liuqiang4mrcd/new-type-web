@@ -9,6 +9,8 @@ interface FlowInspectorProps {
   onStepChange: (index: number) => void;
   onPlayToggle: () => void;
   onReset: () => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 export function FlowInspector({
@@ -20,22 +22,59 @@ export function FlowInspector({
   onStepChange,
   onPlayToggle,
   onReset,
+  collapsed,
+  onToggleCollapse,
 }: FlowInspectorProps) {
+  if (collapsed) {
+    return (
+      <div
+        className="fixed bottom-6 right-6 z-[9999] w-72 bg-gray-900 text-white rounded-xl shadow-2xl border border-gray-700 overflow-hidden cursor-pointer"
+        onClick={onToggleCollapse}
+      >
+        <div className="px-4 py-2.5 bg-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs uppercase tracking-wider text-gray-400 shrink-0">
+              流程
+            </span>
+            <span className="text-sm font-medium truncate">
+              {scenario.label}
+            </span>
+          </div>
+          <span className="text-xs text-gray-400 shrink-0 ml-2">
+            {currentIndex + 1}/{totalSteps}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed bottom-6 right-6 z-[9999] w-72 bg-gray-900 text-white rounded-xl shadow-2xl border border-gray-700 overflow-hidden">
       {/* 标题栏 */}
       <div className="px-4 py-2.5 bg-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[20px] uppercase tracking-wider text-gray-400 shrink-0">
+          <span className="text-xs uppercase tracking-wider text-gray-400 shrink-0">
             流程
           </span>
           <span className="text-sm font-medium truncate">
             {scenario.label}
           </span>
         </div>
-        <span className="text-xs text-gray-400 shrink-0 ml-2">
-          {currentIndex + 1}/{totalSteps}
-        </span>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          <span className="text-xs text-gray-400">
+            {currentIndex + 1}/{totalSteps}
+          </span>
+          <button
+            className="text-gray-400 hover:text-white text-xs px-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleCollapse();
+            }}
+            title="折叠"
+          >
+            _
+          </button>
+        </div>
       </div>
 
       {/* 进度条 */}

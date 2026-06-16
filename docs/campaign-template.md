@@ -1,6 +1,6 @@
 # 活动页模板说明
 
-> 最后更新：2026-06-12（适配三层协作架构，campaign-core → headless）
+> 最后更新：2026-06-16（Playground 3 模式预览 + 手机壳模拟 + 控制面板）
 
 ## 目录结构
 
@@ -22,6 +22,7 @@ apps/campaign-template/
 │   │   ├── app.tsx
 │   │   └── sections/
 │   │       ├── HeroContainer.tsx
+│   │       ├── CountdownTimerContainer.tsx
 │   │       ├── RuleContainer.tsx
 │   │       └── PrizeContainer.tsx
 │   │
@@ -32,12 +33,18 @@ apps/campaign-template/
 │   │   └── constants.ts
 │   │
 │   └── playground/                  # 🔍 设计师预览
-│       ├── index.tsx
-│       ├── SectionPanel.tsx
-│       ├── ScenarioRunner.tsx
-│       ├── FlowInspector.tsx
-│       ├── section-registry.ts
-│       └── scenarios/
+│       ├── index.tsx                # 左主区域 + 右控制面板 flex 布局
+│       ├── ControlPanel.tsx         # 右侧控制面板（模式选择/编辑/日志）
+│       ├── PhoneFrame.tsx           # 手机壳模拟（iframe 内渲染，vw 正确）
+│       ├── SectionPanel.tsx         # 单组件预览（状态切换）
+│       ├── ScenarioRunner.tsx       # 流程预览渲染器（props 驱动）
+│       ├── FlowInspector.tsx        # 浮动流程面板（可折叠）
+│       ├── ContentEditor.tsx        # JSON content 编辑器
+│       ├── ActionsLog.tsx           # actions 调用日志
+│       ├── phone-preview.tsx        # iframe 独立 entry（?mode=phone-preview）
+│       ├── types.ts                 # PlaygroundSection / Scenario / PreviewMode
+│       ├── section-registry.ts      # 组件注册
+│       └── scenarios/               # 预设场景数据
 ```
 
 ## 创建新 Section
@@ -104,6 +111,8 @@ import { Tab } from '@new-type/headless';
 # 线上页面
 pnpm dev
 
-# 设计师 Playground（状态切换 + 场景流程 + 自动播放）
+# 设计师 Playground（三种预览模式 + 控制面板）
 pnpm dev  →  http://localhost:5173/?mode=designer
+# 完整页面手机壳独立入口（iframe 用，无需手动访问）
+pnpm dev  →  http://localhost:5173/?mode=phone-preview
 ```

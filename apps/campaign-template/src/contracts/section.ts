@@ -1,16 +1,45 @@
 import type { ComponentType, ReactNode } from 'react';
 
 /** 组件状态 */
-export type SectionStatus = 'loading' | 'empty' | 'ready' | 'error';
+export type SectionStatus = 'loading' | 'empty' | 'ready' | 'error' | 'disabled' | 'spinning';
 
-/** 状态类型：ui=独立视觉组件（states.tsx），business=业务数据（stateData） */
-export type StateType = 'ui' | 'business';
+/** 状态类型：ui=独立视觉组件（states.tsx），business=业务数据（stateData），interaction=交互状态机 */
+export type StateType = 'ui' | 'business' | 'interaction';
 
 /** 单个状态声明 */
 export interface StateDeclaration {
   key: string;
   type: StateType;
   required: boolean;
+}
+
+/** 触发类型 */
+export type TriggerType = 'click' | 'timeout' | 'animationend' | 'load' | 'swipe' | 'scroll';
+
+/** 状态转换触发条件 */
+export interface StateTrigger {
+  type: TriggerType;
+  /** click/swipe/scroll 类型必须：actions.xxx 方法名 */
+  handler?: string;
+  /** timeout 类型必须：持续时间(ms) */
+  duration?: number;
+}
+
+/** 动效声明 */
+export interface TransitionAnimation {
+  type: 'spin' | 'slide' | 'fade' | 'scale' | 'none';
+  /** 持续时间(ms) */
+  duration: number;
+  easing?: string;
+}
+
+/** 状态转换声明：状态机的一步转换 */
+export interface StateTransition {
+  from: string;
+  to: string;
+  trigger: StateTrigger;
+  animation?: TransitionAnimation;
+  description?: string;
 }
 
 /** 组件状态数据模型 */

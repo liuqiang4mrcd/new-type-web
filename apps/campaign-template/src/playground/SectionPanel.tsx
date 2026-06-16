@@ -4,9 +4,11 @@ import type { PlaygroundSection } from './types';
 
 interface SectionPanelProps {
   section: PlaygroundSection;
+  customContent?: Record<string, unknown> | null;
+  actions?: Record<string, unknown>;
 }
 
-export function SectionPanel({ section }: SectionPanelProps) {
+export function SectionPanel({ section, customContent, actions }: SectionPanelProps) {
   const [status, setStatus] = useState<SectionStatus>('ready');
   const [showMenu, setShowMenu] = useState(false);
 
@@ -22,7 +24,14 @@ export function SectionPanel({ section }: SectionPanelProps) {
       };
       return <StateComponent message={messages[status]} />;
     }
-    return <section.component content={section.defaultContent} />;
+    const content = customContent ?? section.defaultContent;
+    const actionProps = actions ?? section.defaultActions;
+    return (
+      <section.component
+        content={content}
+        actions={actionProps}
+      />
+    );
   };
 
   return (

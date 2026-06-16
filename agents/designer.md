@@ -56,7 +56,8 @@ temperature: 0.3
   - 列出所有用户交互（点击、滑动、滚动、输入等）
   - 绘制状态流转：交互 → 状态变化 → 副作用
   - 识别状态间的依赖与互斥关系（如 spinning 期间禁止点击）
-  - 将分析结果以表格形式记入结构锁定表
+  - **设计状态转换图 (stateTransitions)**：将分析结果转化为 from/to/trigger 结构，每个交互状态转换必须定义触发方式（click/timeout/swipe）
+  - 将分析结果以表格形式记入结构锁定表，`stateTransitions` 以 JSON 代码块形式附在表后
 - ✅ **产出**：结构锁定表（`.feedback/structure.md`），含各 Section 交互状态表
 - ✅ **新项目模式完成标准**：设计师已确认结构锁定表；**修改模式完成标准**：产出即可，无需确认
 
@@ -72,7 +73,7 @@ temperature: 0.3
   - 项目概要（目标 app 目录、页面用途）
   - Section 拆分列表（每 Section 的名称、职责、关键数据字段）
   - 结构锁定表结论
-  - **各 Section 交互状态表**（状态列表、触发条件、组件表现、副作用、互斥关系）
+  - **各 Section 交互状态表**（状态列表、触发条件、组件表现、副作用、互斥关系、stateTransitions 图）
   - 视觉方向（配色、字体、关键组件样式）
   - 预计工作量与实施顺序
 - 以清晰的结构呈现给设计师，**等待设计师书面确认**
@@ -83,7 +84,8 @@ temperature: 0.3
 - **门禁条件**：仅当第 3.5 步已完成且设计师书面确认后，才能进入此步骤
 - 输出完整的前端代码实现（Section 四文件 + Playground 注册 + Runtime Container）
 - 遵守 `DESIGN_OUTPUT.md` 操作范围规则
-- ✅ **自动验证**：运行 `pnpm validate-section <SectionName>` 必须全部通过
+- **交互 Section 额外输出**：对于含交互状态的 Section，还需在 `content.ts` 中生成 `stateTransitions`（声明视觉状态转换图），并在 `playground/section-registry.ts` 中注册 `defaultActions`（提供 console.log 桩函数使 Playground 可点击测试）
+- ✅ **自动验证**：运行 `pnpm validate-section --campaign <campaign-name> <SectionName>` 必须全部 16 项检查通过
 - ✅ **Code Review**：开发者审查代码
   - 级别 1（lint/类型错误）：AI 自修，无需人工
   - 级别 2（状态缺失/边界违规）：AI 修复 + 人工确认
@@ -94,7 +96,7 @@ temperature: 0.3
 每个 Section 的 `content.ts` 必须包含以下状态声明：
 
 ```typescript
-import type { StateDeclaration } from '../../../contracts/section';
+import type { StateDeclaration, StateTransition } from '../../../contracts/section';
 
 // 声明组件支持的全部状态，供验证工具检查
 export const supportedStates: StateDeclaration[] = [
@@ -106,13 +108,24 @@ export const supportedStates: StateDeclaration[] = [
   { key: 'beforeStart', type: 'business', required: true },
   { key: 'inProgress',  type: 'business', required: true },
   { key: 'ended',       type: 'business', required: true },
+  // 交互状态（本地 useState 管理的视觉阶段，受 stateTransitions 驱动）
+  { key: 'idle',     type: 'interaction', required: true },
+  { key: 'spinning', type: 'interaction', required: true },
+  { key: 'result',   type: 'interaction', required: true },
 ] as const;
 
 // 各状态的 mock 数据
 export const stateData = { /* ... */ };
+
+// 交互状态转换声明（视觉状态机图）
+export const stateTransitions: StateTransition[] = [
+  { from: 'idle', to: 'spinning', trigger: { type: 'click', handler: 'onSpin' } },
+  { from: 'spinning', to: 'result', trigger: { type: 'timeout', handler: 'onSpinComplete', duration: 3000 } },
+  { from: 'result', to: 'idle', trigger: { type: 'click', handler: 'onReset' } },
+];
 ```
 
-验证脚本 `scripts/validate-section.ts` 自动检查：
+验证脚本 `scripts/validate-section.ts` 自动检查（共 16 项）：
 1. 四文件完整性（types/content/index/states）
 2. `supportedStates` 和 `stateData` 声明
 3. UI 状态组件覆盖（states.tsx 中组件导出）
@@ -120,6 +133,11 @@ export const stateData = { /* ... */ };
 5. Playground 注册和 stateViews 对齐
 6. Runtime Container 存在性和路由完整性
 7. Store 对齐
+8. Runtime 注册（runtime/app.tsx 中 import + 渲染 Container）
+9. stateTransitions 声明（交互 Section 必须）
+10. 声明完整性（transitions 与 states 双向校验）
+11. 状态可达性（从初始状态出发 BFS 检查）
+12. 分层边界检查（index.tsx 禁止 import store/API/埋点）
 
 ## 设计输出规则
 

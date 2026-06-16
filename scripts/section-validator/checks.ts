@@ -5,6 +5,7 @@ import type {
   CheckResult,
   SectionValidationResult,
   SupportedStateDecl,
+  SectionNaming,
 } from './types';
 import { readFileSafe, buildSectionNaming, resolveSectionPaths } from './discovery';
 import {
@@ -13,6 +14,9 @@ import {
   parseRegistryEntries,
   parseContainerModule,
   parseStoreSectionStateTypes,
+  parseStateTransitions,
+  parseRuntimeApp,
+  checkLayerViolations,
 } from './parsers';
 
 function check(partial: {
@@ -364,6 +368,218 @@ function checkStoreAlignment(
   });
 }
 
+// === #11 Runtime 注册检查 ===
+function checkRuntimeAppRegistration(
+  rootDir: string,
+  baseName: string,
+): CheckResult {
+  const appFile = join(rootDir, 'runtime', 'app.tsx');
+  const result = readFileSafe(appFile);
+  if (!result.ok || !result.text) {
+    return check({
+      name: 'Runtime 注册',
+      passed: false,
+      errors: ['runtime/app.tsx 不存在或无法读取'],
+    });
+  }
+
+  const info = parseRuntimeApp(result.text);
+  const expectedImport = `${baseName}Container`;
+  const expectedTag = `${baseName}Container`;
+
+  const errors: string[] = [];
+  if (!info.containerImports.includes(expectedImport)) {
+    errors.push(`runtime/app.tsx 缺少 import: ${expectedImport}`);
+  }
+  if (!info.containerTags.includes(expectedTag)) {
+    errors.push(`runtime/app.tsx 的 JSX 中缺少 <${expectedTag} />`);
+  }
+
+  return check({
+    name: 'Runtime 注册',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
+// === #12 stateTransitions 声明 ===
+function checkStateTransitionsDeclaration(source: string): CheckResult {
+  const transitions = parseStateTransitions(source);
+  if (transitions.length === 0) {
+    return check({
+      name: 'stateTransitions 声明',
+      passed: false,
+      errors: ['content.ts 中未找到 stateTransitions 导出'],
+    });
+  }
+  return check({
+    name: 'stateTransitions 声明',
+    passed: true,
+    errors: [],
+  });
+}
+
+// === #13 声明完整性 ===
+function checkStateTransitionCoverage(
+  states: SupportedStateDecl[],
+  source: string,
+): CheckResult {
+  const transitions = parseStateTransitions(source);
+  if (transitions.length === 0) {
+    return check({
+      name: '声明完整性',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+
+  const transitionKeys = new Set<string>();
+  for (const t of transitions) {
+    transitionKeys.add(t.from);
+    transitionKeys.add(t.to);
+  }
+
+  const interactionStates = states.filter((s) => s.type === 'interaction');
+  const errors: string[] = [];
+
+  for (const s of interactionStates) {
+    if (!transitionKeys.has(s.key)) {
+      errors.push(`交互状态 "${s.key}" 在 stateTransitions 中未出现`);
+    }
+  }
+
+  const allKeys = new Set(states.map((s) => s.key));
+  for (const t of transitions) {
+    if (!allKeys.has(t.from)) {
+      errors.push(`stateTransitions 的 from "${t.from}" 未在 supportedStates 中声明`);
+    }
+    if (!allKeys.has(t.to)) {
+      errors.push(`stateTransitions 的 to "${t.to}" 未在 supportedStates 中声明`);
+    }
+  }
+
+  return check({
+    name: '声明完整性',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
+// === #14 状态可达性 ===
+function checkStateReachability(
+  states: SupportedStateDecl[],
+  source: string,
+): CheckResult {
+  const transitions = parseStateTransitions(source);
+  if (transitions.length === 0) {
+    return check({
+      name: '状态可达性',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+
+  const interactionStates = states.filter((s) => s.type === 'interaction');
+  if (interactionStates.length === 0) {
+    return check({
+      name: '状态可达性',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+
+  // Build adjacency graph
+  const graph = new Map<string, string[]>();
+  for (const s of interactionStates) {
+    graph.set(s.key, []);
+  }
+  for (const t of transitions) {
+    if (!graph.has(t.from)) graph.set(t.from, []);
+    graph.get(t.from)!.push(t.to);
+  }
+
+  // Find initial state:
+  // 1. Try: states that appear in 'from' but never in any 'to' (acyclic root)
+  const allTo = new Set(transitions.map((t) => t.to));
+  const initialCandidates = interactionStates
+    .filter((s) => !allTo.has(s.key))
+    .map((s) => s.key);
+
+  let initialState: string;
+  if (initialCandidates.length > 0) {
+    initialState = initialCandidates[0];
+  } else if (interactionStates.length > 0) {
+    // 2. Fallback: first interaction state in supportedStates order (cyclic graph)
+    initialState = interactionStates[0].key;
+  } else {
+    return check({
+      name: '状态可达性',
+      passed: true,
+      errors: [],
+    });
+  }
+
+  // BFS
+  const visited = new Set<string>();
+  const queue = [initialState];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    const neighbors = graph.get(current) || [];
+    for (const next of neighbors) {
+      if (!visited.has(next)) queue.push(next);
+    }
+  }
+
+  const unreachable = interactionStates
+    .map((s) => s.key)
+    .filter((key) => !visited.has(key));
+
+  if (unreachable.length > 0) {
+    return check({
+      name: '状态可达性',
+      passed: false,
+      errors: [
+        `以下状态不可达（从初始状态 "${initialState}" 出发无法到达）: ${unreachable.join(', ')}`,
+      ],
+    });
+  }
+
+  return check({
+    name: '状态可达性',
+    passed: true,
+    errors: [],
+  });
+}
+
+// === #15 分层边界检查 ===
+function checkLayerBoundaries(
+  rootDir: string,
+  naming: SectionNaming,
+): CheckResult {
+  const paths = resolveSectionPaths(rootDir, naming);
+  const result = readFileSafe(paths.indexFile);
+  if (!result.ok || !result.text) {
+    return check({
+      name: '分层边界检查',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+
+  const violations = checkLayerViolations(result.text);
+  return check({
+    name: '分层边界检查',
+    passed: violations.length === 0,
+    errors: violations,
+  });
+}
+
 export function validateSection(
   sectionName: string,
   rootDir: string,
@@ -491,6 +707,48 @@ export function validateSection(
 
   // 11. Store 对齐
   allChecks.push(checkStoreAlignment(naming.baseName, storeSource));
+
+  // 12. Runtime 注册
+  allChecks.push(checkRuntimeAppRegistration(rootDir, naming.baseName));
+
+  // 13. stateTransitions 声明
+  if (contentSource) {
+    allChecks.push(checkStateTransitionsDeclaration(contentSource));
+  } else {
+    allChecks.push(check({
+      name: 'stateTransitions 声明',
+      skipped: true,
+      passed: true,
+      errors: [],
+    }));
+  }
+
+  // 14. 声明完整性
+  if (supportedStates && contentSource) {
+    allChecks.push(checkStateTransitionCoverage(supportedStates, contentSource));
+  } else {
+    allChecks.push(check({
+      name: '声明完整性',
+      skipped: true,
+      passed: true,
+      errors: [],
+    }));
+  }
+
+  // 15. 状态可达性
+  if (supportedStates && contentSource) {
+    allChecks.push(checkStateReachability(supportedStates, contentSource));
+  } else {
+    allChecks.push(check({
+      name: '状态可达性',
+      skipped: true,
+      passed: true,
+      errors: [],
+    }));
+  }
+
+  // 16. 分层边界检查
+  allChecks.push(checkLayerBoundaries(rootDir, naming));
 
   const failedChecks = allChecks.filter((c) => !c.passed && !c.skipped);
   return {
