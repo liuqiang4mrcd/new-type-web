@@ -116,15 +116,44 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 
 ## 最终验收
 
-所有 Section 均完成单独验证后，才能运行：
+所有 Section 均完成单独验证后，必须进入最终收尾门禁。**单 Section 全部通过后不能直接宣布完成；`--all` 只是收尾门禁中的一项。**
+
+先在 `.feedback/progress.md` 中追加并维护以下清单：
+
+```md
+## Final Closeout Gate
+
+- [ ] Render order checked: `playground/section-registry.ts` and `runtime/app.tsx` match the locked structure order.
+- [ ] Action wiring checked: `playground/phone-preview.tsx` ACTION_WIRING covers every cross-Section interaction and contains no TODO placeholders.
+- [ ] All sections validation passed: `pnpm validate-section --campaign <campaign-name> --all`
+- [ ] Build passed: `pnpm --filter @new-type/<campaign-name> build`
+- [ ] Feedback archived: root `.feedback/` moved to `apps/<campaign-name>/.feedback/`
+```
+
+逐项执行：
+
+1. 检查 `playground/section-registry.ts` 的注册顺序与结构锁定表一致。
+2. 检查 `runtime/app.tsx` 的渲染顺序与结构锁定表一致。
+3. 检查 `playground/phone-preview.tsx` 的 `ACTION_WIRING` 覆盖所有跨 Section 交互链路，且不存在 `TODO` 占位。
+4. 运行总验收：
 
 ```bash
 pnpm validate-section --campaign <campaign-name> --all
+```
+
+5. 运行 build：
+
+```bash
 pnpm --filter @new-type/<campaign-name> build
 ```
+
+6. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
 
 最终回复必须说明：
 
 - 每个 Section 的单独验证结果。
+- 渲染顺序校验结果。
+- `ACTION_WIRING` 联动完整性校验结果。
 - `--all` 总验收结果。
 - build 结果。
+- `.feedback` 归档结果。

@@ -131,12 +131,29 @@ temperature: 0.3
 
 #### 4.3 全部 Section 完成后
 
-所有 Section 逐个通过验证后，执行以下最终步骤：
+所有 Section 逐个通过验证后，必须进入 4.3 收尾门禁。**完成最后一个 Section 的单组件验证不代表第 4 步完成；`--all` 通过也不代表第 4 步完成。**
+
+进入 4.3 时，必须先在对话或 `.feedback/progress.md` 中列出以下清单，并逐项执行、逐项标记结果：
+
+```md
+## 4.3 Closeout Gate
+
+- [ ] 渲染顺序校验：section-registry.ts / app.tsx 与结构锁定表一致
+- [ ] 联动完整性校验：phone-preview.tsx ACTION_WIRING 覆盖全部跨 Section 交互，且无 TODO 占位
+- [ ] 总验收：pnpm validate-section --campaign <campaign-name> --all
+- [ ] 移动 .feedback 文件：根目录 .feedback/ 已移动到 apps/<campaign>/.feedback/
+```
+
+逐项执行要求：
 
 1. **渲染顺序校验**：检查 `section-registry.ts` 和 `app.tsx` 的渲染顺序与结构锁定表定义的页面布局顺序一致（自上而下：主页面 Section → 弹窗/覆盖层 Section）
 2. **联动完整性校验**：检查 `phone-preview.tsx` 的 `ACTION_WIRING` 覆盖结构锁定表中所有跨 Section 交互链路，移除所有 TODO 占位
 3. **总验收**：`pnpm validate-section --campaign <campaign-name> --all`
 4. **移动 .feedback 文件**：将根目录 `.feedback/` 整个移动到 `apps/<campaign>/.feedback/`
+
+**第 4 步完成定义**：只有以上 4 项全部完成并记录结果后，才能向设计师报告实现阶段完成。最终回复必须明确说明 4.3 四项结果；禁止只报告 `--all` 通过。
+
+**中断处理**：如果设计师在 4.2 结束后提出新的预览、优化或 bug 问题，必须先完成当前 4.3 收尾门禁，或明确告知“当前实现阶段尚未完成 4.3 收尾”，再处理新问题。
 
 #### 4.4 弹窗 Section 实现要求
 
