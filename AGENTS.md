@@ -98,21 +98,6 @@ agents/
 
 以下场景必须自动调用对应的 agent，无需用户手动 @指定：
 
-## 新建活动项目强约束
-
-当用户需求包含“新建项目 / 新活动 / 创建活动 / 生成新项目”时：
-
-- 必须在 `apps/<campaign-name>/` 下创建独立项目。
-- `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
-- 写代码前必须先确认目标 app 目录；如果目标 app 不存在，先复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
-- 推荐使用 `pnpm create-campaign <campaign-name>` 创建项目，避免手动落错目录。
-- 业务 Section、runtime、store、playground 注册都只能写入目标 app。
-- 完成前必须检查 `apps/campaign-template` 无非预期 diff。
-- 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm validate-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `--all` 只能作为总验收。
-- 创建 Section 时必须先做状态适配判断，禁止默认套用 loading/empty/error/ready；展示型 rule 弹窗等无异步数据源组件不应声明不存在的加载和失败状态。
-- Playground 的 `流程预览` 必须按活动业务阶段组织，例如「活动开始前 / 活动进行中 / 活动结束 / 已领取 / 无次数」等真实用户流程；禁止把流程预览做成 Section 清单逐个播放。某个阶段没有意义的模块可以不显示。
-- 弹窗交互必须由页面中的真实入口触发，例如头图 `rule` 按钮打开规则弹窗、`claim` 打开奖励弹窗；禁止为了调试在完整页面底部额外添加弹窗触发按钮列表。弹窗默认必须关闭，打开后必须可关闭。仅单组件预览可以提供独立触发或默认打开态用于查看样式。
-
 ### designer — H5 活动页设计与修改
 
 当用户需求涉及 H5 活动页的**创建、修改或视觉调整**时，自动调用 `designer` agent：
@@ -132,3 +117,18 @@ agents/
 - `agents/shared/DESIGN.md` — 设计规范底线
 - `agents/shared/DESIGN_INPUT.md` — 素材输入与冲突处理规则
 - `agents/shared/DESIGN_OUTPUT.md` — 输出范围与格式规范
+
+---
+
+## 新建活动项目强约束
+
+当用户需求包含"新建项目 / 新活动 / 创建活动 / 生成新项目"时：
+
+- 必须在 `apps/<campaign-name>/` 下创建独立项目。
+- `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
+- 写代码前必须先确认目标 app 目录；如果目标 app 不存在，先复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
+- 推荐使用 `pnpm create-campaign <campaign-name>` 创建项目，避免手动落错目录。
+- 业务 Section、runtime、store、playground 注册都只能写入目标 app。
+- 完成前必须检查 `apps/campaign-template` 无非预期 diff。
+- 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm validate-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `--all` 只能作为总验收。
+- Section 状态适配、流程预览、弹窗交互等实施细节见 `agents/designer.md` 工作流程。

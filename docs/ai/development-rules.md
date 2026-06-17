@@ -164,9 +164,8 @@ interface ScenarioStep {
 - 禁止 Section 清单式命名：`HeroSection -> UserAssetSection -> WheelSection`
 - 阶段差异通过 `content` 覆盖表达，不能靠临时文案
 
-验收要求：
-- 新活动完成前必须打开 `?mode=designer` 的流程预览，确认步骤名称和展示内容符合用户路径。
-- 修改流程相关代码后必须运行 `pnpm --filter @new-type/<campaign> build`，并复跑 `pnpm validate-section --campaign <campaign> --all`。
+> 流程预览的验收要求见 `docs/ai/section-implementation-gate.md` §最终验收。
+> `actions` 联动和 `phone-preview.tsx` 的 ACTION_WIRING 细节见 `agents/designer.md` §4.5。
 
 ### 弹窗交互规则
 
@@ -207,33 +206,10 @@ pnpm validate-section --campaign <campaign> --all
 ### Layer 0 验证
 
 ```bash
-# 验证单个 Section
 pnpm validate-section --campaign <campaign-name> <SectionName>
-
-# 示例
-pnpm validate-section --campaign campaign-2026-money-rain WheelSection
 ```
 
-16 项检查清单：
-
-| # | 检查项 | 说明 |
-|---|--------|------|
-| 1 | 四文件完整性 | types/content/index/states 是否存在 |
-| 2 | supportedStates 声明 | content.ts 中是否导出了 supportedStates |
-| 3 | stateData 声明 | content.ts 中是否导出了 stateData |
-| 4 | UI 状态组件覆盖 | states.tsx 是否导出了所有 required UI 组件 |
-| 5 | 业务状态数据覆盖 | stateData 是否包含所有 required 业务状态 |
-| 6 | 反向一致性 | stateData 的 key 都在 supportedStates 中声明 |
-| 7 | Playground 注册 | section-registry.ts 中已注册 |
-| 8 | stateViews 对齐 | 注册项的 stateViews 覆盖所有 UI 状态 |
-| 9 | Runtime Container | runtime/sections/ 下有对应 Container |
-| 10 | Container 路由完整性 | Container switch 覆盖 loading/empty/error/ready |
-| 11 | Store 对齐 | store 中有 SectionState<NameContent> |
-| 12 | Runtime 注册 | runtime/app.tsx 中已 import 并渲染 Container |
-| 13 | stateTransitions 声明 | 交互 Section 已声明状态转换 |
-| 14 | 声明完整性 | stateTransitions 的 from/to 均在 supportedStates 中 |
-| 15 | 状态可达性 | 从初始状态出发，所有交互状态可达 |
-| 16 | 分层边界检查 | index.tsx 未违规 import useStore/API/埋点 |
+> 16 项检查清单、单 Section 验证流程和 `--all` 总验收见 `docs/ai/section-implementation-gate.md`。
 
 ### 交互状态机与 Actions Props 模式
 

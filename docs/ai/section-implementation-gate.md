@@ -63,6 +63,32 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 - `playground/section-registry.ts` 的 `stateViews` 注册。
 - Runtime Container 中对应 `case 'loading' / 'empty' / 'error'` 分支。
 
+## 验证检查清单（Layer 0 — 16 项）
+
+`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 16 项检查：
+
+| # | 检查项 | 说明 |
+|---|--------|------|
+| 1 | 四文件完整性 | types/content/index/states 是否存在 |
+| 2 | supportedStates 声明 | content.ts 中是否导出了 supportedStates |
+| 3 | stateData 声明 | content.ts 中是否导出了 stateData |
+| 4 | UI 状态组件覆盖 | states.tsx 是否导出了所有 required UI 组件 |
+| 5 | 业务状态数据覆盖 | stateData 是否包含所有 required 业务状态 |
+| 6 | 反向一致性 | stateData 的 key 都在 supportedStates 中声明 |
+| 7 | Playground 注册 | section-registry.ts 中已注册 |
+| 8 | stateViews 对齐 | 注册项的 stateViews 覆盖所有 UI 状态 |
+| 9 | Runtime Container | runtime/sections/ 下有对应 Container |
+| 10 | Container 路由完整性 | Container switch 覆盖 loading/empty/error/ready |
+| 11 | Store 对齐 | store 中有 SectionState&lt;NameContent&gt; |
+| 12 | Runtime 注册 | runtime/app.tsx 中已 import 并渲染 Container |
+| 13 | stateTransitions 声明 | 交互 Section 已声明状态转换 |
+| 14 | 声明完整性 | stateTransitions 的 from/to 均在 supportedStates 中 |
+| 15 | 状态可达性 | 从初始状态出发，所有交互状态可达 |
+| 16 | 分层边界检查 | index.tsx 未违规 import useStore/API/埋点 |
+
+> 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
+> 弹窗 Section 实现要求、phone-preview.tsx ACTION_WIRING 联动见 `agents/designer.md` §4.4-4.5。
+
 ## 禁止事项
 
 - 禁止批量实现多个 Section 后只运行 `--all`。
