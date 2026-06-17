@@ -1,6 +1,6 @@
-import { ContentEditor } from './ContentEditor';
-import { ActionsLog } from './ActionsLog';
-import type { PreviewMode, PlaygroundSection, Scenario } from './types';
+import { ContentEditor } from "./ContentEditor";
+import { ActionsLog } from "./ActionsLog";
+import type { PreviewMode, PlaygroundSection, Scenario } from "./types";
 
 interface ControlPanelProps {
   mode: PreviewMode;
@@ -43,7 +43,8 @@ export function ControlPanel({
   flowInspectorCollapsed,
   onToggleFlowInspectorCollapse,
 }: ControlPanelProps) {
-  const selectedSection = sections.find((s) => s.id === selectedSectionId) ?? null;
+  const selectedSection =
+    sections.find((s) => s.id === selectedSectionId) ?? null;
 
   return (
     <aside className="w-72 shrink-0 bg-gray-900 text-white h-[calc(100vh-56px)] overflow-y-auto border-l border-gray-700">
@@ -53,17 +54,17 @@ export function ControlPanel({
           预览模式
         </h3>
         <div className="space-y-1">
-          {([
-            { value: 'full' as const, label: '完整页面' },
-            { value: 'single' as const, label: '单组件' },
-            { value: 'flow' as const, label: '流程预览' },
-          ]).map(({ value, label }) => (
+          {[
+            { value: "full" as const, label: "完整页面" },
+            { value: "single" as const, label: "单组件" },
+            { value: "flow" as const, label: "流程预览" },
+          ].map(({ value, label }) => (
             <button
               key={value}
               className={`w-full text-left px-3 py-2 rounded text-sm ${
                 mode === value
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800'
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800"
               }`}
               onClick={() => onModeChange(value)}
             >
@@ -74,7 +75,7 @@ export function ControlPanel({
       </div>
 
       {/* Section 列表 — 仅单组件模式 */}
-      {mode === 'single' && (
+      {mode === "single" && (
         <div className="p-4 border-b border-gray-700">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
             Section
@@ -85,8 +86,8 @@ export function ControlPanel({
                 key={s.id}
                 className={`w-full text-left px-3 py-1.5 rounded text-sm ${
                   selectedSectionId === s.id
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800'
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-800"
                 }`}
                 onClick={() => onSectionSelect(s.id)}
               >
@@ -98,7 +99,7 @@ export function ControlPanel({
       )}
 
       {/* Content 编辑器 — 仅单组件模式 */}
-      {mode === 'single' && selectedSection && (
+      {mode === "single" && selectedSection && (
         <details className="p-4 border-b border-gray-700" open>
           <summary className="text-xs font-bold text-gray-400 uppercase tracking-wide cursor-pointer select-none">
             Content 编辑
@@ -114,7 +115,7 @@ export function ControlPanel({
       )}
 
       {/* Actions 日志 — 仅单组件模式 */}
-      {mode === 'single' && (
+      {mode === "single" && (
         <details className="p-4 border-b border-gray-700" open>
           <summary className="text-xs font-bold text-gray-400 uppercase tracking-wide cursor-pointer select-none">
             Actions 日志
@@ -126,7 +127,7 @@ export function ControlPanel({
       )}
 
       {/* 场景 + 控制 — 仅流程模式 */}
-      {mode === 'flow' && (
+      {mode === "flow" && (
         <div className="p-4 border-b border-gray-700">
           {/* 场景列表 */}
           <div className="mb-4">
@@ -139,8 +140,8 @@ export function ControlPanel({
                   key={s.id}
                   className={`w-full text-left px-3 py-2 rounded text-sm ${
                     selectedScenario.id === s.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800'
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-300 hover:bg-gray-800"
                   }`}
                   onClick={() => onScenarioSelect(s)}
                 >
@@ -169,10 +170,10 @@ export function ControlPanel({
                     key={step.id}
                     className={`w-7 h-7 rounded-full text-xs font-medium transition-colors ${
                       isActive
-                        ? 'bg-blue-500 text-white ring-2 ring-blue-400'
+                        ? "bg-blue-500 text-white ring-2 ring-blue-400"
                         : isPast
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-700 text-gray-400 hover:bg-gray-600"
                     }`}
                     onClick={() => onStepChange(idx)}
                     title={step.name}
@@ -210,7 +211,7 @@ export function ControlPanel({
                 className="px-3 py-1.5 text-xs rounded bg-blue-600 hover:bg-blue-500 transition-colors"
                 onClick={onPlayToggle}
               >
-                {isPlaying ? '⏸ 暂停' : '▶ 播放'}
+                {isPlaying ? "⏸ 暂停" : "▶ 播放"}
               </button>
               <button
                 className="flex-1 px-2 py-1.5 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-30 transition-colors"
@@ -229,22 +230,6 @@ export function ControlPanel({
             </div>
           </div>
 
-          {/* Store 数据折叠面板 */}
-          {selectedScenario.steps[activeStepIndex]?.store && (
-            <details className="mt-4">
-              <summary className="text-xs font-bold text-gray-400 uppercase tracking-wide cursor-pointer select-none">
-                Store 数据
-              </summary>
-              <pre className="mt-2 text-xs font-mono bg-gray-800 text-gray-300 rounded p-2 max-h-32 overflow-auto">
-                {JSON.stringify(
-                  selectedScenario.steps[activeStepIndex].store,
-                  null,
-                  2,
-                )}
-              </pre>
-            </details>
-          )}
-
           {/* FlowInspector 折叠控制 */}
           <div className="mt-4 pt-3 border-t border-gray-700">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -254,9 +239,7 @@ export function ControlPanel({
                 checked={!flowInspectorCollapsed}
                 onChange={onToggleFlowInspectorCollapse}
               />
-              <span className="text-xs text-gray-400">
-                显示浮动流程面板
-              </span>
+              <span className="text-xs text-gray-400">显示浮动流程面板</span>
             </label>
           </div>
         </div>

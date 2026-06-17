@@ -91,6 +91,7 @@ designer/sections/<Name>/
 - 每个步骤可以组合多个 Section，展示该阶段用户实际看到的页面。
 - 某阶段无意义的模块可以不显示。
 - 禁止把流程预览写成 Section 清单。
+- 场景必须使用 `group: 'fullpage' | 'module'` 分类，步骤数据统一写入 `sections[]`，禁止使用顶层 `sectionId` / `content` / `status`。
 
 ### 2.2 弹窗触发
 
@@ -101,6 +102,8 @@ designer/sections/<Name>/
 - 弹窗关闭按钮必须能关闭弹窗。
 - 调试用触发按钮只允许出现在单组件预览或右侧控制区域，禁止出现在完整页面底部。
 - 弹窗单组件预览必须限制在组件预览框内部，禁止 fixed 全屏覆盖 Playground。完整页面需要全屏遮罩时，应由 content 字段或预览包装区分 inline / overlay 模式。
+- 单组件预览中，`SectionPanel` 会检测 `defaultContent.isOpen` 并注入 `{ isOpen: true, displayMode: 'inline' }`，因此弹窗的 `defaultContent.isOpen` 必须保持 `false`。
+- 完整页面预览中，跨 Section 的弹窗/结果联动统一维护在 `phone-preview.tsx` 的 `ACTION_WIRING`。
 
 ### 3. 添加 store 状态（integrations/）
 
@@ -122,10 +125,10 @@ interface AppStore {
 ## 引入共享包
 
 ```ts
-import { useCountdown } from '@new-type/hooks';
-import { createRequest } from '@new-type/request';
-import { toast } from '@new-type/ui';
-import { Tab } from '@new-type/headless';
+import { useCountdown } from "@new-type/hooks";
+import { createRequest } from "@new-type/request";
+import { toast } from "@new-type/ui";
+import { Tab } from "@new-type/headless";
 ```
 
 详见 `docs/ai/framework-map.md`。

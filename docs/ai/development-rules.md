@@ -12,23 +12,23 @@
 
 每个活动页 `apps/<campaign>/src/` 内按角色分为三层：
 
-| 目录             | 负责人   | 职责                     | AI 能否修改 |
-| ---------------- | -------- | ------------------------ | ----------- |
-| `designer/`      | 设计师   | 纯视觉组件、展示数据     | 仅 content  |
-| `runtime/`       | AI       | 连接 store 和视觉组件    | ✅ 主力     |
-| `integrations/`  | 开发者   | Store / API / 埋点 / 配置 | 按需        |
-| `playground/`    | 设计师   | 预览环境                 | ❌          |
-| `contracts/`     | 所有角色 | 类型定义                 | ✅          |
+| 目录            | 负责人   | 职责                      | AI 能否修改 |
+| --------------- | -------- | ------------------------- | ----------- |
+| `designer/`     | 设计师   | 纯视觉组件、展示数据      | 仅 content  |
+| `runtime/`      | AI       | 连接 store 和视觉组件     | ✅ 主力     |
+| `integrations/` | 开发者   | Store / API / 埋点 / 配置 | 按需        |
+| `playground/`   | 设计师   | 预览环境                  | ❌          |
+| `contracts/`    | 所有角色 | 类型定义                  | ✅          |
 
 ### AI 修改边界
 
-| 场景                           | 改什么文件                                      | 禁止做的事               |
-| ------------------------------ | ----------------------------------------------- | ------------------------ |
-| 新 section 视觉 + 数据          | `designer/sections/<Name>/{types,content,index,states}.tsx` | 不要调用 store 或 API    |
-| 新 section 连接数据             | `runtime/sections/<Name>Container.tsx`          | 不要改 visual 组件       |
-| 数据接口变更                   | `types.ts`（改接口）+ `runtime/`（改容器）         | 不要直接改 index.tsx     |
-| 新增 API / Store / 埋点         | `integrations/{store,api,tracking}.ts`           | 不要绕开 integrations    |
-| 设计师调整视觉                  | 不动，由设计师手动改                             | AI 绝不自动改 designer 代码 |
+| 场景                    | 改什么文件                                                  | 禁止做的事                  |
+| ----------------------- | ----------------------------------------------------------- | --------------------------- |
+| 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index,states}.tsx` | 不要调用 store 或 API       |
+| 新 section 连接数据     | `runtime/sections/<Name>Container.tsx`                      | 不要改 visual 组件          |
+| 数据接口变更            | `types.ts`（改接口）+ `runtime/`（改容器）                  | 不要直接改 index.tsx        |
+| 新增 API / Store / 埋点 | `integrations/{store,api,tracking}.ts`                      | 不要绕开 integrations       |
+| 设计师调整视觉          | 不动，由设计师手动改                                        | AI 绝不自动改 designer 代码 |
 
 ## 引用规则
 
@@ -39,17 +39,17 @@
 
 ## 文件命名
 
-| 类型 | 命名规则 | 示例 |
-|------|----------|------|
-| 设计师 Section（四文件） | `designer/sections/<Name>/{types,content,index,states}.tsx` | `HeroSection/` |
-| Section 类型接口 | `types.ts` 中 `<Name>Content` | `HeroContent` |
-| Section 默认数据 | `content.ts` 中 `defaultContent` | |
-| Section 状态视图 | `states.tsx` 中直接 export | `HeroLoading`, `HeroError` |
-| Runtime 容器 | `<Name>Container.tsx` | `HeroContainer.tsx` |
-| Playground 场景 | `playground/scenarios/<name>.ts` | `lottery.ts` |
-| Store | `integrations/store.ts` | |
-| Hook | `use<Name>.ts` | `useCountdown.ts` |
-| 工具函数 | 功能名 | `formatDate.ts` |
+| 类型                     | 命名规则                                                    | 示例                       |
+| ------------------------ | ----------------------------------------------------------- | -------------------------- |
+| 设计师 Section（四文件） | `designer/sections/<Name>/{types,content,index,states}.tsx` | `HeroSection/`             |
+| Section 类型接口         | `types.ts` 中 `<Name>Content`                               | `HeroContent`              |
+| Section 默认数据         | `content.ts` 中 `defaultContent`                            |                            |
+| Section 状态视图         | `states.tsx` 中直接 export                                  | `HeroLoading`, `HeroError` |
+| Runtime 容器             | `<Name>Container.tsx`                                       | `HeroContainer.tsx`        |
+| Playground 场景          | `playground/scenarios/<name>.ts`                            | `lottery.ts`               |
+| Store                    | `integrations/store.ts`                                     |                            |
+| Hook                     | `use<Name>.ts`                                              | `useCountdown.ts`          |
+| 工具函数                 | 功能名                                                      | `formatDate.ts`            |
 
 ## Section 四文件约定
 
@@ -64,6 +64,7 @@ designer/sections/HeroSection/
 ```
 
 **重要约束**：
+
 - `index.tsx` **禁止** import `useStore`、`createRequest`、`track`（通过 validate #16 分层边界检查检测）
 - 所有外部数据通过 `SectionProps<T>` 的 `content` 传入
 - 所有外部事件通过 `actions` props 传入（onClick/onSpin/onCrit 等）
@@ -97,6 +98,7 @@ http://localhost:5173/?mode=designer
 ```
 
 此模式下渲染 `playground/index.tsx`，提供：
+
 - `SectionPanel` — 单组件 hover 状态切换 + 交互事件模拟（通过 `defaultActions`）
 - `ScenarioRunner` — 场景流程预览（实况渲染 + 自动播放）
 
@@ -129,21 +131,21 @@ http://localhost:5173/?mode=designer
 
 场景通过 `Scenario.group` 分为两类：
 
-| 类型 | group 值 | 用途 | 渲染方式 |
-|------|----------|------|----------|
-| 整页业务阶段 | `fullpage` | 演示活动整体流程 | 每步渲染 `sections[]` 中所有 Section |
-| 模块局部状态 | `module` | 聚焦单个组件的多种业务状态 | 每步渲染一个 Section（sections 中一个条目） |
+| 类型         | group 值   | 用途                       | 渲染方式                                    |
+| ------------ | ---------- | -------------------------- | ------------------------------------------- |
+| 整页业务阶段 | `fullpage` | 演示活动整体流程           | 每步渲染 `sections[]` 中所有 Section        |
+| 模块局部状态 | `module`   | 聚焦单个组件的多种业务状态 | 每步渲染一个 Section（sections 中一个条目） |
 
 #### 数据结构
 
 ```typescript
 interface ScenarioStep {
   id: string;
-  name: string;                    // 业务阶段名称
+  name: string; // 业务阶段名称
   description?: string;
   sections: Array<{
-    sectionId: string;             // 对应 section-registry 中的 id
-    content?: Record<string, unknown>;  // 覆盖 defaultContent 部分字段
+    sectionId: string; // 对应 section-registry 中的 id
+    content?: Record<string, unknown>; // 覆盖 defaultContent 部分字段
     status?: SectionStatus;
   }>;
 }
@@ -156,7 +158,7 @@ interface ScenarioStep {
 - 展示数据 = `{...section.defaultContent, ...step.section.content}`（浅合并）
 - **禁止** import `useStore` 或 `integrations/store`——场景数据完全在 Playground 内部自洽
 - `ScenarioRunner.tsx` 负责数据合并和渲染，不经过真实 Store
-- `phone-preview.tsx` 始终用 `defaultContent` mock 数据，接入接口后完整页面预览切换到 `runtime/app.tsx`
+- `phone-preview.tsx` 以 `defaultContent` 作为初始 mock 数据；跨 Section 的弹窗/结果联动只能通过本文件内的 `ACTION_WIRING` 浅合并覆盖，不接入真实 Store。接入接口后完整页面预览切换到 `runtime/app.tsx`
 
 #### 命名要求
 
@@ -172,6 +174,7 @@ interface ScenarioStep {
 完整页面中的弹窗必须由真实页面入口触发，默认关闭，且可关闭。
 
 必须遵守：
+
 - 规则弹窗由页面中的 `rule` 入口触发，不得在页面底部额外添加浮动 `rule` 调试按钮。
 - 奖励弹窗由 `claim`、抽奖完成、领取成功等真实业务事件触发，不得在完整页面中额外显示 `reward / 10% / prop` 调试按钮列表。
 - 弹窗关闭按钮必须同时更新 UI 状态，点击后弹窗应从页面消失。
@@ -197,11 +200,11 @@ pnpm validate-section --campaign <campaign> --all
 
 每次 Section 生成后必须通过验证，按成本从低到高分层执行：
 
-| 层 | 工具 | 覆盖范围 | 触发时机 |
-|----|------|---------|---------|
+| 层                     | 工具                          | 覆盖范围                                                               | 触发时机                    |
+| ---------------------- | ----------------------------- | ---------------------------------------------------------------------- | --------------------------- |
 | Layer 0 — AST 静态检查 | `scripts/validate-section.ts` | 16 项检查：文件完整性、类型声明、状态覆盖、Playground 注册、分层边界等 | 每次 Section 改动后立即执行 |
-| Layer 1 — 单元测试 | Vitest + jsdom | 组件渲染、状态转换逻辑、事件处理边界 | Section 含交互逻辑时 |
-| Layer 2 — 集成测试 | Playwright | 交互全链路、动效验证、多 Section 协作 | Section 交互逻辑稳定后 |
+| Layer 1 — 单元测试     | Vitest + jsdom                | 组件渲染、状态转换逻辑、事件处理边界                                   | Section 含交互逻辑时        |
+| Layer 2 — 集成测试     | Playwright                    | 交互全链路、动效验证、多 Section 协作                                  | Section 交互逻辑稳定后      |
 
 ### Layer 0 验证
 
@@ -237,6 +240,7 @@ index.tsx (纯视觉 + 本地 useState 状态机)
 - 违反此规则等同于记录不存在的证据
 
 违反案例：
+
 - 对话中输出了 `.feedback/*.md` 的完整内容，但从未用 `write` 工具写入 → ❌ 文件不存在
 - 在 Relevant Files 中列出 `apps/money-rain/.feedback/demand.md`，但该文件从未被创建 → ❌ 引用不存在文件
 
@@ -244,15 +248,15 @@ index.tsx (纯视觉 + 本地 useState 状态机)
 
 AI 生成的文档类内容（README、设计文档、注释、PRD、计划、issue、变更记录等），如无特殊说明，**必须使用中文输出**。
 
-| 内容类型 | 语言要求 |
-|---------|---------|
-| 文档（README、设计文档、规则文件） | 中文（默认） |
-| 代码注释 | 中文注释解释逻辑，英文术语按惯例保留 |
-| PRD / 技术方案 | 中文 |
-| 变更记录 / 更新日志 | 中文 |
-| Git commit message | 英文（遵循 git 惯例） |
-| AI 内部推理 / 思考过程 | 中文 |
-| 用户明确要求英文的内容 | 按用户要求 |
+| 内容类型                           | 语言要求                             |
+| ---------------------------------- | ------------------------------------ |
+| 文档（README、设计文档、规则文件） | 中文（默认）                         |
+| 代码注释                           | 中文注释解释逻辑，英文术语按惯例保留 |
+| PRD / 技术方案                     | 中文                                 |
+| 变更记录 / 更新日志                | 中文                                 |
+| Git commit message                 | 英文（遵循 git 惯例）                |
+| AI 内部推理 / 思考过程             | 中文                                 |
+| 用户明确要求英文的内容             | 按用户要求                           |
 
 ## 活动页创建流程
 

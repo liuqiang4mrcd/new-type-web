@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import type { SectionStatus } from '../contracts/section';
-import type { PlaygroundSection } from './types';
+import { useState } from "react";
+import type { SectionStatus } from "../contracts/section";
+import type { PlaygroundSection } from "./types";
 
 interface SectionPanelProps {
   section: PlaygroundSection;
@@ -8,30 +8,36 @@ interface SectionPanelProps {
   actions?: Record<string, unknown>;
 }
 
-export function SectionPanel({ section, customContent, actions }: SectionPanelProps) {
-  const [status, setStatus] = useState<SectionStatus>('ready');
+export function SectionPanel({
+  section,
+  customContent,
+  actions,
+}: SectionPanelProps) {
+  const [status, setStatus] = useState<SectionStatus>("ready");
   const [showMenu, setShowMenu] = useState(false);
 
-  const statuses: SectionStatus[] = ['ready', 'loading', 'empty', 'error'];
+  const statuses: SectionStatus[] = ["ready", "loading", "empty", "error"];
+  const isDialogSection = Object.prototype.hasOwnProperty.call(
+    section.defaultContent,
+    "isOpen",
+  );
 
   const renderContent = () => {
-    if (status !== 'ready' && section.stateViews[status]) {
+    if (status !== "ready" && section.stateViews[status]) {
       const StateComponent = section.stateViews[status]!;
       const messages: Record<string, string> = {
-        loading: '加载中...',
-        empty: '暂无内容',
-        error: '加载失败，请稍后重试',
+        loading: "加载中...",
+        empty: "暂无内容",
+        error: "加载失败，请稍后重试",
       };
       return <StateComponent message={messages[status]} />;
     }
-    const content = customContent ?? section.defaultContent;
+    const baseContent = customContent ?? section.defaultContent;
+    const content = isDialogSection
+      ? { ...baseContent, isOpen: true, displayMode: "inline" }
+      : baseContent;
     const actionProps = actions ?? section.defaultActions;
-    return (
-      <section.component
-        content={content}
-        actions={actionProps}
-      />
-    );
+    return <section.component content={content} actions={actionProps} />;
   };
 
   return (
@@ -53,18 +59,18 @@ export function SectionPanel({ section, customContent, actions }: SectionPanelPr
                 key={s}
                 className={`px-2 py-0.5 text-xs rounded ${
                   status === s
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                 }`}
                 onClick={() => setStatus(s)}
               >
-                {s === 'ready'
-                  ? '正常'
-                  : s === 'loading'
-                    ? '加载'
-                    : s === 'empty'
-                      ? '空态'
-                      : '错误'}
+                {s === "ready"
+                  ? "正常"
+                  : s === "loading"
+                    ? "加载"
+                    : s === "empty"
+                      ? "空态"
+                      : "错误"}
               </button>
             ))}
           </div>

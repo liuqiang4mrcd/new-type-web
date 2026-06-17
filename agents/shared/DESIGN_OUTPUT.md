@@ -6,11 +6,11 @@
 
 设计师的操作范围限定在活动应用 `apps/<campaign>/src/` 下的特定目录，不得越界修改其他层级的代码。
 
-| 目录 | 职责 | 可操作 |
-|------|------|--------|
-| `designer/sections/` | 视觉 Section 四文件 | ✅ 创建/修改 |
-| `playground/` | 预览环境注册 | ✅ 注册新 Section |
-| `assets/` | 图片/资源文件 | ✅ 添加 |
+| 目录                 | 职责                | 可操作            |
+| -------------------- | ------------------- | ----------------- |
+| `designer/sections/` | 视觉 Section 四文件 | ✅ 创建/修改      |
+| `playground/`        | 预览环境注册        | ✅ 注册新 Section |
+| `assets/`            | 图片/资源文件       | ✅ 添加           |
 
 ## 禁止操作
 
@@ -33,6 +33,7 @@ designer/sections/<Name>/
 ```
 
 约束：
+
 - `index.tsx` 不能 import store、API、埋点，所有数据通过 `content` props 传入
 - `types.ts` 中接口名以 `Content` 结尾
 - `content.ts` 导出名为 `defaultContent`
@@ -44,17 +45,17 @@ designer/sections/<Name>/
 ```typescript
 export const supportedStates: StateDeclaration[] = [
   // UI 状态（对应 states.tsx 中独立组件）
-  { key: 'loading', type: 'ui', required: true },
-  { key: 'empty',   type: 'ui', required: true },
-  { key: 'error',   type: 'ui', required: true },
+  { key: "loading", type: "ui", required: true },
+  { key: "empty", type: "ui", required: true },
+  { key: "error", type: "ui", required: true },
   // 业务状态（复用主组件，仅换数据）
-  { key: 'beforeStart', type: 'business', required: true },
-  { key: 'inProgress',  type: 'business', required: true },
-  { key: 'ended',       type: 'business', required: true },
+  { key: "beforeStart", type: "business", required: true },
+  { key: "inProgress", type: "business", required: true },
+  { key: "ended", type: "business", required: true },
   // 交互状态（本地 useState 管理的视觉阶段，受 stateTransitions 驱动）
-  { key: 'idle',     type: 'interaction', required: true },
-  { key: 'spinning', type: 'interaction', required: true },
-  { key: 'result',   type: 'interaction', required: true },
+  { key: "idle", type: "interaction", required: true },
+  { key: "spinning", type: "interaction", required: true },
+  { key: "result", type: "interaction", required: true },
 ] as const;
 ```
 
@@ -67,13 +68,29 @@ export const supportedStates: StateDeclaration[] = [
 交互类 Section 必须在 `content.ts` 中声明视觉状态转换图：
 
 ```typescript
-import type { StateTransition } from '../../../contracts/section';
+import type { StateTransition } from "../../../contracts/section";
 
 export const stateTransitions: StateTransition[] = [
-  { from: 'idle', to: 'spinning', trigger: { type: 'click', handler: 'onSpin' } },
-  { from: 'spinning', to: 'result', trigger: { type: 'timeout', handler: 'onSpinComplete', duration: 3000 } },
-  { from: 'result', to: 'idle', trigger: { type: 'click', handler: 'onReset' } },
-  { from: 'spinning', to: 'idle', trigger: { type: 'click', handler: 'onReset' } },
+  {
+    from: "idle",
+    to: "spinning",
+    trigger: { type: "click", handler: "onSpin" },
+  },
+  {
+    from: "spinning",
+    to: "result",
+    trigger: { type: "timeout", handler: "onSpinComplete", duration: 3000 },
+  },
+  {
+    from: "result",
+    to: "idle",
+    trigger: { type: "click", handler: "onReset" },
+  },
+  {
+    from: "spinning",
+    to: "idle",
+    trigger: { type: "click", handler: "onReset" },
+  },
 ];
 ```
 
@@ -113,30 +130,30 @@ export const stateTransitions: StateTransition[] = [
 
 场景通过 `Scenario.group` 字段分为两类：
 
-| group | 类型 | 用途 | 渲染方式 | 示例 |
-|-------|------|------|----------|------|
-| `fullpage` | 整页业务阶段 | 演示活动整体流程，每步展示用户在该阶段看到的完整页面 | 每步渲染 `sections[]` 中所有 Section，纵向排列 | 活动开始前 / 进行中 / 结束 |
-| `module` | 模块局部状态 | 聚焦验证单个组件的多种业务状态 | 每步渲染一个 Section（`sections[]` 中只放一个条目） | 可抽奖 / 无次数 / 已领取 / 弹窗打开 |
+| group      | 类型         | 用途                                                 | 渲染方式                                            | 示例                                |
+| ---------- | ------------ | ---------------------------------------------------- | --------------------------------------------------- | ----------------------------------- |
+| `fullpage` | 整页业务阶段 | 演示活动整体流程，每步展示用户在该阶段看到的完整页面 | 每步渲染 `sections[]` 中所有 Section，纵向排列      | 活动开始前 / 进行中 / 结束          |
+| `module`   | 模块局部状态 | 聚焦验证单个组件的多种业务状态                       | 每步渲染一个 Section（`sections[]` 中只放一个条目） | 可抽奖 / 无次数 / 已领取 / 弹窗打开 |
 
 ### 数据结构
 
 ```typescript
 interface ScenarioStep {
   id: string;
-  name: string;                    // 业务阶段名称，如「等待活动开启」
+  name: string; // 业务阶段名称，如「等待活动开启」
   description?: string;
   sections: Array<{
-    sectionId: string;             // 对应 section-registry 中的 id
-    content?: Record<string, unknown>;  // 覆盖 defaultContent 的字段（浅合并）
-    status?: SectionStatus;        // 切换到 loading/empty/error 状态视图
+    sectionId: string; // 对应 section-registry 中的 id
+    content?: Record<string, unknown>; // 覆盖 defaultContent 的字段（浅合并）
+    status?: SectionStatus; // 切换到 loading/empty/error 状态视图
   }>;
 }
 
 interface Scenario {
   id: string;
-  label: string;                   // 场景名称
+  label: string; // 场景名称
   description?: string;
-  group: 'fullpage' | 'module';    // 场景分类
+  group: "fullpage" | "module"; // 场景分类
   steps: ScenarioStep[];
   autoPlayDelay?: number;
 }
@@ -147,7 +164,7 @@ interface Scenario {
 - 每个 Section 的最终展示数据通过浅合并生成：`{...defaultContent, ...step.section.content}`。只覆盖需要变化的字段，未覆盖的保持 `defaultContent` 原值。
 - **禁止**在场景中 import `useStore`、`integrations/store` 或任何真实数据流模块——场景数据必须全部来自 `defaultContent` + `content` override。
 - 场景数据的处理（合并、渲染）全部在 `playground/ScenarioRunner.tsx` 内部自洽完成。
-- `phone-preview.tsx`（完整页面预览）永远是设计阶段的 mock 数据排版工具，它直接遍历 Section 注册表并传入 `defaultContent`。接入真实接口后，完整页面预览应切换至 `runtime/app.tsx`（真实 Store + Container）。
+- `phone-preview.tsx`（完整页面预览）永远是设计阶段的 mock 数据排版工具，它以 `defaultContent` 作为初始内容，跨 Section 的弹窗/结果联动只能通过 `ACTION_WIRING` 浅合并覆盖。接入真实接口后，完整页面预览应切换至 `runtime/app.tsx`（真实 Store + Container）。
 
 ### 命名要求
 
@@ -157,9 +174,11 @@ interface Scenario {
 - 业务阶段差异优先通过 `content` 覆盖表达（如倒计时归零、按钮禁用、空数据、已领取态），不能靠临时文案解释。
 
 错误示例：
+
 - `Hero -> UserAsset -> RewardTier -> Wheel` 这种 Section 清单式步骤命名。
 
 正确示例：
+
 - 整页场景：`等待活动开启 -> 充值选档/领取/抽奖 -> 活动结束`。
 - 模块场景：`可抽奖 -> 抽奖动画 -> 无抽奖次数` / `未领取 -> 已领取 -> 不可领取`。
 
@@ -168,6 +187,7 @@ interface Scenario {
 弹窗必须服务于页面真实交互链路，不能成为页面中的孤立调试入口。
 
 要求：
+
 - 规则弹窗、奖励弹窗、提示弹窗等默认必须关闭。
 - 完整页面中的弹窗必须由真实页面按钮或业务事件触发，例如头图 `rule` 按钮打开规则弹窗、`claim` 打开奖励弹窗、抽奖完成打开结果弹窗。
 - 弹窗打开后必须提供可点击关闭入口，关闭后应从完整页面中消失。

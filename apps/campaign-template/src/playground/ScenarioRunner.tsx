@@ -1,11 +1,51 @@
-import { registerSections } from './section-registry';
-import type { Scenario } from './types';
-import type { SectionStatus } from '../contracts/section';
+import { registerSections } from "./section-registry";
+import type { Scenario } from "./types";
+import type { SectionStatus } from "../contracts/section";
 
 const sections = registerSections();
 
-/** 根据 step 的 sectionId 和 status 找出要渲染的组件 */
-function StepRenderer({ scenario, stepIndex }: { scenario: Scenario; stepIndex: number }) {
+function renderSection(
+  sectionId: string,
+  status: SectionStatus,
+  contentOverride?: Record<string, unknown>,
+) {
+  const section = sections.find((s) => s.id === sectionId);
+  if (!section) {
+    return (
+      <div className="flex items-center justify-center min-h-[160px] text-gray-400 text-sm">
+        未找到 Section: {sectionId}
+      </div>
+    );
+  }
+
+  if (status !== "ready" && section.stateViews[status]) {
+    const StateComp = section.stateViews[status]!;
+    const messages: Record<string, string> = {
+      loading: "加载中...",
+      empty: "暂无内容",
+      error: "加载失败，请稍后重试",
+    };
+    return <StateComp message={messages[status]} />;
+  }
+
+  const content = {
+    ...section.defaultContent,
+    ...(contentOverride ?? {}),
+  };
+
+  return (
+    <section.component content={content} actions={section.defaultActions} />
+  );
+}
+
+/** 根据 step.sections 渲染当前业务步骤中的一个或多个 Section */
+function StepRenderer({
+  scenario,
+  stepIndex,
+}: {
+  scenario: Scenario;
+  stepIndex: number;
+}) {
   const step = scenario.steps[stepIndex];
   if (!step) {
     return (
@@ -15,37 +55,27 @@ function StepRenderer({ scenario, stepIndex }: { scenario: Scenario; stepIndex: 
     );
   }
 
-  if (!step.sectionId) {
+  if (step.sections.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px] text-gray-400 text-sm">
-        此步骤未指定要渲染的 section
+        此步骤未指定要渲染的 Section
       </div>
     );
   }
 
-  const section = sections.find((s) => s.id === step.sectionId);
-  if (!section) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] text-gray-400 text-sm">
-        未找到 Section: {step.sectionId}
-      </div>
-    );
-  }
-
-  const status: SectionStatus = step.status || 'ready';
-
-  if (status !== 'ready' && section.stateViews[status]) {
-    const StateComp = section.stateViews[status]!;
-    const messages: Record<string, string> = {
-      loading: '加载中...',
-      empty: '暂无内容',
-      error: '加载失败，请稍后重试',
-    };
-    return <StateComp message={messages[status]} />;
-  }
-
-  const content = step.content || section.defaultContent;
-  return <section.component content={content} />;
+  return (
+    <div className="flex flex-col">
+      {step.sections.map((entry) => (
+        <div key={entry.sectionId} className="relative">
+          {renderSection(
+            entry.sectionId,
+            entry.status || "ready",
+            entry.content,
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 interface ScenarioRunnerProps {
@@ -66,14 +96,14 @@ export function ScenarioRunner({ scenario, stepIndex }: ScenarioRunnerProps) {
                 步骤 {stepIndex + 1} / {scenario.steps.length}
               </span>
               <span className="text-sm font-medium text-gray-700">
-                {currentStep?.name ?? ''}
+                {currentStep?.name ?? ""}
               </span>
             </div>
-            {currentStep?.sectionId && (
+            {currentStep?.sections?.length ? (
               <span className="text-xs uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-600">
-                {currentStep.sectionId}
+                {scenario.group}
               </span>
-            )}
+            ) : null}
           </div>
 
           <div className="relative">
