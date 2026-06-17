@@ -6,7 +6,7 @@
 
 每个 Section 必须按以下顺序闭环：
 
-1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、数据、交互、状态和边界。
+1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、Layout Spec 引用、Interaction Spec 引用、数据、交互、状态和边界。
 2. 完成状态适配判断，明确该 Section 是否真的需要 `loading / empty / error`。
 3. 实现 `designer/sections/<SectionName>/` 四文件。
 4. 注册 `playground/section-registry.ts`，交互 Section 必须提供 `defaultActions`。
@@ -26,11 +26,23 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 
 实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `.feedback/progress.md` 或 `.feedback/sections/<SectionName>.md`。
 
+组件设计卡必须继承第 2 步结构规划中的 Layout Spec 和 Interaction Spec。若当前 Section 对应的几何约束、关键元素约束或交互链路缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
+
 ```md
 ## <SectionName> Component Card
 
 - Purpose:
 - Display:
+- Layout Spec refs:
+  - Section constraints:
+  - Key element constraints:
+  - Preserved spacing/alignment/layer rules:
+- Interaction Spec refs:
+  - Interaction ids:
+  - Action handlers:
+  - Target changes:
+  - Close/reset behavior:
+  - Mutex rules:
 - Content fields:
 - Static constants:
 - Async data source: yes/no
@@ -44,7 +56,7 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 - Validation command: `pnpm validate-section --campaign <campaign-name> <SectionName>`
 ```
 
-如果组件设计卡无法判断状态或交互，必须先补充分析，不能先写代码。
+如果组件设计卡无法判断布局、关键元素归属、状态或交互，必须先补充分析，不能先写代码。
 
 ## 状态适配规则
 
@@ -95,6 +107,8 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 - 禁止用最终 build 代替单组件验证。
 - 禁止当前 Section 单独验证失败时继续实现下一个 Section。
 - 禁止只在对话中口头说明进度而不更新 `.feedback/progress.md`。
+- 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
+- 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
 
 ## `.feedback/progress.md` 模板
 
@@ -124,7 +138,8 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 ## Final Closeout Gate
 
 - [ ] Render order checked: `playground/section-registry.ts` and `runtime/app.tsx` match the locked structure order.
-- [ ] Action wiring checked: `playground/phone-preview.tsx` ACTION_WIRING covers every cross-Section interaction and contains no TODO placeholders.
+- [ ] Layout spec checked: implemented Section order, key element placement, spacing, alignment, and layer rules match Layout Spec.
+- [ ] Action wiring checked: every Interaction Spec item is mapped to defaultActions / ACTION_WIRING / stateTransitions / Runtime actions and contains no TODO placeholders.
 - [ ] All sections validation passed: `pnpm validate-section --campaign <campaign-name> --all`
 - [ ] Build passed: `pnpm --filter @new-type/<campaign-name> build`
 - [ ] Feedback archived: root `.feedback/` moved to `apps/<campaign-name>/.feedback/`
@@ -134,26 +149,28 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 
 1. 检查 `playground/section-registry.ts` 的注册顺序与结构锁定表一致。
 2. 检查 `runtime/app.tsx` 的渲染顺序与结构锁定表一致。
-3. 检查 `playground/phone-preview.tsx` 的 `ACTION_WIRING` 覆盖所有跨 Section 交互链路，且不存在 `TODO` 占位。
-4. 运行总验收：
+3. 按 Layout Spec 检查关键元素位置、尺寸、间距、对齐、层级和响应规则是否被实现保留。
+4. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 和 Runtime actions 命名是否一致，且不存在 `TODO` 占位。
+5. 运行总验收：
 
 ```bash
 pnpm validate-section --campaign <campaign-name> --all
 ```
 
-5. 运行 build：
+6. 运行 build：
 
 ```bash
 pnpm --filter @new-type/<campaign-name> build
 ```
 
-6. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
+7. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
 
 最终回复必须说明：
 
 - 每个 Section 的单独验证结果。
 - 渲染顺序校验结果。
-- `ACTION_WIRING` 联动完整性校验结果。
+- Layout Spec 保真校验结果。
+- Interaction Spec / `ACTION_WIRING` 联动完整性校验结果。
 - `--all` 总验收结果。
 - build 结果。
 - `.feedback` 归档结果。
