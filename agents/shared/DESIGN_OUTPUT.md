@@ -109,19 +109,59 @@ export const stateTransitions: StateTransition[] = [
 
 `playground/scenarios/` 中的流程预览必须表达活动的业务阶段，而不是 Section 目录顺序。
 
-要求：
-- 流程步骤应命名为真实用户阶段，例如「活动开始前」「活动进行中」「活动结束」「已领取」「无抽奖次数」「奖励为空」。
+### 场景分类
+
+场景通过 `Scenario.group` 字段分为两类：
+
+| group | 类型 | 用途 | 渲染方式 | 示例 |
+|-------|------|------|----------|------|
+| `fullpage` | 整页业务阶段 | 演示活动整体流程，每步展示用户在该阶段看到的完整页面 | 每步渲染 `sections[]` 中所有 Section，纵向排列 | 活动开始前 / 进行中 / 结束 |
+| `module` | 模块局部状态 | 聚焦验证单个组件的多种业务状态 | 每步渲染一个 Section（`sections[]` 中只放一个条目） | 可抽奖 / 无次数 / 已领取 / 弹窗打开 |
+
+### 数据结构
+
+```typescript
+interface ScenarioStep {
+  id: string;
+  name: string;                    // 业务阶段名称，如「等待活动开启」
+  description?: string;
+  sections: Array<{
+    sectionId: string;             // 对应 section-registry 中的 id
+    content?: Record<string, unknown>;  // 覆盖 defaultContent 的字段（浅合并）
+    status?: SectionStatus;        // 切换到 loading/empty/error 状态视图
+  }>;
+}
+
+interface Scenario {
+  id: string;
+  label: string;                   // 场景名称
+  description?: string;
+  group: 'fullpage' | 'module';    // 场景分类
+  steps: ScenarioStep[];
+  autoPlayDelay?: number;
+}
+```
+
+### 数据流规则（强制）
+
+- 每个 Section 的最终展示数据通过浅合并生成：`{...defaultContent, ...step.section.content}`。只覆盖需要变化的字段，未覆盖的保持 `defaultContent` 原值。
+- **禁止**在场景中 import `useStore`、`integrations/store` 或任何真实数据流模块——场景数据必须全部来自 `defaultContent` + `content` override。
+- 场景数据的处理（合并、渲染）全部在 `playground/ScenarioRunner.tsx` 内部自洽完成。
+- `phone-preview.tsx`（完整页面预览）永远是设计阶段的 mock 数据排版工具，它直接遍历 Section 注册表并传入 `defaultContent`。接入真实接口后，完整页面预览应切换至 `runtime/app.tsx`（真实 Store + Container）。
+
+### 命名要求
+
+- 步骤名称必须表达真实用户阶段，例如「活动开始前」「活动进行中」「活动结束」「可抽奖」「无抽奖次数」「已领取」。
 - 每个步骤可以渲染一个或多个 Section，以复现该阶段用户实际看到的页面组合。
-- 某个阶段没有业务意义的模块可以不显示；禁止为了凑流程把所有 Section 逐个播放一遍。
-- 业务阶段差异优先通过 `content` / `store` / `status` 表达，例如倒计时、按钮文案、禁用态、空态、已结束态。
-- 流程预览必须在设计确认和最终验收时检查，确保步骤名称、展示内容和用户路径一致。
+- 某个阶段没有业务意义的模块可以不显示；禁止为了凑流程把所有 Section 按目录顺序逐个播放一遍。
+- 业务阶段差异优先通过 `content` 覆盖表达（如倒计时归零、按钮禁用、空数据、已领取态），不能靠临时文案解释。
 
 错误示例：
-- `Hero -> UserAsset -> RewardTier -> Wheel` 这种 Section 清单式流程。
+- `Hero -> UserAsset -> RewardTier -> Wheel` 这种 Section 清单式步骤命名。
 
 正确示例：
-- `活动开始前 -> 活动进行中 -> 活动结束`。
-- `未登录 -> 已登录未参与 -> 可领取 -> 已领取`。
+- 整页场景：`等待活动开启 -> 充值选档/领取/抽奖 -> 活动结束`。
+- 模块场景：`可抽奖 -> 抽奖动画 -> 无抽奖次数` / `未领取 -> 已领取 -> 不可领取`。
 
 ## 弹窗交互输出
 
@@ -133,5 +173,15 @@ export const stateTransitions: StateTransition[] = [
 - 弹窗打开后必须提供可点击关闭入口，关闭后应从完整页面中消失。
 - 禁止在完整页面底部或任意无关位置额外添加 `rule / reward / prop / 10%` 等调试按钮列表。
 - 弹窗 Section 可以在单组件预览中注册默认打开态，或在右侧单组件控制区域通过 content/actions 触发，方便设计师查看样式；该预览入口不得泄漏到完整页面。
-- 弹窗单组件预览必须渲染在组件预览框内部，禁止使用 `fixed inset-0` 覆盖整个 Playground 页面。需要通过 `displayMode: 'inline' | 'overlay'` 或同等字段区分预览态和完整页面态。
+- 弹窗单组件预览必须渲染在组件预览框内部，禁止使用 `fixed inset-0` 覆盖整个 Playground 页面。需要通过 `displayMode: 'inline' | 'overlay'` 字段区分预览态和完整页面态。
+- 弹窗组件实现要点：
+  - `types.ts` 中 Content 接口必须包含 `isOpen: boolean` 和 `displayMode?: 'inline' | 'overlay'`。
+  - `index.tsx` 入口守卫：`if (!content.isOpen) return null;`
+  - `overlay` 模式（完整页面）：外层容器使用 `fixed inset-0 z-50 flex items-center justify-center`，遮罩 `onClick` 可关闭弹窗。
+  - `inline` 模式（单组件预览）：外层容器使用 `relative flex min-h-[420px|300px] w-full items-center justify-center`，同样保留深色遮罩背景；遮罩 `onClick` **不应关闭弹窗**，防止预览时意外消失。
+  - 内层弹窗卡片**必须使用 `width: calc(100% - {左右margin之和}px)` + `maxWidth` 属性**，例如 `width: calc(100% - 60px); maxWidth: 670px;`。**禁止使用 `w-full mx-[30px]` 组合**——`w-full`（100%宽）+ `mx-[30px]`（左右各30px margin）会导致内容宽度溢出父容器（总宽 = 100% + 60px），被 `SectionPanel` 的 `overflow-hidden` 裁剪。
+- `SectionPanel`（`playground/SectionPanel.tsx`）在单组件预览中必须自动检测弹窗类 Section：
+  - 检测方式：判断 `section.defaultContent` 中是否存在 `isOpen` 字段
+  - 检测到弹窗后自动注入：`{ ...baseContent, isOpen: true, displayMode: 'inline' }`
+  - 禁止为了预览而将 `defaultContent.isOpen` 硬编码为 `true`
 - 若弹窗逻辑由 runtime/store 控制，视觉组件只通过 `content.isOpen` 和 `actions.onClose*` 接收状态与事件，不应直接 import store。

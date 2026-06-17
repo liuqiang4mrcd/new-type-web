@@ -117,6 +117,37 @@ temperature: 0.3
   - `supportedStates` 只能声明真实会出现的状态；例如展示型 rule 弹窗没有异步数据源时，不应声明 `loading / empty / error`。
   - `states.tsx`、`playground.stateViews`、Container 中的 `loading / empty / error` 分支必须与 `supportedStates` 的 UI 状态保持一致。
   - `stateTransitions` 只在存在 interaction 状态时必需；纯展示且无交互状态的 Section 不应强行声明空转状态机。
+- **弹窗/覆盖层 Section 实现检查清单（强制）**：
+  - `types.ts` 的 Content 接口必须包含以下字段：
+    - `isOpen: boolean` — 控制弹窗显隐
+    - `displayMode?: 'inline' | 'overlay'` — 区分单组件预览态和完整页面覆盖态
+  - `index.tsx` 中必须实现以下逻辑：
+    - 入口守卫：`if (!content.isOpen) return null;`
+    - 读取 `content.displayMode` 决定布局模式：
+      - `overlay`（默认/完整页面）：`fixed inset-0 z-50 flex items-center justify-center`
+      - `inline`（单组件预览）：`relative flex min-h-[420px|300px] w-full items-center justify-center`
+    - 两种模式均需保留深色遮罩背景（`rgba(0, 0, 0, 0.7)`）
+    - 遮罩 `onClick` 关闭弹窗**仅应在 `overlay` 模式生效**，inline 模式不应关闭以防止预览时意外消失
+  - 内层弹窗卡片宽度的正确写法：`width: calc(100% - {左右margin之和}px)` + 独立的 `maxWidth` 属性。**禁止使用 `w-full mx-[30px]` 的组合**——这会导致内容宽度溢出父容器，被 `SectionPanel` 的 `overflow-hidden` 裁剪
+  - Section 注册到 `playground/section-registry.ts` 后，`SectionPanel` 在单组件预览中自动检测弹窗类 Section（通过判断 `defaultContent` 中是否存在 `isOpen` 字段），并自动注入：
+    - `isOpen: true` — 使弹窗显示
+    - `displayMode: 'inline'` — 确保弹窗渲染在预览容器内部而非全屏覆盖
+  - 禁止为了在单组件预览中看到弹窗而将 `defaultContent.isOpen` 设为 `true`——这将导致完整页面初始化时弹窗打开。
+- **流程预览场景编写规则（强制）**：
+  - `playground/scenarios/scaffold.ts` 中的场景分为两类，通过 `Scenario.group` 区分：
+    - `group: 'fullpage'`（整页业务阶段）— 每个步骤渲染该阶段用户看到的**完整页面**（所有相关 Section 同时展示），用于演示活动整体流程（活动开始前 / 进行中 / 结束）
+    - `group: 'module'`（模块局部状态）— 每个步骤只渲染**单个模块**的多种业务状态（可抽奖 / 无次数 / 已领取 / 弹窗打开等），用于聚焦验证组件状态
+  - `ScenarioStep` 统一使用 `sections[]` 数组字段，**禁止使用 `sectionId`/`content`/`status` 单字段**：
+    ```typescript
+    sections: [
+      { sectionId: 'hero', content: { countdown: { days: 0, hours: 0, minutes: 0, seconds: 0 }, isCountdownEnded: true } },
+      { sectionId: 'claim', content: { isClaimed: true, canClaim: false } },
+      { sectionId: 'wheel', status: 'loading' },
+    ]
+    ```
+  - 场景数据只通过 `content` 字段覆盖 `defaultContent` 的特定字段（浅合并：`{...defaultContent, ...override}`），**不经过真实 Store**
+  - 流程预览的数据处理全部在 Playground 内部自洽，不得 import `useStore`、不得触及 `integrations/store.ts`
+  - `phone-preview.tsx`（完整页面预览）永远是设计阶段的 mock 数据排版工具，它直接使用每个 Section 的 `defaultContent`，不做任何数据 override。接入真实接口后，`phone-preview.tsx` 不应被误参考，完整页面预览应切换到 `runtime/app.tsx`（真实 Store + Container）
 - **移动 .feedback 文件**：项目创建后（`pnpm create-campaign` 或 `cp -r`），将根目录 `.feedback/` 整个移动到 `apps/<campaign>/.feedback/`。使用 `mv .feedback apps/<campaign>/.feedback`。移动前确认根目录 `.feedback/` 存在，移动后确认目标路径文件完整。
 - ✅ **自动验证**：运行 `pnpm validate-section --campaign <campaign-name> <SectionName>` 必须全部 16 项检查通过
 - ✅ **Code Review**：开发者审查代码
