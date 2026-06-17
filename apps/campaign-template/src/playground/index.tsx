@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { SectionPanel } from './SectionPanel';
 import { PhoneFrame } from './PhoneFrame';
 import { ScenarioRunner } from './ScenarioRunner';
 import { ControlPanel } from './ControlPanel';
 import { FlowInspector } from './FlowInspector';
 import { registerSections } from './section-registry';
-import { scenarios } from './scenarios/scaffold';
+import { scenarios, scenarioMeta } from './scenarios';
 import type { PreviewMode } from './types';
 import type { Scenario } from './types';
 
@@ -69,6 +69,28 @@ export function Playground() {
     setActiveStepIndex(0);
   }, []);
 
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (isPlaying) {
+      timerRef.current = setInterval(() => {
+        setActiveStepIndex((prev) => {
+          const next = prev + 1;
+          if (next >= selectedScenario.steps.length) {
+            setIsPlaying(false);
+            return 0;
+          }
+          return next;
+        });
+      }, selectedScenario.autoPlayDelay ?? 2000);
+    }
+    return () => {
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isPlaying, selectedScenario.steps.length, selectedScenario.autoPlayDelay]);
+
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 bg-gray-900 text-white px-6 py-3 flex items-center justify-between">
@@ -79,6 +101,11 @@ export function Playground() {
           <span className="text-xs bg-gray-700 px-2 py-0.5 rounded">
             campaign-template
           </span>
+          {!scenarioMeta.hasBusinessScenarios && (
+            <span className="text-xs bg-yellow-700 px-2 py-0.5 rounded text-yellow-200">
+              无业务场景
+            </span>
+          )}
         </div>
       </header>
 
