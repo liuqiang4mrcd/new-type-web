@@ -1,6 +1,6 @@
 # AI 开发规则
 
-> 最后更新：2026-06-16（引用即断言规则 + designer 工作流写入要求）
+> 最后更新：2026-06-17（流程预览与弹窗交互规则）
 
 ## 目录边界
 
@@ -121,6 +121,41 @@ http://localhost:5173/?mode=designer
 - `defaultActions` 为交互 Section 提供 Playground 中的 console.log 桩函数，使点击事件可观测
 - 纯展示 Section 不需要 `defaultActions`
 
+### 流程预览规则
+
+`playground/scenarios/` 的 `流程预览` 是业务流程预览，不是组件目录预览。
+
+必须遵守：
+- 步骤必须按真实业务阶段命名，例如「活动开始前」「活动进行中」「活动结束」「已领取」「无次数」「奖励为空」。
+- 一个步骤可以渲染多个 Section，展示用户在该阶段看到的完整页面片段。
+- 阶段中没有业务意义的 Section 可以不展示。
+- 禁止将流程预览写成 `HeroSection -> UserAssetSection -> RewardTierSection -> WheelSection` 这种 Section 清单播放。
+- 阶段差异应通过 `content`、`status`、`store` 或场景数据表达，不能靠临时文案解释。
+
+验收要求：
+- 新活动完成前必须打开 `?mode=designer` 的流程预览，确认步骤名称和展示内容符合用户路径。
+- 修改流程相关代码后必须运行 `pnpm --filter @new-type/<campaign> build`，并复跑 `pnpm validate-section --campaign <campaign> --all`。
+
+### 弹窗交互规则
+
+完整页面中的弹窗必须由真实页面入口触发，默认关闭，且可关闭。
+
+必须遵守：
+- 规则弹窗由页面中的 `rule` 入口触发，不得在页面底部额外添加浮动 `rule` 调试按钮。
+- 奖励弹窗由 `claim`、抽奖完成、领取成功等真实业务事件触发，不得在完整页面中额外显示 `reward / 10% / prop` 调试按钮列表。
+- 弹窗关闭按钮必须同时更新 UI 状态，点击后弹窗应从页面消失。
+- 单组件预览可以注册默认打开态或 mock actions，以便查看弹窗样式；该逻辑只能存在于 Playground 单组件上下文，不得影响完整页面和 runtime。
+- 弹窗单组件预览必须渲染在组件预览框内部，禁止 `fixed inset-0` 覆盖整个 Playground 页面。推荐通过 `displayMode: 'inline' | 'overlay'` 或同等字段区分单组件预览与完整页面 runtime。
+- Runtime/store 可控制 `isOpen`、`variant` 等弹窗状态；视觉组件只能通过 `content` 和 `actions` 接收，不得直接 import store。
+
+建议回归检查：
+
+```bash
+# 初始页面不应出现弹窗；点击真实入口后出现；点击关闭后消失
+pnpm --filter @new-type/<campaign> build
+pnpm validate-section --campaign <campaign> --all
+```
+
 ## 三层验证体系
 
 每次 Section 生成后必须通过验证，按成本从低到高分层执行：
@@ -190,6 +225,20 @@ index.tsx (纯视觉 + 本地 useState 状态机)
 违反案例：
 - 对话中输出了 `.feedback/*.md` 的完整内容，但从未用 `write` 工具写入 → ❌ 文件不存在
 - 在 Relevant Files 中列出 `apps/money-rain/.feedback/demand.md`，但该文件从未被创建 → ❌ 引用不存在文件
+
+## 文档输出语言
+
+AI 生成的文档类内容（README、设计文档、注释、PRD、计划、issue、变更记录等），如无特殊说明，**必须使用中文输出**。
+
+| 内容类型 | 语言要求 |
+|---------|---------|
+| 文档（README、设计文档、规则文件） | 中文（默认） |
+| 代码注释 | 中文注释解释逻辑，英文术语按惯例保留 |
+| PRD / 技术方案 | 中文 |
+| 变更记录 / 更新日志 | 中文 |
+| Git commit message | 英文（遵循 git 惯例） |
+| AI 内部推理 / 思考过程 | 中文 |
+| 用户明确要求英文的内容 | 按用户要求 |
 
 ## 活动页创建流程
 
