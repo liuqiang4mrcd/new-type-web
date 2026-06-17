@@ -17,15 +17,16 @@
 | `designer/`     | 设计师   | 纯视觉组件、展示数据      | 仅 content  |
 | `runtime/`      | AI       | 连接 store 和视觉组件     | ✅ 主力     |
 | `integrations/` | 开发者   | Store / API / 埋点 / 配置 | 按需        |
-| `playground/`   | 设计师   | 预览环境                  | ❌          |
+| `playground/`   | 设计师   | 预览环境、Section 注册、流程预览 | ✅ 按需     |
 | `contracts/`    | 所有角色 | 类型定义                  | ✅          |
 
 ### AI 修改边界
 
 | 场景                    | 改什么文件                                                  | 禁止做的事                  |
 | ----------------------- | ----------------------------------------------------------- | --------------------------- |
-| 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index,states}.tsx` | 不要调用 store 或 API       |
+| 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index}.tsx` + 条件 `states.tsx` | 不要调用 store 或 API       |
 | 新 section 连接数据     | `runtime/sections/<Name>Container.tsx`                      | 不要改 visual 组件          |
+| 新 section 预览注册     | `playground/section-registry.ts` / `playground/scenarios/*` / `playground/phone-preview.tsx` | 不要接入真实 Store 或 API |
 | 数据接口变更            | `types.ts`（改接口）+ `runtime/`（改容器）                  | 不要直接改 index.tsx        |
 | 新增 API / Store / 埋点 | `integrations/{store,api,tracking}.ts`                      | 不要绕开 integrations       |
 | 设计师调整视觉          | 不动，由设计师手动改                                        | AI 绝不自动改 designer 代码 |
@@ -41,7 +42,7 @@
 
 | 类型                     | 命名规则                                                    | 示例                       |
 | ------------------------ | ----------------------------------------------------------- | -------------------------- |
-| 设计师 Section（四文件） | `designer/sections/<Name>/{types,content,index,states}.tsx` | `HeroSection/`             |
+| 设计师 Section（核心文件） | `designer/sections/<Name>/{types,content,index}.tsx`，`states.tsx` 条件必需 | `HeroSection/`             |
 | Section 类型接口         | `types.ts` 中 `<Name>Content`                               | `HeroContent`              |
 | Section 默认数据         | `content.ts` 中 `defaultContent`                            |                            |
 | Section 状态视图         | `states.tsx` 中直接 export                                  | `HeroLoading`, `HeroError` |
@@ -51,16 +52,16 @@
 | Hook                     | `use<Name>.ts`                                              | `useCountdown.ts`          |
 | 工具函数                 | 功能名                                                      | `formatDate.ts`            |
 
-## Section 四文件约定
+## Section 文件约定
 
-每个视觉 section 必须包含四个文件：
+每个视觉 section 必须包含核心三文件；仅当存在 required UI 状态时才需要 `states.tsx`：
 
 ```txt
 designer/sections/HeroSection/
 ├── types.ts          # 数据接口定义（HeroContent）
 ├── content.ts        # 默认展示数据（defaultContent）+ 状态声明（supportedStates）+ 交互状态机（stateTransitions）
 ├── index.tsx         # 纯视觉组件（通过 content props 接收数据）
-└── states.tsx        # [可选] loading/empty/error 状态视图
+└── states.tsx        # 条件必需：required UI 状态视图
 ```
 
 **重要约束**：
@@ -69,7 +70,8 @@ designer/sections/HeroSection/
 - 所有外部数据通过 `SectionProps<T>` 的 `content` 传入
 - 所有外部事件通过 `actions` props 传入（onClick/onSpin/onCrit 等）
 - 交互状态机的视觉状态用本地 `useState` 管理，数据状态由 `content` 驱动
-- `states.tsx` 中的状态视图只接收 `{ message?: string }` 作为 props
+- `states.tsx` 只在 `supportedStates` 存在 `{ type: 'ui', required: true }` 时创建，状态视图只接收 `{ message?: string }` 作为 props
+- 禁止为了固定文件数量给没有 UI 状态的 Section 生成空状态文件或伪 loading/empty/error
 
 ## Runtime Container 模式
 
@@ -235,13 +237,13 @@ index.tsx (纯视觉 + 本地 useState 状态机)
 
 **任何在对话摘要、Relevant Files、状态记录中列出的文件路径，都必须是已确认存在于磁盘上的真实文件。**
 
-- 在引用文件路径时，必须先用 `write` / `edit` 等工具写入，或确认文件已存在
+- 在引用文件路径时，必须先写入磁盘，或确认文件已存在
 - 禁止在摘要中列出"计划要创建"或"对话中提到过"但未写入的文件路径
 - 违反此规则等同于记录不存在的证据
 
 违反案例：
 
-- 对话中输出了 `.feedback/*.md` 的完整内容，但从未用 `write` 工具写入 → ❌ 文件不存在
+- 对话中输出了 `.feedback/*.md` 的完整内容，但从未写入磁盘 → ❌ 文件不存在
 - 在 Relevant Files 中列出 `apps/money-rain/.feedback/demand.md`，但该文件从未被创建 → ❌ 引用不存在文件
 
 ## 文档输出语言
@@ -261,7 +263,7 @@ AI 生成的文档类内容（README、设计文档、注释、PRD、计划、is
 ## 活动页创建流程
 
 1. 运行 `pnpm create-campaign` 交互式创建
-2. 在 `designer/sections/` 下创建 Section 四文件
+2. 在 `designer/sections/` 下创建 Section 核心文件和必要状态视图
 3. 在 `integrations/store.ts` 中添加对应的 store state
 4. 在 `runtime/sections/` 下创建 Container
 5. 在 `playground/section-registry.ts` 注册新 section

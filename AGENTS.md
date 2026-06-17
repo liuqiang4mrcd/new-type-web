@@ -6,7 +6,7 @@ pnpm + Nx monorepo，提供 H5 活动页面的开发、设计和部署能力。
 |---|---|
 | 技术栈 | React 18 + TypeScript + TailwindCSS + Zustand + Vite |
 | 构建 | Nx 编排，pnpm workspace |
-| 设计规范 | 750px 设计稿，postcss-pxtorem 自动转换 |
+| 设计规范 | 750px 设计稿，postcss-mobile-forever 自动 px→vw |
 
 **目录结构：**
 
@@ -88,7 +88,7 @@ agents/
 └── shared/
     ├── DESIGN.md        # H5 活动页设计规范（画布、布局、色彩、字体、组件尺寸等）
     ├── DESIGN_INPUT.md  # 设计素材输入规则（原型图/视觉参考图职责边界）
-    └── DESIGN_OUTPUT.md # 设计输出规则（操作范围、Section 格式、Playground 注册）
+    └── DESIGN_OUTPUT.md # 端到端实施输出规则（操作范围、Section 格式、Playground/Runtime 注册）
 ```
 
 - `agents/*.md` — 可调用的 agent 定义
@@ -116,7 +116,7 @@ agents/
 - `agents/designer.md` — designer agent 定义
 - `agents/shared/DESIGN.md` — 设计规范底线
 - `agents/shared/DESIGN_INPUT.md` — 素材输入与冲突处理规则
-- `agents/shared/DESIGN_OUTPUT.md` — 输出范围与格式规范
+- `agents/shared/DESIGN_OUTPUT.md` — 端到端实施范围与格式规范
 
 ---
 

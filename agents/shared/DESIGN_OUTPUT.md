@@ -1,35 +1,39 @@
-# 设计输出规则
+# 端到端实施输出规则
 
-> 设计师的操作范围和输出规范
+> `designer` agent 的端到端实施范围和输出规范
 
 ## 操作范围
 
-设计师的操作范围限定在活动应用 `apps/<campaign>/src/` 下的特定目录，不得越界修改其他层级的代码。
+`designer` agent 在新活动端到端实施时，操作范围限定在目标活动应用 `apps/<campaign>/src/` 和该活动的 `.feedback/` 记录内，不得越界修改其他活动或共享工程代码。
 
-| 目录                 | 职责                | 可操作            |
-| -------------------- | ------------------- | ----------------- |
-| `designer/sections/` | 视觉 Section 四文件 | ✅ 创建/修改      |
-| `playground/`        | 预览环境注册        | ✅ 注册新 Section |
-| `assets/`            | 图片/资源文件       | ✅ 添加           |
+| 目录 / 文件 | 职责 | 可操作 |
+| --- | --- | --- |
+| `designer/sections/` | 视觉 Section 核心文件、展示数据、状态视图 | ✅ 创建/修改 |
+| `playground/` | Section 注册、场景、完整页预览联动 | ✅ 创建/修改 |
+| `runtime/` | Container、线上渲染顺序、Runtime actions | ✅ 创建/修改 |
+| `integrations/store.ts` | SectionState、mock 状态、端到端联动所需本地状态 | ✅ 按需修改 |
+| `assets/` | 图片/资源文件 | ✅ 添加 |
+| `.feedback/` | 需求、结构、设计、进度和组件设计卡 | ✅ 创建/更新 |
 
 ## 禁止操作
 
-- ❌ `integrations/` — 生产逻辑层（Store/API/埋点），归开发者
-- ❌ `runtime/` — AI 粘合层容器
-- ❌ `contracts/` — 类型契约（只读，不可修改）
+- ❌ `integrations/api.ts` / `integrations/tracking.ts` — 真实 API、埋点接入默认归开发者，除非用户明确要求
+- ❌ `contracts/` — 类型契约默认只读；只有验证器或已确认方案要求新增通用契约时才可修改
 - ❌ `packages/*` — 共享包
 - ❌ `scripts/` — 工程化脚本
+- ❌ 其他 `apps/*` 活动应用
+- ❌ `apps/campaign-template/` 业务实现修改；它只能作为复制源和结构参考
 
 ## Section 输出格式
 
-每个视觉 section 严格按四文件模式输出：
+每个视觉 Section 按“核心三文件必需、状态视图条件必需”输出：
 
 ```
 designer/sections/<Name>/
 ├── types.ts          # <Name>Content 接口定义
-├── content.ts        # export const defaultContent: <Name>Content
+├── content.ts        # defaultContent + supportedStates + stateData + 必要的 stateTransitions
 ├── index.tsx         # 纯视觉组件，通过 SectionProps<Content> 接收数据
-└── states.tsx        # [可选] <Name>Loading / <Name>Empty / <Name>Error
+└── states.tsx        # 仅当 supportedStates 存在 required UI 状态时必需
 ```
 
 约束：
@@ -37,6 +41,9 @@ designer/sections/<Name>/
 - `index.tsx` 不能 import store、API、埋点，所有数据通过 `content` props 传入
 - `types.ts` 中接口名以 `Content` 结尾
 - `content.ts` 导出名为 `defaultContent`
+- `content.ts` 必须导出 `supportedStates` 和 `stateData`
+- 只有 `supportedStates` 中存在 `{ type: 'ui', required: true }` 时，才创建 `states.tsx` 并导出对应 UI 状态组件
+- 禁止为了满足固定文件数量而给没有 UI 状态的 Section 生成空 `states.tsx` 或伪 loading/empty/error
 - Section 实现必须保留第 2 步 Layout Spec 中声明的关键元素位置、尺寸、间距、对齐、层级和响应规则。
 - 交互实现必须以第 2 步 Interaction Spec 为唯一真源，`defaultActions`、`ACTION_WIRING`、`stateTransitions` 和 Runtime actions 命名必须与其一致。
 - 若实现时发现 Layout Spec 或 Interaction Spec 无法落地，必须暂停并回到结构规划/设计方案确认，禁止自行改结构或改 action 命名。
@@ -50,7 +57,7 @@ designer/sections/<Name>/
 
 实现关键布局时必须优先使用明确的布局约束：
 
-- 固定设计稿尺寸使用 px，由 postcss-pxtorem 转换。
+- 固定设计稿尺寸在 CSS/Tailwind 中使用 750px 设计稿 px，由 `postcss-mobile-forever` 按 `viewportWidth: 750` 转换为 vw。JS 运行时尺寸使用 `@new-type/utils` 的 `vw()`。
 - 重复项使用 grid/flex 明确列数、gap、padding 和对齐。
 - 进度条、按钮、卡片等固定格式元素必须给出稳定尺寸或 `min-height`，避免文案、状态和 hover 导致布局跳动。
 - 弹窗、浮层、sticky/fixed 元素必须明确层级和定位归属。

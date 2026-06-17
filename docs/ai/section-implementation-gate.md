@@ -8,7 +8,7 @@
 
 1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、Layout Spec 引用、Interaction Spec 引用、数据、交互、状态和边界。
 2. 完成状态适配判断，明确该 Section 是否真的需要 `loading / empty / error`。
-3. 实现 `designer/sections/<SectionName>/` 四文件。
+3. 实现 `designer/sections/<SectionName>/` 文件：`types.ts` / `content.ts` / `index.tsx` 必需；存在 required UI 状态时才创建 `states.tsx`。
 4. 注册 `playground/section-registry.ts`，交互 Section 必须提供 `defaultActions`。
 5. 接入 `integrations/store.ts` 的 `SectionState<<SectionName>Content>`。
 6. 创建 `runtime/sections/<BaseName>Container.tsx`。
@@ -81,7 +81,7 @@ pnpm validate-section --campaign <campaign-name> <SectionName>
 
 | # | 检查项 | 说明 |
 |---|--------|------|
-| 1 | 四文件完整性 | types/content/index/states 是否存在 |
+| 1 | Section 文件完整性 | types/content/index 是否存在；states 由 UI 状态覆盖检查按需验证 |
 | 2 | supportedStates 声明 | content.ts 中是否导出了 supportedStates |
 | 3 | stateData 声明 | content.ts 中是否导出了 stateData |
 | 4 | UI 状态组件覆盖 | states.tsx 是否导出了所有 required UI 组件 |

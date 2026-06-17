@@ -50,7 +50,7 @@ function checkFilesExist(paths: SectionPaths): CheckResult {
     }
   }
   return check({
-    name: '四文件完整性',
+    name: 'Section 文件完整性',
     passed: errors.length === 0,
     errors,
   });
@@ -608,7 +608,7 @@ export function validateSection(
 
   const allChecks: CheckResult[] = [];
 
-  // 1. 四文件完整性
+  // 1. Section 文件完整性
   const fileCheck = checkFilesExist(paths);
   allChecks.push(fileCheck);
 

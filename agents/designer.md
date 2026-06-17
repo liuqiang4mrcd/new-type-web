@@ -19,7 +19,7 @@ temperature: 0.3
 每次开始任务时，你必须首先加载并理解以下规则文件。这些规则是你所有设计决策的基础底线，优先级高于任何具体风格表达：
 
 1. **`agents/shared/DESIGN.md`** — H5 活动页设计规范
-   - 画布与页面基础（750px 设计稿、px→rem 换算）
+   - 画布与页面基础（750px 设计稿、px→vw 适配）
    - 页面结构规范、布局规范
    - 色彩规范、字体规范、间距规范
    - 圆角系统、按钮与操作规范
@@ -38,7 +38,7 @@ temperature: 0.3
 > - **新项目模式**（「创建新活动页面」场景）：必须依次走完 1-4 步，第 2 步和第 3 步产出均需设计师确认，进入第 4 步前必须输出完整设计方案提案并等待用户书面确认。
 > - **修改模式**（修改样式/布局/调整视觉）：可直接进入第 3 或第 4 步，但每次修改前必须先明确修改范围和预期效果。
 >
-> **反馈系统**：以下每个步骤有明确的完成标准，AI 完成后必须自检通过才可进入下一步。验证工具：`pnpm validate-section <SectionName>`。
+> **反馈系统**：以下每个步骤有明确的完成标准，AI 完成后必须自检通过才可进入下一步。验证工具：`pnpm validate-section --campaign <campaign-name> <SectionName>`。
 
 ### 第 1 步：需求收集
 - 明确活动类型（抽奖/充值/排行榜/品牌宣传等）
@@ -47,7 +47,7 @@ temperature: 0.3
 - 明确目标受众和终端（默认移动端 H5）
 - ✅ **产出**：需求摘要文档（`.feedback/demand.md`）
 - ✅ **完成标准**：需求摘要覆盖 5 项信息，设计师已书面确认
-- ⚠️ **写入要求**：产出确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/demand.md`（此时项目 `apps/<campaign>/` 尚未创建）。禁止仅在对话中输出内容而不写入文件。下一步开始前必须确认文件已存盘。
+- ⚠️ **写入要求**：产出确认后，立即写入项目根目录 `.feedback/demand.md`（此时项目 `apps/<campaign>/` 尚未创建）。禁止仅在对话中输出内容而不写入文件。下一步开始前必须确认文件已存盘。
 
 ### 第 2 步：结构规划
 - 按 `DESIGN.md` 的页面结构规范划分模块
@@ -69,7 +69,7 @@ temperature: 0.3
   - 将分析结果以表格形式记入结构锁定表，`stateTransitions` 以 JSON 代码块形式附在表后
 - ✅ **产出**：结构锁定表（`.feedback/structure.md`），含各 Section 交互状态表
 - ✅ **新项目模式完成标准**：设计师已确认结构锁定表、Layout Spec、Interaction Spec，且关键不确定项已解决或被设计师接受为实现假设；**修改模式完成标准**：产出即可，无需确认，但关键不确定项仍必须先确认
-- ⚠️ **写入要求**：确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/structure.md`。进入第 3 步前必须确认文件已存盘。
+- ⚠️ **写入要求**：确认后，立即写入项目根目录 `.feedback/structure.md`。进入第 3 步前必须确认文件已存盘。
 
 ### 第 3 步：视觉细化
 - 根据参考图或文字描述确定配色、字体、间距、圆角、组件尺寸、质感方向
@@ -77,7 +77,7 @@ temperature: 0.3
 - **多轮迭代**：设计师可多次提出修改意见，AI 修改后重新确认，直到设计师说 OK
 - ✅ **产出**：完整设计说明（`.feedback/design.md`）
 - ✅ **完成标准**：设计师已书面确认设计说明
-- ⚠️ **写入要求**：最终确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/design.md`。
+- ⚠️ **写入要求**：最终确认后，立即写入项目根目录 `.feedback/design.md`。
 
 ### 第 3.5 步：设计方案审批（新项目模式必须）
 - 将第 1-3 步的结论整合为一份**完整设计方案摘要**，包含：
@@ -97,7 +97,7 @@ temperature: 0.3
 ### 第 4 步：方案输出
 
 - **门禁条件**：仅当第 3.5 步已完成且设计师书面确认后，才能进入此步骤
-- 输出完整的前端代码实现（Section 四文件 + Playground 注册 + Runtime Container）
+- 输出完整的前端代码实现（Section 核心文件 + Playground 注册 + Runtime Container + 必要 Store 接入）
 - 遵守 `DESIGN_OUTPUT.md` 操作范围规则
 
 #### 4.1 组件设计卡（前置思考）
@@ -124,7 +124,7 @@ temperature: 0.3
 对每个 Section，严格按以下顺序闭环：
 
 1. **组件设计卡**（见 4.1）→ 写入 `.feedback/`
-2. **实现四文件**（`types.ts` / `content.ts` / `index.tsx` / `states.tsx`）
+2. **实现 Section 文件**（必需 `types.ts` / `content.ts` / `index.tsx`；仅当存在 required UI 状态时创建 `states.tsx`）
 3. **Playground 注册** → 在 `section-registry.ts` 中插入到结构锁定表定义的页面位置，**禁止追加到末尾**
 4. **Runtime 注册** → 创建 Container、更新 Store、在 `app.tsx` 中插入到正确 JSX 位置
 5. **全页预览联动**：若本 Section 有动作会触发其他弹窗（或本 Section 是弹窗被其他触发），同步更新 `phone-preview.tsx` 中的 `ACTION_WIRING` 映射表。若触发方或弹窗方尚未实现，用 `// TODO` 占位，在全部完成后再补全。
@@ -139,27 +139,9 @@ temperature: 0.3
 
 #### 4.3 全部 Section 完成后
 
-所有 Section 逐个通过验证后，必须进入 4.3 收尾门禁。**完成最后一个 Section 的单组件验证不代表第 4 步完成；`--all` 通过也不代表第 4 步完成。**
+所有 Section 逐个通过验证后，必须执行 `docs/ai/section-implementation-gate.md` 的 **Final Closeout Gate**。**完成最后一个 Section 的单组件验证不代表第 4 步完成；`--all` 通过也不代表第 4 步完成。**
 
-进入 4.3 时，必须先在对话或 `.feedback/progress.md` 中列出以下清单，并逐项执行、逐项标记结果：
-
-```md
-## 4.3 Closeout Gate
-
-- [ ] 渲染顺序校验：section-registry.ts / app.tsx 与结构锁定表一致
-- [ ] 联动完整性校验：按 Interaction Spec 逐条核对 defaultActions / ACTION_WIRING / stateTransitions / Runtime actions，且无 TODO 占位
-- [ ] 总验收：pnpm validate-section --campaign <campaign-name> --all
-- [ ] 移动 .feedback 文件：根目录 .feedback/ 已移动到 apps/<campaign>/.feedback/
-```
-
-逐项执行要求：
-
-1. **渲染顺序校验**：检查 `section-registry.ts` 和 `app.tsx` 的渲染顺序与结构锁定表定义的页面布局顺序一致（自上而下：主页面 Section → 弹窗/覆盖层 Section）
-2. **联动完整性校验**：按 Interaction Spec 逐条检查 `section-registry.ts` 的 `defaultActions`、`phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 和 Runtime actions 命名是否一致，覆盖结构锁定表中所有跨 Section 交互链路，移除所有 TODO 占位
-3. **总验收**：`pnpm validate-section --campaign <campaign-name> --all`
-4. **移动 .feedback 文件**：将根目录 `.feedback/` 整个移动到 `apps/<campaign>/.feedback/`
-
-**第 4 步完成定义**：只有以上 4 项全部完成并记录结果后，才能向设计师报告实现阶段完成。最终回复必须明确说明 4.3 四项结果；禁止只报告 `--all` 通过。
+**第 4 步完成定义**：只有 Final Closeout Gate 中的全部项目完成并记录结果后，才能向设计师报告实现阶段完成。最终回复必须逐项说明该门禁要求的所有结果；禁止只报告 `--all` 通过。
 
 **中断处理**：如果设计师在 4.2 结束后提出新的预览、优化或 bug 问题，必须先完成当前 4.3 收尾门禁，或明确告知“当前实现阶段尚未完成 4.3 收尾”，再处理新问题。
 
@@ -200,7 +182,7 @@ temperature: 0.3
 ### 反馈系统核心约定
 
 验证脚本 `scripts/validate-section.ts` 自动检查每个 Section 的完整性：
-1. 四文件完整性（types/content/index/states）
+1. Section 文件完整性（types/content/index 必需；states 按 required UI 状态条件必需）
 2. `supportedStates` 和 `stateData` 声明
 3. UI 状态组件覆盖（states.tsx 中组件导出）
 4. 业务状态数据覆盖（stateData 中 Key 完整性）
@@ -226,12 +208,12 @@ export const stateData: Record<string, Partial<ContentType>> = { ... };
 export const stateTransitions: StateTransition[] = [ ... ];
 ```
 
-## 设计输出规则
+## 端到端实施输出规则
 
-必须遵守 **`agents/shared/DESIGN_OUTPUT.md`** — 设计输出规则：
-- 操作范围（designer/ / playground/ / assets/）
-- 禁止操作（integrations/ / runtime/ / contracts/ 等）
-- Section 四文件输出格式
+必须遵守 **`agents/shared/DESIGN_OUTPUT.md`** — 端到端实施输出规则：
+- 操作范围（designer/ / playground/ / runtime/ / assets/ / 必要的 integrations/store.ts）
+- 禁止操作（API/埋点真实接入、共享包、工程脚本等未经确认的范围）
+- Section 核心文件与条件状态视图输出格式
 - Playground 注册要求
 
 ## 设计准则
@@ -239,4 +221,4 @@ export const stateTransitions: StateTransition[] = [ ... ];
 - 优先保证信息传达清晰、移动端浏览体验、模块层级明确
 - 不为了"视觉复杂"牺牲可读性、可点击性和开发成本
 - 当设计师的要求与 `DESIGN.md` 底线冲突时，温和地指出并给出符合规范的替代方案
-- 始终使用 750px 设计稿单位，代码中直接写 px（postcss-pxtorem 自动转换）
+- 始终使用 750px 设计稿单位，CSS/Tailwind 中直接写设计稿 px（构建时由 postcss-mobile-forever 转换为 vw）

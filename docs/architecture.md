@@ -135,7 +135,7 @@ apps/campaign-template/
 │   │           ├── types.ts          # 数据接口定义
 │   │           ├── content.ts        # 默认展示数据
 │   │           ├── index.tsx         # 纯视觉组件
-│   │           └── states.tsx        # [可选] loading/empty/error 状态视图
+│   │           └── states.tsx        # 条件必需：loading/empty/error 等 UI 状态视图
 │   │
 │   ├── runtime/                     # 🤖 AI 粘合层
 │   │   ├── app.tsx                  # 线上根组件（store 驱动）
@@ -276,7 +276,7 @@ packages/config/
 ## 10. AI 友好设计原则
 
 1. **目录即职责**：`designer/` / `runtime/` / `integrations/` / `playground/` 各自独立，AI 根据任务选择目录
-2. **Section 四文件模式**：`types.ts + content.ts + index.tsx + states.tsx`，AI 可预测文件位置和接口
+2. **Section 文件模式**：`types.ts + content.ts + index.tsx` 为核心文件，`states.tsx` 仅在存在 required UI 状态时创建，AI 可预测文件位置和接口
 3. **容器模式**：每个 visual section 对应一个 runtime container，AI 只需改 container 来调整数据流
 4. **文档内置**：架构文档、AI 规则、包引用地图都在仓库内，AI 启动时读取
 5. **命名可推断**：Container 结尾表示 runtime 粘合层，Section 结尾表示视觉组件

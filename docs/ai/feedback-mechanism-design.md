@@ -145,7 +145,7 @@ export const stateData: Record<string, Partial<WheelContent>> = { /* ... */ };
 
 | # | 检查项 | 当前状态 | 新增 | 检测方式 |
 |---|--------|----------|------|----------|
-| 1 | 四文件完整性 | ✅ 已有 | — | 文件存在性 |
+| 1 | Section 文件完整性 | ✅ 已有 | — | `types/content/index` 文件存在性；`states` 按 UI 状态条件验证 |
 | 2 | supportedStates 声明 | ✅ 已有 | — | AST 解析 |
 | 3 | stateData 声明 | ✅ 已有 | — | AST 解析 |
 | 4 | UI 状态组件覆盖 | ✅ 已有 | — | AST 解析 |
@@ -241,7 +241,7 @@ Step 4: 批量生成所有 Section → 手工验证 → 暴露问题
 
 ```
 Step 4-1: 选择第一个 Section（按结构锁定表顺序）
-Step 4-2: 生成该 Section 四文件
+Step 4-2: 生成该 Section 核心文件和必要状态视图
 Step 4-3: 注册到 Playground + Runtime
 Step 4-4: 自动运行 validate（Layer 0 → Layer 1）
 Step 4-5: 失败 → 自修复 → 回到 4-4

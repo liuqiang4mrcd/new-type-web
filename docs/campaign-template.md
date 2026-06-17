@@ -62,7 +62,7 @@ designer/sections/<Name>/
 ├── types.ts          # 定义 <Name>Content 接口
 ├── content.ts        # export const defaultContent: <Name>Content
 ├── index.tsx         # 纯视觉组件，Props: SectionProps<<Name>Content>
-└── states.tsx        # [可选] export <Name>Loading / <Name>Empty / <Name>Error
+└── states.tsx        # 条件必需：export required UI 状态组件
 ```
 
 ```ts
