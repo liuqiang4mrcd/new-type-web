@@ -52,6 +52,11 @@ temperature: 0.3
 ### 第 2 步：结构规划
 - 按 `DESIGN.md` 的页面结构规范划分模块
 - 输出「结构锁定表」：原型图结构、可借鉴内容、禁止改动项（遵循 `DESIGN_INPUT.md` 要求）
+- **状态适配分析（强制）**：每个 Section 必须先判断组件类型，再声明状态；禁止默认套用 loading/empty/error/ready 四状态。
+  - 展示型静态组件（如 rule 说明、纯文案弹窗、装饰 Header）：通常不需要 loading/empty/error，只声明真实存在的业务/交互状态。
+  - 数据展示组件（如奖励列表、排行榜、用户资产）：按数据来源判断是否需要 loading/empty/error。
+  - 强交互组件（如抽奖、转盘、领取）：必须声明 interaction 状态和 `stateTransitions`。
+  - 只有 `supportedStates` 中声明为 `type: 'ui'` 且 `required: true` 的状态，才需要 `states.tsx` 组件、`stateViews` 注册和 Container 路由。
 - **对每个 Section 进行交互状态分析**：
   - 枚举该 Section 的所有可视状态（loading、empty、error、idle、active、result 等）
   - 列出所有用户交互（点击、滑动、滚动、输入等）
@@ -87,7 +92,31 @@ temperature: 0.3
 - **门禁条件**：仅当第 3.5 步已完成且设计师书面确认后，才能进入此步骤
 - 输出完整的前端代码实现（Section 四文件 + Playground 注册 + Runtime Container）
 - 遵守 `DESIGN_OUTPUT.md` 操作范围规则
+- **组件输出前置思考（强制）**：
+  - 实际输出任何 Section 代码前，必须先为当前 Section 写出「组件设计卡」，禁止直接从模板复制或直接生成代码。
+  - 组件设计卡必须至少包含：
+    - **具体作用**：该 Section 解决什么页面任务，是否承载业务数据、静态说明、操作入口或纯视觉氛围。
+    - **展示方式**：布局结构、主次信息、视觉容器、是否需要列表/宫格/弹窗/转盘/进度条等形态。
+    - **数据来源与字段**：哪些字段来自 `content`，哪些是纯展示常量，是否存在异步数据源。
+    - **交互逻辑**：用户可点击/滑动/滚动/输入什么，触发什么 actions，是否需要禁用、节流、互斥。
+    - **状态模型**：真实存在的 UI / business / interaction 状态；禁止默认套用 loading/empty/error/ready。
+    - **边界场景**：长文案、多语言、空数据、无次数、已领取、活动未开始/已结束等该 Section 真实会遇到的情况。
+    - **验收命令**：当前 Section 的单组件验证命令 `pnpm validate-section --campaign <campaign-name> <SectionName>`。
+  - 组件设计卡必须写入 `.feedback/progress.md` 或独立 `.feedback/sections/<SectionName>.md`，并在对话中简要报告后，才能开始该 Section 的代码实现。
+  - 若组件设计卡无法说明该 Section 是否需要 loading/empty/error 或 interaction 状态，必须暂停并补充分析，不能先写代码再调整状态。
 - **交互 Section 额外输出**：对于含交互状态的 Section，还需在 `content.ts` 中生成 `stateTransitions`（声明视觉状态转换图），并在 `playground/section-registry.ts` 中注册 `defaultActions`（提供 console.log 桩函数使 Playground 可点击测试）
+- **单 Section 实现门禁（强制）**：
+  - 第 4 步开始前，必须根据第 3.5 步确认的 Section 拆分创建 `.feedback/progress.md`，列出每个 Section 的 `planned / implementing / implemented / validated` 状态。
+  - 必须按 Section 逐个闭环实现：完成当前 Section 四文件、Playground 注册、Runtime Container、Store 对齐、Runtime 注册后，立即执行 `pnpm validate-section --campaign <campaign-name> <SectionName>`。
+  - 单个 Section 的 16 项检查未全部通过时，禁止开始下一个 Section。
+  - 每个 Section 通过单独验证后，必须立即更新 `.feedback/progress.md`，并在对话中报告：`<SectionName> 单组件校验通过：16/16`。
+  - `pnpm validate-section --campaign <campaign-name> --all` 只能作为最终总验收，禁止替代逐 Section 过程验证。
+  - 禁止为了减少重复修改 `store / runtime / playground` 而批量实现多个 Section 后再统一验证。
+- **状态声明门禁（强制）**：
+  - 写 `content.ts` 前必须先完成该 Section 的状态适配结论，不能从模板复制默认状态后再补内容。
+  - `supportedStates` 只能声明真实会出现的状态；例如展示型 rule 弹窗没有异步数据源时，不应声明 `loading / empty / error`。
+  - `states.tsx`、`playground.stateViews`、Container 中的 `loading / empty / error` 分支必须与 `supportedStates` 的 UI 状态保持一致。
+  - `stateTransitions` 只在存在 interaction 状态时必需；纯展示且无交互状态的 Section 不应强行声明空转状态机。
 - **移动 .feedback 文件**：项目创建后（`pnpm create-campaign` 或 `cp -r`），将根目录 `.feedback/` 整个移动到 `apps/<campaign>/.feedback/`。使用 `mv .feedback apps/<campaign>/.feedback`。移动前确认根目录 `.feedback/` 存在，移动后确认目标路径文件完整。
 - ✅ **自动验证**：运行 `pnpm validate-section --campaign <campaign-name> <SectionName>` 必须全部 16 项检查通过
 - ✅ **Code Review**：开发者审查代码

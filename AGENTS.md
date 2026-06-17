@@ -31,6 +31,7 @@ packages/
 | `docs/architecture.md` | 项目整体架构理解 |
 | `docs/ai/development-rules.md` | AI 开发约束（三层架构、目录边界、命名规范） |
 | `docs/ai/framework-map.md` | 共享包引用地图（什么功能用哪个包） |
+| `docs/ai/section-implementation-gate.md` | Section 实现阶段门禁：完成一个、验证一个 |
 
 ---
 
@@ -107,6 +108,8 @@ agents/
 - 推荐使用 `pnpm create-campaign <campaign-name>` 创建项目，避免手动落错目录。
 - 业务 Section、runtime、store、playground 注册都只能写入目标 app。
 - 完成前必须检查 `apps/campaign-template` 无非预期 diff。
+- 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm validate-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `--all` 只能作为总验收。
+- 创建 Section 时必须先做状态适配判断，禁止默认套用 loading/empty/error/ready；展示型 rule 弹窗等无异步数据源组件不应声明不存在的加载和失败状态。
 
 ### designer — H5 活动页设计与修改
 

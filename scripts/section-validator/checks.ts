@@ -303,6 +303,7 @@ function checkRuntimeContainer(
 function checkContainerRouting(
   rootDir: string,
   baseName: string,
+  states: SupportedStateDecl[] | null,
 ): CheckResult {
   const containerFile = join(
     rootDir,
@@ -328,7 +329,11 @@ function checkContainerRouting(
     });
   }
   const container = parseContainerModule(result.ok ? result.text : null);
-  const required: string[] = ['loading', 'empty', 'error', 'ready'];
+  const declaredUiStatuses = (states ?? [])
+    .filter((s) => s.type === 'ui' && s.required)
+    .map((s) => s.key)
+    .filter((key) => ['loading', 'empty', 'error'].includes(key));
+  const required: string[] = ['ready', ...declaredUiStatuses];
   const missing = required.filter((r) => !container.switchCases.includes(r as any));
   if (missing.length > 0) {
     return check({
@@ -404,12 +409,24 @@ function checkRuntimeAppRegistration(
 
 // === #12 stateTransitions 声明 ===
 function checkStateTransitionsDeclaration(source: string): CheckResult {
+  const content = parseContentModule(source);
+  const hasRequiredInteractionStates = (content.supportedStates ?? []).some(
+    (state) => state.type === 'interaction' && state.required,
+  );
   const transitions = parseStateTransitions(source);
-  if (transitions.length === 0) {
+  if (hasRequiredInteractionStates && transitions.length === 0) {
     return check({
       name: 'stateTransitions 声明',
       passed: false,
       errors: ['content.ts 中未找到 stateTransitions 导出'],
+    });
+  }
+  if (!hasRequiredInteractionStates && transitions.length === 0) {
+    return check({
+      name: 'stateTransitions 声明',
+      passed: true,
+      skipped: true,
+      errors: [],
     });
   }
   return check({
@@ -703,7 +720,7 @@ export function validateSection(
   allChecks.push(checkRuntimeContainer(rootDir, naming.baseName));
 
   // 10. Container 路由完整性
-  allChecks.push(checkContainerRouting(rootDir, naming.baseName));
+  allChecks.push(checkContainerRouting(rootDir, naming.baseName, supportedStates));
 
   // 11. Store 对齐
   allChecks.push(checkStoreAlignment(naming.baseName, storeSource));

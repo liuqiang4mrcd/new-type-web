@@ -1,10 +1,12 @@
 import fsExtra from 'fs-extra';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import prompts from 'prompts';
 
 const { copy, pathExists } = fsExtra;
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function validateName(value: string): true | string {
   if (!value) return '请输入活动名称';

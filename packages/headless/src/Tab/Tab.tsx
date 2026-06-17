@@ -105,7 +105,7 @@ function TabRoot<T extends string = string>({
 }
 
 function TabList({ children, className, ...rest }: TabListProps) {
-  const { orientation, baseId } = useTabContext();
+  const { orientation } = useTabContext();
   const listRef = useRef<HTMLDivElement>(null);
 
   const getTriggerValues = useCallback((): string[] => {

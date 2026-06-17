@@ -9,7 +9,10 @@
     "./tsconfig/react.json": "./tsconfig/react.json",
     "./eslint/base": "./eslint/base.js",
     "./eslint/react": "./eslint/react.js",
-    "./tailwind/preset": "./tailwind/preset.js",
+    "./tailwind/preset": {
+      "types": "./tailwind/preset.d.ts",
+      "default": "./tailwind/preset.js"
+    },
     "./vite/campaign-base": "./vite/campaign-base.ts"
   },
   "peerDependencies": {
