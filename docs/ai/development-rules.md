@@ -1,6 +1,6 @@
 # AI 开发规则
 
-> 最后更新：2026-06-17（流程预览与弹窗交互规则）
+> 最后更新：2026-06-17（流程预览场景分类与数据流规则）
 
 ## 目录边界
 
@@ -125,12 +125,44 @@ http://localhost:5173/?mode=designer
 
 `playground/scenarios/` 的 `流程预览` 是业务流程预览，不是组件目录预览。
 
-必须遵守：
-- 步骤必须按真实业务阶段命名，例如「活动开始前」「活动进行中」「活动结束」「已领取」「无次数」「奖励为空」。
-- 一个步骤可以渲染多个 Section，展示用户在该阶段看到的完整页面片段。
-- 阶段中没有业务意义的 Section 可以不展示。
-- 禁止将流程预览写成 `HeroSection -> UserAssetSection -> RewardTierSection -> WheelSection` 这种 Section 清单播放。
-- 阶段差异应通过 `content`、`status`、`store` 或场景数据表达，不能靠临时文案解释。
+#### 场景分类
+
+场景通过 `Scenario.group` 分为两类：
+
+| 类型 | group 值 | 用途 | 渲染方式 |
+|------|----------|------|----------|
+| 整页业务阶段 | `fullpage` | 演示活动整体流程 | 每步渲染 `sections[]` 中所有 Section |
+| 模块局部状态 | `module` | 聚焦单个组件的多种业务状态 | 每步渲染一个 Section（sections 中一个条目） |
+
+#### 数据结构
+
+```typescript
+interface ScenarioStep {
+  id: string;
+  name: string;                    // 业务阶段名称
+  description?: string;
+  sections: Array<{
+    sectionId: string;             // 对应 section-registry 中的 id
+    content?: Record<string, unknown>;  // 覆盖 defaultContent 部分字段
+    status?: SectionStatus;
+  }>;
+}
+```
+
+**禁止**在 `ScenarioStep` 中使用 `sectionId`/`content`/`status` 顶层单字段——统一使用 `sections[]` 数组。
+
+#### 数据流规则（强制）
+
+- 展示数据 = `{...section.defaultContent, ...step.section.content}`（浅合并）
+- **禁止** import `useStore` 或 `integrations/store`——场景数据完全在 Playground 内部自洽
+- `ScenarioRunner.tsx` 负责数据合并和渲染，不经过真实 Store
+- `phone-preview.tsx` 始终用 `defaultContent` mock 数据，接入接口后完整页面预览切换到 `runtime/app.tsx`
+
+#### 命名要求
+
+- 步骤名称为真实业务阶段，如「活动开始前」「进行中」「结束」「可抽奖」「无次数」「已领取」
+- 禁止 Section 清单式命名：`HeroSection -> UserAssetSection -> WheelSection`
+- 阶段差异通过 `content` 覆盖表达，不能靠临时文案
 
 验收要求：
 - 新活动完成前必须打开 `?mode=designer` 的流程预览，确认步骤名称和展示内容符合用户路径。
@@ -145,7 +177,13 @@ http://localhost:5173/?mode=designer
 - 奖励弹窗由 `claim`、抽奖完成、领取成功等真实业务事件触发，不得在完整页面中额外显示 `reward / 10% / prop` 调试按钮列表。
 - 弹窗关闭按钮必须同时更新 UI 状态，点击后弹窗应从页面消失。
 - 单组件预览可以注册默认打开态或 mock actions，以便查看弹窗样式；该逻辑只能存在于 Playground 单组件上下文，不得影响完整页面和 runtime。
-- 弹窗单组件预览必须渲染在组件预览框内部，禁止 `fixed inset-0` 覆盖整个 Playground 页面。推荐通过 `displayMode: 'inline' | 'overlay'` 或同等字段区分单组件预览与完整页面 runtime。
+- 弹窗单组件预览必须渲染在组件预览框内部，禁止 `fixed inset-0` 覆盖整个 Playground 页面。必须通过 `displayMode: 'inline' | 'overlay'` 字段区分单组件预览与完整页面 runtime。
+- 弹窗组件 `types.ts` 中 Content 接口必须包含 `isOpen: boolean` 和 `displayMode?: 'inline' | 'overlay'`。
+- 弹窗组件 `index.tsx` 中：
+  - `overlay` 模式：`fixed inset-0 z-50 flex items-center justify-center`，遮罩 `onClick` 可关闭
+  - `inline` 模式：`relative flex min-h-[420px|300px] w-full items-center justify-center`，保留深色遮罩，遮罩不可点击关闭
+  - 内层卡片宽度用 `width: calc(100% - Npx)` + `maxWidth`，禁止用 `w-full mx-[Npx]`（会导致溢出被 `overflow-hidden` 裁剪）
+- `SectionPanel` 在单组件预览时自动检测弹窗（`'isOpen' in defaultContent`），注入 `isOpen: true + displayMode: 'inline'`。禁止将 `defaultContent.isOpen` 设为 `true`。
 - Runtime/store 可控制 `isOpen`、`variant` 等弹窗状态；视觉组件只能通过 `content` 和 `actions` 接收，不得直接 import store。
 
 建议回归检查：
