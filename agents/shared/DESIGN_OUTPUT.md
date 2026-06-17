@@ -104,3 +104,34 @@ export const stateTransitions: StateTransition[] = [
 
 - `defaultActions`: 为交互 Section 提供 Playground 环境中的 console.log 桩函数。纯展示 Section 不需要此字段。
 - `stateViews`: 覆盖 `supportedStates` 中所有 `type: 'ui'` 的状态。`type: 'interaction'` 的状态有独立视图组件时也建议注册。
+
+## Playground 流程预览
+
+`playground/scenarios/` 中的流程预览必须表达活动的业务阶段，而不是 Section 目录顺序。
+
+要求：
+- 流程步骤应命名为真实用户阶段，例如「活动开始前」「活动进行中」「活动结束」「已领取」「无抽奖次数」「奖励为空」。
+- 每个步骤可以渲染一个或多个 Section，以复现该阶段用户实际看到的页面组合。
+- 某个阶段没有业务意义的模块可以不显示；禁止为了凑流程把所有 Section 逐个播放一遍。
+- 业务阶段差异优先通过 `content` / `store` / `status` 表达，例如倒计时、按钮文案、禁用态、空态、已结束态。
+- 流程预览必须在设计确认和最终验收时检查，确保步骤名称、展示内容和用户路径一致。
+
+错误示例：
+- `Hero -> UserAsset -> RewardTier -> Wheel` 这种 Section 清单式流程。
+
+正确示例：
+- `活动开始前 -> 活动进行中 -> 活动结束`。
+- `未登录 -> 已登录未参与 -> 可领取 -> 已领取`。
+
+## 弹窗交互输出
+
+弹窗必须服务于页面真实交互链路，不能成为页面中的孤立调试入口。
+
+要求：
+- 规则弹窗、奖励弹窗、提示弹窗等默认必须关闭。
+- 完整页面中的弹窗必须由真实页面按钮或业务事件触发，例如头图 `rule` 按钮打开规则弹窗、`claim` 打开奖励弹窗、抽奖完成打开结果弹窗。
+- 弹窗打开后必须提供可点击关闭入口，关闭后应从完整页面中消失。
+- 禁止在完整页面底部或任意无关位置额外添加 `rule / reward / prop / 10%` 等调试按钮列表。
+- 弹窗 Section 可以在单组件预览中注册默认打开态，或在右侧单组件控制区域通过 content/actions 触发，方便设计师查看样式；该预览入口不得泄漏到完整页面。
+- 弹窗单组件预览必须渲染在组件预览框内部，禁止使用 `fixed inset-0` 覆盖整个 Playground 页面。需要通过 `displayMode: 'inline' | 'overlay'` 或同等字段区分预览态和完整页面态。
+- 若弹窗逻辑由 runtime/store 控制，视觉组件只通过 `content.isOpen` 和 `actions.onClose*` 接收状态与事件，不应直接 import store。

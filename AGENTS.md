@@ -110,6 +110,8 @@ agents/
 - 完成前必须检查 `apps/campaign-template` 无非预期 diff。
 - 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm validate-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `--all` 只能作为总验收。
 - 创建 Section 时必须先做状态适配判断，禁止默认套用 loading/empty/error/ready；展示型 rule 弹窗等无异步数据源组件不应声明不存在的加载和失败状态。
+- Playground 的 `流程预览` 必须按活动业务阶段组织，例如「活动开始前 / 活动进行中 / 活动结束 / 已领取 / 无次数」等真实用户流程；禁止把流程预览做成 Section 清单逐个播放。某个阶段没有意义的模块可以不显示。
+- 弹窗交互必须由页面中的真实入口触发，例如头图 `rule` 按钮打开规则弹窗、`claim` 打开奖励弹窗；禁止为了调试在完整页面底部额外添加弹窗触发按钮列表。弹窗默认必须关闭，打开后必须可关闭。仅单组件预览可以提供独立触发或默认打开态用于查看样式。
 
 ### designer — H5 活动页设计与修改
 
