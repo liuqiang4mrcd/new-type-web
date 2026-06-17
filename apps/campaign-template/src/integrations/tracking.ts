@@ -1,25 +1,7 @@
-import { pageView, click } from '@new-type/analytics';
+function track(event: string, payload?: Record<string, unknown>) {
+  console.log('[tracking]', event, payload ?? {});
+}
 
 export function trackPageView() {
-  pageView();
-}
-
-export function trackHeroClick() {
-  click('hero_btn');
-}
-
-export function trackRuleView() {
-  click('rule_view');
-}
-
-export function trackDrawClick() {
-  click('draw_btn');
-}
-
-export function trackClaimClick() {
-  click('claim_btn');
-}
-
-export function trackPrizeView(prizeName: string) {
-  click('prize_view', { prize: prizeName });
+  track('page_view');
 }

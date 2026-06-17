@@ -1,6 +1,6 @@
 import fsExtra from 'fs-extra';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'path';
+import { dirname, relative, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import prompts from 'prompts';
 
@@ -47,7 +47,14 @@ async function main() {
     throw new Error(`目标项目已存在: ${targetDir}`);
   }
 
-  await copy(templateDir, targetDir);
+  await copy(templateDir, targetDir, {
+    filter: (src) => {
+      const rel = relative(templateDir, src);
+      if (!rel) return true;
+      const [topLevel] = rel.split(/[/\\]/);
+      return !['dist', 'node_modules'].includes(topLevel);
+    },
+  });
 
   const pkgPath = `${targetDir}/package.json`;
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));

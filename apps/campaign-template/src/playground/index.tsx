@@ -5,7 +5,7 @@ import { ScenarioRunner } from './ScenarioRunner';
 import { ControlPanel } from './ControlPanel';
 import { FlowInspector } from './FlowInspector';
 import { registerSections } from './section-registry';
-import { scenarios } from './scenarios/lottery';
+import { scenarios } from './scenarios/scaffold';
 import type { PreviewMode } from './types';
 import type { Scenario } from './types';
 

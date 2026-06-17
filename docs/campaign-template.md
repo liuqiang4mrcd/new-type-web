@@ -1,6 +1,10 @@
 # 活动页模板说明
 
-> 最后更新：2026-06-16（Playground 3 模式预览 + 手机壳模拟 + 控制面板）
+> 最后更新：2026-06-17（中性 Scaffold 模板 + Playground 3 模式预览）
+
+`apps/campaign-template` 是新活动的最小可运行脚手架，不承载具体业务示例。它只保留中性的 `ScaffoldSection`，用于确认工程链路、Playground 和 runtime 能正常工作。
+
+创建新活动后，必须根据已确认的设计方案和组件设计卡逐个创建真实 Section。禁止把模板中的 scaffold 内容、状态或文案当成业务组件基底。
 
 ## 目录结构
 
@@ -13,18 +17,12 @@ apps/campaign-template/
 │   │   └── section.ts               # 类型契约
 │   │
 │   ├── designer/sections/           # 🎨 设计师视觉层
-│   │   ├── HeroSection/            # types/content/index/states
-│   │   ├── RuleSection/
-│   │   ├── PrizeSection/
-│   │   └── CountdownTimer/
+│   │   └── ScaffoldSection/         # 中性占位 Section，创建新活动后替换
 │   │
 │   ├── runtime/                     # 🤖 AI 粘合层
 │   │   ├── app.tsx
 │   │   └── sections/
-│   │       ├── HeroContainer.tsx
-│   │       ├── CountdownTimerContainer.tsx
-│   │       ├── RuleContainer.tsx
-│   │       └── PrizeContainer.tsx
+│   │       └── ScaffoldContainer.tsx
 │   │
 │   ├── integrations/                # 👨‍💻 生产逻辑层
 │   │   ├── store.ts
@@ -44,8 +42,16 @@ apps/campaign-template/
 │       ├── phone-preview.tsx        # iframe 独立 entry（?mode=phone-preview）
 │       ├── types.ts                 # PlaygroundSection / Scenario / PreviewMode
 │       ├── section-registry.ts      # 组件注册
-│       └── scenarios/               # 预设场景数据
+│       └── scenarios/               # 中性预设场景数据
 ```
+
+## Scaffold 约束
+
+- `ScaffoldSection` 只用于验证模板可运行，不代表任何活动类型。
+- 复制模板创建新活动后，应先根据设计方案决定真实 Section 拆分。
+- 输出真实 Section 前必须先写组件设计卡，明确作用、展示方式、数据、交互、状态和边界。
+- 不要从 scaffold 默认状态推导业务状态；每个 Section 必须独立做状态适配。
+- 如果需要业务示例，应放在 `docs/` 或独立示例目录，不应放入 `apps/campaign-template` 复制源。
 
 ## 创建新 Section
 
@@ -73,7 +79,7 @@ designer/sections/<Name>/
   name: '<Name>Section',
   component: <Name>Section,
   defaultContent,
-  stateViews: { loading: <Name>Loading, empty: <Name>Empty, error: <Name>Error },
+  stateViews: { /* 只注册 supportedStates 中真实存在的 UI 状态 */ },
 }
 ```
 

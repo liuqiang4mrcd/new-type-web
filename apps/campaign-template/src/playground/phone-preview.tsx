@@ -6,7 +6,7 @@ const sections = registerSections();
 
 function PhonePreview() {
   return (
-    <main className="min-h-screen" style={{ background: '#0a1a0a' }}>
+    <main className="min-h-screen" style={{ background: '#f7f8fb' }}>
       {sections.map((section) => (
         <section.component
           key={section.id}
