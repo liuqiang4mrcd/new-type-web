@@ -37,6 +37,43 @@ designer/sections/<Name>/
 - `index.tsx` 不能 import store、API、埋点，所有数据通过 `content` props 传入
 - `types.ts` 中接口名以 `Content` 结尾
 - `content.ts` 导出名为 `defaultContent`
+- Section 实现必须保留第 2 步 Layout Spec 中声明的关键元素位置、尺寸、间距、对齐、层级和响应规则。
+- 交互实现必须以第 2 步 Interaction Spec 为唯一真源，`defaultActions`、`ACTION_WIRING`、`stateTransitions` 和 Runtime actions 命名必须与其一致。
+- 若实现时发现 Layout Spec 或 Interaction Spec 无法落地，必须暂停并回到结构规划/设计方案确认，禁止自行改结构或改 action 命名。
+
+## Layout Spec 保真要求
+
+代码输出必须区分关键元素和普通装饰：
+
+- **关键元素**：进度条、主按钮、抽奖入口、领取按钮、弹窗入口、排行榜、任务列表、奖励卡片等，必须按 Layout Spec 保留父级归属、相对顺序、尺寸规则、间距、对齐和层级。
+- **普通装饰**：背景光效、金币、丝带、纹理、角标等，可以在不破坏关键元素可读性和点击性的前提下微调。
+
+实现关键布局时必须优先使用明确的布局约束：
+
+- 固定设计稿尺寸使用 px，由 postcss-pxtorem 转换。
+- 重复项使用 grid/flex 明确列数、gap、padding 和对齐。
+- 进度条、按钮、卡片等固定格式元素必须给出稳定尺寸或 `min-height`，避免文案、状态和 hover 导致布局跳动。
+- 弹窗、浮层、sticky/fixed 元素必须明确层级和定位归属。
+
+禁止事项：
+
+- 禁止把原型图中的关键进度条、按钮、入口或列表当作可自由调整的装饰。
+- 禁止因为视觉参考图更好看而改变 Layout Spec 中锁定的模块顺序、父子关系或交互入口位置。
+- 禁止只凭自然语言印象重建布局；必须能追溯到结构锁定表中的 Layout Spec。
+
+## Interaction Spec 对齐要求
+
+交互代码输出必须能逐条追溯到 Interaction Spec：
+
+| Interaction Spec 字段 | 代码落点 |
+|---|---|
+| `actionHandler` | `section-registry.ts` 的 `defaultActions`、Runtime Container actions |
+| `targetSection` / `targetChange` | `phone-preview.tsx` 的 `ACTION_WIRING` 或 Runtime 状态更新 |
+| `userAction` | 视觉组件 `index.tsx` 中绑定的事件 |
+| `mutex` | disabled、loading、spinning、claimed 等互斥逻辑 |
+| `closeOrReset` | 弹窗关闭、状态复位或重新进入 idle 的 action |
+
+跨 Section 交互必须在 `phone-preview.tsx` 的 `ACTION_WIRING` 中体现；组件内部交互状态必须在 `content.ts` 的 `stateTransitions` 中体现。所有 TODO 占位必须在最终 4.3 收尾前清除。
 
 ### 状态声明要求
 

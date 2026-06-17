@@ -52,6 +52,9 @@ temperature: 0.3
 ### 第 2 步：结构规划
 - 按 `DESIGN.md` 的页面结构规范划分模块
 - 输出「结构锁定表」：原型图结构、可借鉴内容、禁止改动项（遵循 `DESIGN_INPUT.md` 要求）
+- **Layout Spec 几何锁定（强制）**：将原型图中的 Section 顺序、关键元素位置、尺寸、间距、对齐、层级和响应行为写成结构化表格。进度条、主按钮、领取按钮、抽奖入口、弹窗入口、任务列表、奖励卡片等关键元素必须进入强约束，禁止只用自然语言概括。
+- **Interaction Spec 交互链路（强制）**：将原型图中的所有关键交互写成结构化链路表，包含 `id / triggerSection / element / userAction / actionHandler / targetSection / targetChange / closeOrReset / mutex`。后续代码中的 `defaultActions`、`ACTION_WIRING`、`stateTransitions` 和 Runtime actions 命名必须与 Interaction Spec 对齐。
+- **不确定项清单（强制）**：列出无法从原型图稳定判断的关键布局或交互问题。Section 边界、关键元素归属、进度条/按钮父级、fixed/sticky/scroll/overlay 行为、弹窗触发与关闭方式等不确定时，必须先向设计师确认，禁止自行脑补后进入实现。
 - **状态适配分析（强制）**：每个 Section 必须先判断组件类型，再声明状态；禁止默认套用 loading/empty/error/ready 四状态。
   - 展示型静态组件（如 rule 说明、纯文案弹窗、装饰 Header）：通常不需要 loading/empty/error，只声明真实存在的业务/交互状态。
   - 数据展示组件（如奖励列表、排行榜、用户资产）：按数据来源判断是否需要 loading/empty/error。
@@ -65,7 +68,7 @@ temperature: 0.3
   - **设计状态转换图 (stateTransitions)**：将分析结果转化为 from/to/trigger 结构，每个交互状态转换必须定义触发方式（click/timeout/swipe）
   - 将分析结果以表格形式记入结构锁定表，`stateTransitions` 以 JSON 代码块形式附在表后
 - ✅ **产出**：结构锁定表（`.feedback/structure.md`），含各 Section 交互状态表
-- ✅ **新项目模式完成标准**：设计师已确认结构锁定表；**修改模式完成标准**：产出即可，无需确认
+- ✅ **新项目模式完成标准**：设计师已确认结构锁定表、Layout Spec、Interaction Spec，且关键不确定项已解决或被设计师接受为实现假设；**修改模式完成标准**：产出即可，无需确认，但关键不确定项仍必须先确认
 - ⚠️ **写入要求**：确认后，**立即使用 `write` 工具**写入项目根目录 `.feedback/structure.md`。进入第 3 步前必须确认文件已存盘。
 
 ### 第 3 步：视觉细化
@@ -81,6 +84,9 @@ temperature: 0.3
   - 项目概要（目标 app 目录、页面用途）
   - Section 拆分列表（每 Section 的名称、职责、关键数据字段）
   - 结构锁定表结论
+  - **Layout Spec 几何锁定表**（Section 级约束、关键元素级约束、普通装饰级约束）
+  - **Interaction Spec 交互链路表**（每条链路的 action 命名、目标 Section、目标状态变化、关闭/复位方式、互斥条件）
+  - **不确定项处理结果**（已确认结论或设计师接受的实现假设）
   - **各 Section 交互状态表**（状态列表、触发条件、组件表现、副作用、互斥关系、stateTransitions 图）
   - 视觉方向（配色、字体、关键组件样式）
   - 预计工作量与实施顺序
@@ -101,13 +107,15 @@ temperature: 0.3
 组件设计卡必须至少包含：
 - **具体作用**：该 Section 解决什么页面任务，是否承载业务数据、静态说明、操作入口或纯视觉氛围。
 - **展示方式**：布局结构、主次信息、视觉容器、是否需要列表/宫格/弹窗/转盘/进度条等形态。
+- **Layout Spec 引用**：列出本 Section 对应的 Section 级约束和关键元素级约束，明确必须保留的尺寸、间距、对齐、层级和响应行为。
+- **Interaction Spec 引用**：列出本 Section 作为触发方或目标方参与的交互链路 id，并声明对应 action handler、目标状态变化、关闭/复位方式和互斥条件。
 - **数据来源与字段**：哪些字段来自 `content`，哪些是纯展示常量，是否存在异步数据源。
 - **交互逻辑**：用户可点击/滑动/滚动/输入什么，触发什么 actions，是否需要禁用、节流、互斥。
 - **状态模型**：真实存在的 UI / business / interaction 状态，继承第 2 步状态适配分析的结论（禁止默认套用 loading/empty/error/ready）。
 - **边界场景**：长文案、多语言、空数据、无次数、已领取、活动未开始/已结束等该 Section 真实会遇到的情况。
 - **验收命令**：当前 Section 的单组件验证命令 `pnpm validate-section --campaign <campaign-name> <SectionName>`。
 
-组件设计卡必须写入 `.feedback/progress.md` 或独立 `.feedback/sections/<SectionName>.md`，并在对话中简要报告后，才能开始该 Section 的代码实现。
+组件设计卡必须写入 `.feedback/progress.md` 或独立 `.feedback/sections/<SectionName>.md`，并在对话中简要报告后，才能开始该 Section 的代码实现。若组件设计卡无法引用明确的 Layout Spec 或 Interaction Spec，必须先回到第 2 步补齐或向设计师确认，禁止直接写代码。
 
 #### 4.2 逐个 Section 实施循环
 
@@ -139,7 +147,7 @@ temperature: 0.3
 ## 4.3 Closeout Gate
 
 - [ ] 渲染顺序校验：section-registry.ts / app.tsx 与结构锁定表一致
-- [ ] 联动完整性校验：phone-preview.tsx ACTION_WIRING 覆盖全部跨 Section 交互，且无 TODO 占位
+- [ ] 联动完整性校验：按 Interaction Spec 逐条核对 defaultActions / ACTION_WIRING / stateTransitions / Runtime actions，且无 TODO 占位
 - [ ] 总验收：pnpm validate-section --campaign <campaign-name> --all
 - [ ] 移动 .feedback 文件：根目录 .feedback/ 已移动到 apps/<campaign>/.feedback/
 ```
@@ -147,7 +155,7 @@ temperature: 0.3
 逐项执行要求：
 
 1. **渲染顺序校验**：检查 `section-registry.ts` 和 `app.tsx` 的渲染顺序与结构锁定表定义的页面布局顺序一致（自上而下：主页面 Section → 弹窗/覆盖层 Section）
-2. **联动完整性校验**：检查 `phone-preview.tsx` 的 `ACTION_WIRING` 覆盖结构锁定表中所有跨 Section 交互链路，移除所有 TODO 占位
+2. **联动完整性校验**：按 Interaction Spec 逐条检查 `section-registry.ts` 的 `defaultActions`、`phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 和 Runtime actions 命名是否一致，覆盖结构锁定表中所有跨 Section 交互链路，移除所有 TODO 占位
 3. **总验收**：`pnpm validate-section --campaign <campaign-name> --all`
 4. **移动 .feedback 文件**：将根目录 `.feedback/` 整个移动到 `apps/<campaign>/.feedback/`
 
