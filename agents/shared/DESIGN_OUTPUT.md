@@ -149,7 +149,7 @@ export const stateTransitions: StateTransition[] = [
 - `trigger.type` 支持: `click`（用户点击）、`timeout`（自动定时）、`swipe`（滑动）、`scroll`（滚动）
 - `trigger.handler` 对应 `actions` props 中的回调函数名
 - `trigger.duration` 仅用于 `type: 'timeout'`，单位 ms
-- 可选 `animation` 字段：`animation?: { type: 'slide' | 'fade' | 'scale', duration: number, timing: string }`，用于声明状态转换时的动效
+- 可选 `animation` 字段：`animation?: { type: 'slide' | 'fade' | 'scale', duration: number, easing: string }`，用于声明状态转换时的动效
 
 ## Playground 注册
 

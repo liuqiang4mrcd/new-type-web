@@ -41,6 +41,53 @@ temperature: 0.3
 >
 > **反馈系统**：以下每个步骤有明确的完成标准，AI 完成后必须自检通过才可进入下一步。结构验证工具：`pnpm validate-section --campaign <campaign-name> <SectionName>`；单 Section 实施门禁：`pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 
+### 全局流程进度（必须）
+
+`.feedback/progress.md` 是 designer 任务的全局 process ledger 和上下文恢复源，必须从第 1 步开始创建并持续维护。
+
+职责边界：
+
+- `.feedback/demand.md` / `.feedback/structure.md` / `.feedback/design.md` 记录各阶段产物内容。
+- `.feedback/progress.md` 记录流程阶段、当前门禁、已完成检查项、下一步动作和恢复规则。
+- 对话上下文可用于理解近期交互，但上下文压缩、对话中断或阶段不确定时，必须以 `.feedback/progress.md` 为恢复入口。
+
+进入每个阶段前后都必须更新 `.feedback/progress.md`：
+
+```md
+# Designer Task Progress
+
+## Execution Context
+
+- Campaign: `<campaign-name | pending>`
+- Target app: `apps/<campaign-name> | pending`
+- Mode: `new-project | modification`
+- Current phase: `demand | structure | visual-design | approval | section-implementation | final-closeout | completed`
+- Current gate: `<具体门禁或当前 Section>`
+- Resume rule: read this file first; continue only from Current phase / Current gate; if files and this ledger conflict, audit and update this ledger before proceeding.
+
+## Global Flow
+
+- [ ] Step 1 demand collected and written to `.feedback/demand.md`
+- [ ] Step 1 demand confirmed by designer
+- [ ] Step 2 structure, Layout Spec, Interaction Spec, uncertainty list, and state analysis written to `.feedback/structure.md`
+- [ ] Step 2 structure confirmed by designer
+- [ ] Step 3 visual design written to `.feedback/design.md`
+- [ ] Step 3 visual design confirmed by designer
+- [ ] Step 3.5 complete design proposal presented
+- [ ] Step 3.5 designer confirmed implementation can start
+- [ ] Step 4 implementation ledger initialized
+- [ ] Step 4 Section loop completed
+- [ ] Step 4 Final Closeout Gate completed
+
+## Current Notes
+
+- Last completed action:
+- Next required action:
+- Blocking questions:
+```
+
+第 4 步开始时，在同一个 `.feedback/progress.md` 中追加并维护 Section Implementation Progress、Section Loop Checklist 和 Final Closeout Gate；禁止另起只覆盖实现阶段的进度文件。
+
 ### 第 1 步：需求收集
 
 - 明确活动类型（抽奖/充值/排行榜/品牌宣传等）
@@ -49,7 +96,7 @@ temperature: 0.3
 - 明确目标受众和终端（默认移动端 H5）
 - ✅ **产出**：需求摘要文档（`.feedback/demand.md`）
 - ✅ **完成标准**：需求摘要覆盖 5 项信息，设计师已书面确认
-- ⚠️ **写入要求**：产出确认后，立即写入项目根目录 `.feedback/demand.md`（此时项目 `apps/<campaign>/` 尚未创建）。禁止仅在对话中输出内容而不写入文件。下一步开始前必须确认文件已存盘。
+- ⚠️ **写入要求**：第 1 步开始时先创建或更新项目根目录 `.feedback/progress.md`；产出确认后，立即写入项目根目录 `.feedback/demand.md`（此时项目 `apps/<campaign>/` 尚未创建），并更新 `.feedback/progress.md` 的 Global Flow、Current phase 和 Next required action。禁止仅在对话中输出内容而不写入文件。下一步开始前必须确认文件已存盘。
 
 ### 第 2 步：结构规划
 
@@ -72,7 +119,7 @@ temperature: 0.3
   - 将分析结果以表格形式记入结构锁定表，`stateTransitions` 以 JSON 代码块形式附在表后
 - ✅ **产出**：结构锁定表（`.feedback/structure.md`），含各 Section 交互状态表
 - ✅ **新项目模式完成标准**：设计师已确认结构锁定表、Layout Spec、Interaction Spec，且关键不确定项已解决或被设计师接受为实现假设；**修改模式完成标准**：产出即可，无需确认，但关键不确定项仍必须先确认
-- ⚠️ **写入要求**：确认后，立即写入项目根目录 `.feedback/structure.md`。进入第 3 步前必须确认文件已存盘。
+- ⚠️ **写入要求**：确认后，立即写入项目根目录 `.feedback/structure.md`，并更新 `.feedback/progress.md`。进入第 3 步前必须确认文件已存盘。
 
 ### 第 3 步：视觉细化
 
@@ -81,7 +128,7 @@ temperature: 0.3
 - **多轮迭代**：设计师可多次提出修改意见，AI 修改后重新确认，直到设计师说 OK
 - ✅ **产出**：完整设计说明（`.feedback/design.md`）
 - ✅ **完成标准**：设计师已书面确认设计说明
-- ⚠️ **写入要求**：最终确认后，立即写入项目根目录 `.feedback/design.md`。
+- ⚠️ **写入要求**：最终确认后，立即写入项目根目录 `.feedback/design.md`，并更新 `.feedback/progress.md`。
 
 ### 第 3.5 步：设计方案审批（新项目模式必须）
 
@@ -97,7 +144,7 @@ temperature: 0.3
   - 预计工作量与实施顺序
 - 以清晰的结构呈现给设计师，**等待设计师书面确认**
 - ✅ **产出**：设计方案摘要（与用户对话中直接呈现）
-- ✅ **完成标准**：设计师已书面确认「可以开始实现」
+- ✅ **完成标准**：设计师已书面确认「可以开始实现」，并已更新 `.feedback/progress.md` 的 Step 3.5 和 Current phase
 
 ### 第 4 步：方案输出
 
@@ -134,7 +181,15 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 
 #### 4.2 逐个 Section 实施循环
 
-第 4 步开始前，必须根据第 3.5 步确认的 Section 拆分创建 `.feedback/progress.md`，列出每个 Section 的 `planned / implementing / implemented / validated` 状态。
+第 4 步开始前，必须根据第 3.5 步确认的 Section 拆分更新既有 `.feedback/progress.md`，并使用 `docs/ai/section-implementation-gate.md` 中的实现阶段模板一次性追加后续全部流程：
+
+- Execution Context
+- Section Implementation Progress
+- Current Gate
+- Section Loop Checklist
+- Final Closeout Gate
+
+`.feedback/progress.md` 是 designer 任务全局恢复源，不能只记录 Section implementation 进度。上下文压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `.feedback/progress.md`，按 `Current phase`、`Current Gate` 和 checklist 恢复；如果代码状态与 progress 记录冲突，必须先审计并更新 progress，再继续实现。
 
 对每个 Section，严格按以下顺序闭环：
 

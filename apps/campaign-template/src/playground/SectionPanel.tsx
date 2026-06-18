@@ -16,11 +16,24 @@ export function SectionPanel({
   const [status, setStatus] = useState<SectionStatus>("ready");
   const [showMenu, setShowMenu] = useState(false);
 
-  const statuses: SectionStatus[] = ["ready", "loading", "empty", "error"];
+  const stateViewStatuses = Object.keys(section.stateViews) as SectionStatus[];
+  const statuses: SectionStatus[] = [
+    "ready",
+    ...stateViewStatuses.filter((s) => s !== "ready"),
+  ];
+  const showStatusMenu = showMenu && statuses.length > 1;
   const isDialogSection = Object.prototype.hasOwnProperty.call(
     section.defaultContent,
     "isOpen",
   );
+  const statusLabels: Partial<Record<SectionStatus, string>> = {
+    ready: "正常",
+    loading: "加载",
+    empty: "空态",
+    error: "错误",
+    disabled: "禁用",
+    spinning: "动画",
+  };
 
   const renderContent = () => {
     if (status !== "ready" && section.stateViews[status]) {
@@ -51,7 +64,7 @@ export function SectionPanel({
         <span className="text-sm font-medium text-gray-700">
           {section.name}
         </span>
-        {showMenu && (
+        {showStatusMenu && (
           <div className="flex items-center gap-1">
             <span className="text-xs text-gray-400 mr-1">状态:</span>
             {statuses.map((s) => (
@@ -64,13 +77,7 @@ export function SectionPanel({
                 }`}
                 onClick={() => setStatus(s)}
               >
-                {s === "ready"
-                  ? "正常"
-                  : s === "loading"
-                    ? "加载"
-                    : s === "empty"
-                      ? "空态"
-                      : "错误"}
+                {statusLabels[s] ?? s}
               </button>
             ))}
           </div>

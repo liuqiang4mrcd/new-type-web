@@ -159,9 +159,9 @@ tests:
 - `playground/section-registry.ts` 的 `stateViews` 注册。
 - Runtime Container 中对应 `case 'loading' / 'empty' / 'error'` 分支。
 
-## 验证检查清单（Layer 0 — 16 项）
+## 验证检查清单（Layer 0 — 17 项）
 
-`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 16 项检查：
+`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 17 项检查：
 
 | #   | 检查项                | 说明                                                                             |
 | --- | --------------------- | -------------------------------------------------------------------------------- |
@@ -195,10 +195,28 @@ tests:
 - 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
 
-## `.feedback/progress.md` 模板
+## `.feedback/progress.md` 实现阶段模板
+
+`.feedback/progress.md` 是 designer 任务的全局 process ledger。第 4 步进入实现阶段时，必须在既有 `.feedback/progress.md` 中追加以下实现阶段账本，并预置后续所有 Final Closeout Gate 任务。
+
+当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `.feedback/progress.md`，按全局 `Current phase`、实现阶段 `Current Gate` 和下方 checklist 恢复，不得凭对话记忆继续执行。
 
 ```md
-# Section Implementation Progress
+# Designer Task Progress
+
+<!-- 第 1-3.5 步的 Global Flow 由 agents/designer.md 维护；以下内容为第 4 步追加区块。 -->
+
+## Section Implementation Progress
+
+## Execution Context
+
+- Campaign: `<campaign-name>`
+- Target app: `apps/<campaign-name>`
+- Source template: `apps/campaign-template`
+- Mode: `new-project`
+- Design package confirmed: yes
+- Current phase: `section-implementation | final-closeout | completed`
+- Resume rule: continue from global Current phase and implementation Current Gate; if code and this file conflict, audit and update this file before implementing.
 
 | Order | Section            | Implemented | Single Validation | Command                                                                 | Result  |
 | ----: | ------------------ | ----------- | ----------------- | ----------------------------------------------------------------------- | ------- |
@@ -211,15 +229,18 @@ tests:
 - Current Section: `<SectionName>`
 - Status: `planned | implementing | implemented | validating | validated`
 - Last validation output: `pending`
-```
 
-## 最终验收
+## Section Loop Checklist
 
-所有 Section 均完成单独验证后，必须进入最终收尾门禁。**单 Section 全部通过后不能直接宣布完成；`--all` 只是收尾门禁中的一项。**
+- [ ] All component cards written under `.feedback/sections/` or this file.
+- [ ] All spec tests generated from component cards.
+- [ ] All Sections implemented.
+- [ ] All Sections registered in Playground in locked structure order.
+- [ ] All Runtime Containers created and rendered in locked structure order.
+- [ ] All required Store actions implemented.
+- [ ] All phone-preview `ACTION_WIRING` entries completed.
+- [ ] Every Section has passed its own `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`.
 
-先在 `.feedback/progress.md` 中追加并维护以下清单：
-
-```md
 ## Final Closeout Gate
 
 - [ ] Render order checked: `playground/section-registry.ts` and `runtime/app.tsx` match the locked structure order.
@@ -227,10 +248,16 @@ tests:
 - [ ] Playground wiring checked: every Interaction Spec item is mapped to defaultActions / ACTION_WIRING / stateTransitions and contains no TODO placeholders.
 - [ ] Runtime wiring checked: every cross-Section targetChange has a Store action and every Runtime Container binds that action; console.log-only handlers are allowed only for external/no-target interactions.
 - [ ] All sections validation passed: `pnpm validate-section --campaign <campaign-name> --all`
-- [ ] Unit spec tests passed: `pnpm test:unit -- apps/<campaign-name>/src`
+- [ ] Unit spec tests passed: `pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src`
 - [ ] Build passed: `pnpm --filter @new-type/<campaign-name> build`
 - [ ] Feedback archived: root `.feedback/` moved to `apps/<campaign-name>/.feedback/`
 ```
+
+## 最终验收
+
+所有 Section 均完成单独验证后，必须进入最终收尾门禁。**单 Section 全部通过后不能直接宣布完成；`--all` 只是收尾门禁中的一项。**
+
+Final Closeout Gate 必须已在进入第 4 步时预置到 `.feedback/progress.md`。执行最终验收时逐项勾选并记录结果，禁止等到最后才追加 checklist。
 
 逐项执行：
 

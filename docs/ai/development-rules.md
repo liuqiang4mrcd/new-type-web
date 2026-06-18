@@ -14,7 +14,7 @@
 
 | 目录            | 负责人   | 职责                      | AI 能否修改 |
 | --------------- | -------- | ------------------------- | ----------- |
-| `designer/`     | 设计师   | 纯视觉组件、展示数据      | 仅 content  |
+| `designer/`     | 设计师   | 纯视觉组件、展示数据      | ✅ 目标活动内可创建/修改 |
 | `runtime/`      | AI       | 连接 store 和视觉组件     | ✅ 主力     |
 | `integrations/` | 开发者   | Store / API / 埋点 / 配置 | 按需        |
 | `playground/`   | 设计师   | 预览环境、Section 注册、流程预览 | ✅ 按需     |
@@ -24,12 +24,12 @@
 
 | 场景                    | 改什么文件                                                  | 禁止做的事                  |
 | ----------------------- | ----------------------------------------------------------- | --------------------------- |
-| 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index}.tsx` + 条件 `states.tsx` | 不要调用 store 或 API       |
+| 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index}.tsx` + 条件 `states.tsx` | 不要调用 store 或 API；不要修改 `apps/campaign-template/` 业务实现 |
 | 新 section 连接数据     | `runtime/sections/<Name>Container.tsx`                      | 不要改 visual 组件          |
 | 新 section 预览注册     | `playground/section-registry.ts` / `playground/scenarios/*` / `playground/phone-preview.tsx` | 不要接入真实 Store 或 API |
 | 数据接口变更            | `types.ts`（改接口）+ `runtime/`（改容器）                  | 不要直接改 index.tsx        |
 | 新增 API / Store / 埋点 | `integrations/{store,api,tracking}.ts`                      | 不要绕开 integrations       |
-| 设计师调整视觉          | 不动，由设计师手动改                                        | AI 绝不自动改 designer 代码 |
+| 设计师调整视觉          | 按用户明确范围修改目标活动的 `designer/sections/*`           | 不要越界修改模板、共享包或未确认的视觉结构 |
 
 ## 引用规则
 
@@ -204,7 +204,7 @@ pnpm validate-section --campaign <campaign> --all
 
 | 层                     | 工具                          | 覆盖范围                                                               | 触发时机                    |
 | ---------------------- | ----------------------------- | ---------------------------------------------------------------------- | --------------------------- |
-| Layer 0 — AST 静态检查 | `scripts/validate-section.ts` | 16 项检查：文件完整性、类型声明、状态覆盖、Playground 注册、分层边界等 | 每次 Section 改动后立即执行 |
+| Layer 0 — AST 静态检查 | `scripts/validate-section.ts` | 17 项检查：文件完整性、类型声明、状态覆盖、Playground 注册、Runtime 联动、分层边界等 | 每次 Section 改动后立即执行 |
 | Layer 1 — 单元测试     | Vitest + jsdom                | 组件渲染、状态转换逻辑、事件处理边界                                   | Section 含交互逻辑时        |
 | Layer 2 — 集成测试     | Playwright                    | 交互全链路、动效验证、多 Section 协作                                  | Section 交互逻辑稳定后      |
 
@@ -214,7 +214,7 @@ pnpm validate-section --campaign <campaign> --all
 pnpm validate-section --campaign <campaign-name> <SectionName>
 ```
 
-> 16 项检查清单、单 Section 验证流程和 `--all` 总验收见 `docs/ai/section-implementation-gate.md`。
+> 17 项检查清单、单 Section 验证流程和 `--all` 总验收见 `docs/ai/section-implementation-gate.md`。
 
 ### 交互状态机与 Actions Props 模式
 
