@@ -39,7 +39,7 @@ temperature: 0.3
 > - **新项目模式**（「创建新活动页面」场景）：必须依次走完 1-4 步，第 2 步和第 3 步产出均需设计师确认，进入第 4 步前必须输出完整设计方案提案并等待用户书面确认。
 > - **修改模式**（修改样式/布局/调整视觉）：可直接进入第 3 或第 4 步，但每次修改前必须先明确修改范围和预期效果。
 >
-> **反馈系统**：以下每个步骤有明确的完成标准，AI 完成后必须自检通过才可进入下一步。结构验证工具：`pnpm validate-section --campaign <campaign-name> <SectionName>`；单 Section 实施门禁：`pnpm verify-section --campaign <campaign-name> <SectionName>`。
+> **反馈系统**：以下每个步骤有明确的完成标准，AI 完成后必须自检通过才可进入下一步。结构验证工具：`pnpm validate-section --campaign <campaign-name> <SectionName>`；单 Section 实施门禁：`pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 
 ### 第 1 步：需求收集
 
@@ -120,7 +120,7 @@ temperature: 0.3
 - **状态模型**：真实存在的 UI / business / interaction 状态，继承第 2 步状态适配分析的结论（禁止默认套用 loading/empty/error/ready）。
 - **边界场景**：长文案、多语言、空数据、无次数、已领取、活动未开始/已结束等该 Section 真实会遇到的情况。
 - **Acceptance Tests（强制）**：用 `## Acceptance Tests` YAML 写出该 Section 的功能验收规格，覆盖用户可见行为、关键交互、状态变化、弹窗开关、按钮禁用和 action 调用。该 YAML 是 `*.spec.test.tsx` 的唯一源头。
-- **验收命令**：当前 Section 的单组件验证命令 `pnpm verify-section --campaign <campaign-name> <SectionName>`。
+- **验收命令**：当前 Section 的单组件验证命令 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 
 组件设计卡必须写入 `.feedback/progress.md` 或独立 `.feedback/sections/<SectionName>.md`，并在对话中简要报告后，才能开始该 Section 的代码实现。若组件设计卡无法引用明确的 Layout Spec 或 Interaction Spec，必须先回到第 2 步补齐或向设计师确认，禁止直接写代码。
 
@@ -144,7 +144,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 4. **Playground 注册** → 在 `section-registry.ts` 中插入到结构锁定表定义的页面位置，**禁止追加到末尾**
 5. **Runtime 注册** → 创建 Container、更新 Store、在 `app.tsx` 中插入到正确 JSX 位置。若 Interaction Spec 中该 Section 的 `targetSection` 不是 `self`，或 `targetChange` 会改变其他 Section 的 `content/status`，必须在 `integrations/store.ts` 中创建对应 Runtime action，并在 Container 中绑定该 action；禁止用 `console.log` 代替 Runtime 状态变化。
 6. **全页预览联动**：若本 Section 有动作会触发其他弹窗（或本 Section 是弹窗被其他触发），同步更新 `phone-preview.tsx` 中的 `ACTION_WIRING` 映射表。若触发方或弹窗方尚未实现，用 `// TODO` 占位，在全部完成后再补全。`ACTION_WIRING` 只代表 Playground 联动，不代表 Runtime 联动完成。
-7. **单 Section 验证**：`pnpm verify-section --campaign <campaign-name> <SectionName>`，结构检查、规格测试和已有 regression 测试全部通过
+7. **单 Section 验证**：`pnpm --silent verify-section --campaign <campaign-name> <SectionName>`，结构检查、规格测试和已有 regression 测试全部通过
 8. **更新进度**：`.feedback/progress.md` 标记为 `validated`，并在对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests`
 
 **关键约束：**
@@ -192,7 +192,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 
 #### 4.7 自动验证与 Code Review
 
-- ✅ **自动验证**：每 Section 完成后执行 `pnpm verify-section --campaign <campaign-name> <SectionName>`，全部完成后执行 `pnpm validate-section --campaign <campaign-name> --all`、`pnpm test:unit -- apps/<campaign-name>/src`
+- ✅ **自动验证**：每 Section 完成后执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`，全部完成后执行 `pnpm validate-section --campaign <campaign-name> --all`、`pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src`
 - ✅ **Code Review**：开发者审查代码
   - 级别 1（lint/类型错误）：AI 自修，无需人工
   - 级别 2（状态缺失/边界违规）：AI 修复 + 人工确认

@@ -1,7 +1,7 @@
-import type { ValidationReport, SectionValidationResult } from './types';
+import type { ValidationReport, SectionValidationResult } from "./types";
 
 export function buildReport(
-  target: 'all' | string,
+  target: "all" | string,
   results: SectionValidationResult[],
 ): ValidationReport {
   let totalChecks = 0;
@@ -38,4 +38,33 @@ export function buildReport(
 
 export function printReport(report: ValidationReport): string {
   return JSON.stringify(report, null, 2);
+}
+
+export function printCompactReport(report: ValidationReport): string {
+  const { summary } = report;
+  const passedChecks =
+    summary.totalChecks - summary.failedChecks - summary.skippedChecks;
+  const lines = [
+    `${summary.failedChecks > 0 ? "FAIL" : "OK"} validate-section ${report.target}`,
+    `sections: ${summary.passedSections}/${summary.totalSections} passed, checks: ${passedChecks}/${summary.totalChecks} passed, skipped: ${summary.skippedChecks}`,
+  ];
+
+  for (const result of report.results) {
+    const failedChecks = result.checks.filter(
+      (check) => !check.passed && !check.skipped,
+    );
+    if (failedChecks.length === 0) {
+      continue;
+    }
+
+    lines.push("", `${result.section}: ${failedChecks.length} failed check(s)`);
+    for (const failedCheck of failedChecks) {
+      lines.push(`- ${failedCheck.name}`);
+      for (const error of failedCheck.errors) {
+        lines.push(`  ${error}`);
+      }
+    }
+  }
+
+  return lines.join("\n");
 }

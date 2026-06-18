@@ -23,7 +23,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 10. 立即运行单组件验证：
 
 ```bash
-pnpm verify-section --campaign <campaign-name> <SectionName>
+pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 ```
 
 11. 单组件结构检查和规格测试全部通过后，更新 `.feedback/progress.md`。
@@ -64,7 +64,7 @@ pnpm verify-section --campaign <campaign-name> <SectionName>
   - Spec source: `.feedback/sections/<SectionName>.md`
   - Generated spec test: `apps/<campaign-name>/src/designer/sections/<SectionName>/__tests__/<SectionName>.spec.test.tsx`
   - Regression test: `apps/<campaign-name>/src/designer/sections/<SectionName>/__tests__/<SectionName>.regression.test.tsx`
-- Validation command: `pnpm verify-section --campaign <campaign-name> <SectionName>`
+- Validation command: `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`
 ```
 
 如果组件设计卡无法判断布局、关键元素归属、状态或交互，必须先补充分析，不能先写代码。
@@ -140,7 +140,7 @@ tests:
 | `<SectionName>.spec.test.tsx`       | 自动生成，可被覆盖 | 从 Component Card 的 `Acceptance Tests` 生成，禁止手改 |
 | `<SectionName>.regression.test.tsx` | 人工维护           | 补充历史 bug、边界场景和非规格回归用例，生成器永不触碰 |
 
-`pnpm verify-section --campaign <campaign> <SectionName>` 每次都会重新生成 `*.spec.test.tsx`，然后运行当前 Section 的 spec 测试；如果 regression 测试文件存在，也会一并运行。
+`pnpm --silent verify-section --campaign <campaign> <SectionName>` 每次都会重新生成 `*.spec.test.tsx`，然后运行当前 Section 的 spec 测试；如果 regression 测试文件存在，也会一并运行。
 
 ## 状态适配规则
 
@@ -163,24 +163,24 @@ tests:
 
 `pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 16 项检查：
 
-| #   | 检查项                | 说明                                                            |
-| --- | --------------------- | --------------------------------------------------------------- |
-| 1   | Section 文件完整性    | types/content/index 是否存在；states 由 UI 状态覆盖检查按需验证 |
-| 2   | supportedStates 声明  | content.ts 中是否导出了 supportedStates                         |
-| 3   | stateData 声明        | content.ts 中是否导出了 stateData                               |
-| 4   | UI 状态组件覆盖       | states.tsx 是否导出了所有 required UI 组件                      |
-| 5   | 业务状态数据覆盖      | stateData 是否包含所有 required 业务状态                        |
-| 6   | 反向一致性            | stateData 的 key 都在 supportedStates 中声明                    |
-| 7   | Playground 注册       | section-registry.ts 中已注册                                    |
-| 8   | stateViews 对齐       | 注册项的 stateViews 覆盖所有 UI 状态                            |
-| 9   | Runtime Container     | runtime/sections/ 下有对应 Container                            |
-| 10  | Container 路由完整性  | Container switch 覆盖 loading/empty/error/ready                 |
-| 11  | Store 对齐            | store 中有 SectionState&lt;NameContent&gt;                      |
-| 12  | Runtime 注册          | runtime/app.tsx 中已 import 并渲染 Container                    |
-| 13  | stateTransitions 声明 | 交互 Section 已声明状态转换                                     |
-| 14  | 声明完整性            | stateTransitions 的 from/to 均在 supportedStates 中             |
-| 15  | 状态可达性            | 从初始状态出发，所有交互状态可达                                |
-| 16  | 分层边界检查          | index.tsx 未违规 import useStore/API/埋点                       |
+| #   | 检查项                | 说明                                                                             |
+| --- | --------------------- | -------------------------------------------------------------------------------- |
+| 1   | Section 文件完整性    | types/content/index 是否存在；states 由 UI 状态覆盖检查按需验证                  |
+| 2   | supportedStates 声明  | content.ts 中是否导出了 supportedStates                                          |
+| 3   | stateData 声明        | content.ts 中是否导出了 stateData                                                |
+| 4   | UI 状态组件覆盖       | states.tsx 是否导出了所有 required UI 组件                                       |
+| 5   | 业务状态数据覆盖      | stateData 是否包含所有 required 业务状态                                         |
+| 6   | 反向一致性            | stateData 的 key 都在 supportedStates 中声明                                     |
+| 7   | Playground 注册       | section-registry.ts 中已注册                                                     |
+| 8   | stateViews 对齐       | 注册项的 stateViews 覆盖所有 UI 状态                                             |
+| 9   | Runtime Container     | runtime/sections/ 下有对应 Container                                             |
+| 10  | Container 路由完整性  | Container switch 覆盖 loading/empty/error/ready                                  |
+| 11  | Store 对齐            | store 中有 SectionState&lt;NameContent&gt;                                       |
+| 12  | Runtime 注册          | runtime/app.tsx 中已 import 并渲染 Container                                     |
+| 13  | stateTransitions 声明 | 交互 Section 已声明状态转换                                                      |
+| 14  | 声明完整性            | stateTransitions 的 from/to 均在 supportedStates 中                              |
+| 15  | 状态可达性            | 从初始状态出发，所有交互状态可达                                                 |
+| 16  | 分层边界检查          | index.tsx 未违规 import useStore/API/埋点                                        |
 | 17  | Runtime 联动实现      | `ACTION_WIRING` 中跨 Section action 在 Runtime Container 中不是 console.log-only |
 
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
@@ -200,11 +200,11 @@ tests:
 ```md
 # Section Implementation Progress
 
-| Order | Section            | Implemented | Single Validation | Command                                                        | Result  |
-| ----: | ------------------ | ----------- | ----------------- | -------------------------------------------------------------- | ------- |
-|     1 | HeroSection        | [ ]         | [ ]               | `pnpm verify-section --campaign <campaign> HeroSection`        | pending |
-|     2 | UserBalanceSection | [ ]         | [ ]               | `pnpm verify-section --campaign <campaign> UserBalanceSection` | pending |
-|     3 | PrizeSection       | [ ]         | [ ]               | `pnpm verify-section --campaign <campaign> PrizeSection`       | pending |
+| Order | Section            | Implemented | Single Validation | Command                                                                 | Result  |
+| ----: | ------------------ | ----------- | ----------------- | ----------------------------------------------------------------------- | ------- |
+|     1 | HeroSection        | [ ]         | [ ]               | `pnpm --silent verify-section --campaign <campaign> HeroSection`        | pending |
+|     2 | UserBalanceSection | [ ]         | [ ]               | `pnpm --silent verify-section --campaign <campaign> UserBalanceSection` | pending |
+|     3 | PrizeSection       | [ ]         | [ ]               | `pnpm --silent verify-section --campaign <campaign> PrizeSection`       | pending |
 
 ## Current Gate
 
@@ -248,7 +248,7 @@ pnpm validate-section --campaign <campaign-name> --all
 7. 运行全量单元测试：
 
 ```bash
-pnpm test:unit -- apps/<campaign-name>/src
+pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src
 ```
 
 8. 运行 build：
