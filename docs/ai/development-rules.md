@@ -169,7 +169,7 @@ interface ScenarioStep {
 - 阶段差异通过 `content` 覆盖表达，不能靠临时文案
 
 > 流程预览的验收要求见 `docs/ai/section-implementation-gate.md` §最终验收。
-> `actions` 联动和 `phone-preview.tsx` 的 ACTION_WIRING 细节见 `agents/designer.md` §4.5。
+> `actions` 联动和 `phone-preview.tsx` 的 ACTION_WIRING 细节见 `agents/skills/section-implementation/SKILL.md`。
 
 ### 弹窗交互规则
 

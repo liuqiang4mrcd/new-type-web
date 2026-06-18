@@ -184,7 +184,7 @@ tests:
 | 17  | Runtime 联动实现      | `ACTION_WIRING` 中跨 Section action 在 Runtime Container 中不是 console.log-only |
 
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
-> 弹窗 Section 实现要求、phone-preview.tsx ACTION_WIRING 联动见 `agents/designer.md` §4.4-4.5。
+> 弹窗 Section 实现要求、phone-preview.tsx ACTION_WIRING 联动见 `agents/skills/section-implementation/SKILL.md`。
 
 ## 禁止事项
 

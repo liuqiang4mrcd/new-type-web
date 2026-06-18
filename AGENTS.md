@@ -62,6 +62,7 @@ packages/
 ### 核心原则
 
 - **项目优先**：任何时候项目 `agents/*.md` 中的 agent 能覆盖当前需求，就不应加载外部 skill。
+- **项目内 skill 例外**：`designer` agent 可按自身编排流程加载 `agents/skills/*/SKILL.md`，这些是项目 agent 的内部能力模块，不属于外部 skill。
 - **不绕路**：项目 agent 的工作流程（如 designer 的第 1 步需求收集）已经内嵌了需求探索能力，不需要用 brainstorming / grill 等外部 skill 替代其职责。
 - **自问自答**：在执行任何 skill 加载前，先过一遍 Q1→Q2→Q3，确认项目 agent 确实无法处理，再考虑外部 skill。
 
@@ -84,7 +85,12 @@ packages/
 
 ```
 agents/
-├── designer.md          # AI 设计师助手 — 与设计师交互，辅助设计 H5 活动页
+├── designer.md          # AI 设计师助手 — H5 活动页流程编排者
+├── skills/              # designer 调用的项目内能力模块
+│   ├── design-input/SKILL.md          # 需求收集、素材分析、结构规划
+│   ├── visual-design/SKILL.md         # 视觉细化与视觉修改
+│   ├── section-implementation/SKILL.md # Section 实施、Playground/Runtime/Store 联动
+│   └── section-verification/SKILL.md  # 单 Section 验证与最终收尾
 └── shared/
     ├── DESIGN.md        # H5 活动页设计规范（画布、布局、色彩、字体、组件尺寸等）
     ├── DESIGN_INPUT.md  # 设计素材输入规则（原型图/视觉参考图职责边界）
@@ -92,6 +98,7 @@ agents/
 ```
 
 - `agents/*.md` — 可调用的 agent 定义
+- `agents/skills/*/SKILL.md` — 项目内能力模块，由 `designer` agent 按阶段加载，不直接替代项目 agent
 - `agents/shared/*.md` — 被 agent 或 skill 引用的共享规则文档，不可直接调用
 
 ## 自动触发规则
@@ -114,6 +121,10 @@ agents/
 
 设计依据：
 - `agents/designer.md` — designer agent 定义
+- `agents/skills/design-input/SKILL.md` — 需求收集、素材分析与结构规划
+- `agents/skills/visual-design/SKILL.md` — 视觉细化
+- `agents/skills/section-implementation/SKILL.md` — Section 实施与联动
+- `agents/skills/section-verification/SKILL.md` — 验证与最终收尾
 - `agents/shared/DESIGN.md` — 设计规范底线
 - `agents/shared/DESIGN_INPUT.md` — 素材输入与冲突处理规则
 - `agents/shared/DESIGN_OUTPUT.md` — 端到端实施范围与格式规范
@@ -126,9 +137,9 @@ agents/
 
 - 必须在 `apps/<campaign-name>/` 下创建独立项目。
 - `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
-- 写代码前必须先确认目标 app 目录；如果目标 app 不存在，先复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
-- 推荐使用 `pnpm create-campaign <campaign-name>` 创建项目，避免手动落错目录。
+- 写代码前必须先确认目标 app 目录；如果目标 app 不存在，必须优先使用 `pnpm create-campaign <campaign-name>` 创建项目。
+- 只有当 `pnpm create-campaign` 不可用或明确失败且原因已记录时，才允许手动复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
 - 业务 Section、runtime、store、playground 注册都只能写入目标 app。
 - 完成前必须检查 `apps/campaign-template` 无非预期 diff。
-- 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm validate-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `--all` 只能作为总验收。
-- Section 状态适配、流程预览、弹窗交互等实施细节见 `agents/designer.md` 工作流程。
+- 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `validate-section --all` 只能作为总验收的一项。
+- Section 状态适配、流程预览、弹窗交互等实施细节见 `agents/skills/section-implementation/SKILL.md`。
