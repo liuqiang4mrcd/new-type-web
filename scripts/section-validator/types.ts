@@ -59,8 +59,14 @@ export interface ParsedStatesModule {
 }
 
 export interface ParsedRegistryEntry {
+  id?: string;
   name?: string;
   stateViewKeys: string[];
+}
+
+export interface ParsedActionWiring {
+  sectionId: string;
+  actionNames: string[];
 }
 
 export interface ParsedContainerModule {

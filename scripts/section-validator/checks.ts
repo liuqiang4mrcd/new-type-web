@@ -17,6 +17,7 @@ import {
   parseStateTransitions,
   parseRuntimeApp,
   checkLayerViolations,
+  parseActionWiring,
 } from './parsers';
 
 function check(partial: {
@@ -597,11 +598,116 @@ function checkLayerBoundaries(
   });
 }
 
+function findPropertyValue(source: string, propertyName: string): string | null {
+  const propertyRe = new RegExp(`${propertyName}\\s*:`, 'g');
+  const match = propertyRe.exec(source);
+  if (!match) return null;
+
+  let index = match.index + match[0].length;
+  while (index < source.length && /\s/.test(source[index])) index++;
+
+  const start = index;
+  let depth = 0;
+  let quote: string | null = null;
+  for (; index < source.length; index++) {
+    const char = source[index];
+    const prev = source[index - 1];
+
+    if (quote) {
+      if (char === quote && prev !== '\\') quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      continue;
+    }
+    if (char === '(' || char === '{' || char === '[') depth++;
+    if (char === ')' || char === '}' || char === ']') {
+      if (depth === 0) break;
+      depth--;
+    }
+    if (depth === 0 && char === ',') break;
+  }
+
+  return source.slice(start, index).trim();
+}
+
+function checkRuntimeActionWiring(
+  rootDir: string,
+  sectionName: string,
+  baseName: string,
+  registrySource: string,
+  phonePreviewSource: string,
+): CheckResult {
+  const entries = parseRegistryEntries(registrySource);
+  const entry = entries.find(
+    (e) => e.name === sectionName || e.name === baseName,
+  );
+  if (!entry?.id) {
+    return check({
+      name: 'Runtime 联动实现',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+
+  const wiring = parseActionWiring(phonePreviewSource).find(
+    (item) => item.sectionId === entry.id,
+  );
+  if (!wiring || wiring.actionNames.length === 0) {
+    return check({
+      name: 'Runtime 联动实现',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+
+  const containerFile = join(
+    rootDir,
+    'runtime',
+    'sections',
+    `${baseName}Container.tsx`,
+  );
+  const result = readFileSafe(containerFile);
+  if (!result.ok) {
+    return check({
+      name: 'Runtime 联动实现',
+      passed: false,
+      errors: [result.error],
+    });
+  }
+
+  const errors: string[] = [];
+  for (const actionName of wiring.actionNames) {
+    const value = findPropertyValue(result.text, actionName);
+    if (!value) {
+      errors.push(
+        `${baseName}Container.tsx 缺少跨 Section action 绑定: ${actionName}`,
+      );
+      continue;
+    }
+    if (/^\(?[^=)]*\)?\s*=>\s*console\.log\s*\(/.test(value)) {
+      errors.push(
+        `${baseName}Container.tsx 的 ${actionName} 是 console.log-only，必须绑定 Store action 更新目标 Section`,
+      );
+    }
+  }
+
+  return check({
+    name: 'Runtime 联动实现',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
 export function validateSection(
   sectionName: string,
   rootDir: string,
   registrySource: string,
   storeSource: string,
+  phonePreviewSource = '',
 ): SectionValidationResult {
   const naming = buildSectionNaming(sectionName);
   const paths = resolveSectionPaths(rootDir, naming);
@@ -766,6 +872,17 @@ export function validateSection(
 
   // 16. 分层边界检查
   allChecks.push(checkLayerBoundaries(rootDir, naming));
+
+  // 17. Runtime 联动实现
+  allChecks.push(
+    checkRuntimeActionWiring(
+      rootDir,
+      sectionName,
+      naming.baseName,
+      registrySource,
+      phonePreviewSource,
+    ),
+  );
 
   const failedChecks = allChecks.filter((c) => !c.passed && !c.skipped);
   return {

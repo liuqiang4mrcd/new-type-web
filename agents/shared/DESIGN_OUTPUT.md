@@ -75,12 +75,19 @@ designer/sections/<Name>/
 | Interaction Spec 字段 | 代码落点 |
 |---|---|
 | `actionHandler` | `section-registry.ts` 的 `defaultActions`、Runtime Container actions |
-| `targetSection` / `targetChange` | `phone-preview.tsx` 的 `ACTION_WIRING` 或 Runtime 状态更新 |
+| `targetSection` / `targetChange` | `phone-preview.tsx` 的 `ACTION_WIRING` 和 Runtime Store action 状态更新 |
 | `userAction` | 视觉组件 `index.tsx` 中绑定的事件 |
 | `mutex` | disabled、loading、spinning、claimed 等互斥逻辑 |
 | `closeOrReset` | 弹窗关闭、状态复位或重新进入 idle 的 action |
 
-跨 Section 交互必须在 `phone-preview.tsx` 的 `ACTION_WIRING` 中体现；组件内部交互状态必须在 `content.ts` 的 `stateTransitions` 中体现。所有 TODO 占位必须在最终 4.3 收尾前清除。
+跨 Section 交互必须同时在 `phone-preview.tsx` 的 `ACTION_WIRING` 和 Runtime Store action 中体现；组件内部交互状态必须在 `content.ts` 的 `stateTransitions` 中体现。所有 TODO 占位必须在最终 4.3 收尾前清除。
+
+Runtime 联动要求：
+
+- 若 Interaction Spec 的 `targetSection` 不是 `self`，或 `targetChange` 会改变其他 Section 的 `content/status`，`integrations/store.ts` 必须声明并实现对应 action，例如 `openRule / closeRule / openReward / closeReward / openCritResult / closeCritResult / openTip / closeTip`。
+- Runtime Container 必须将该 Store action 绑定到视觉组件的 `actions` props。`console.log` 只能用于 back/share/recharge 等外部跳转或暂未接入真实能力的非目标状态变化事件。
+- `phone-preview.tsx` 的 `ACTION_WIRING` 只负责设计阶段 mock 预览，不能替代 Runtime Store 联动。
+- Final Closeout 前必须逐条核对 `defaultActions / ACTION_WIRING / stateTransitions / Store actions / Runtime Container actions`，确保命名和目标变化均与 Interaction Spec 一致。
 
 ### 状态声明要求
 

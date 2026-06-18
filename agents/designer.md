@@ -142,8 +142,8 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 2. **生成规格测试**：`pnpm generate-spec-tests --campaign <campaign-name> <SectionName>`，生成 `*.spec.test.tsx` 作为实现前标准答案
 3. **实现 Section 文件**（必需 `types.ts` / `content.ts` / `index.tsx`；仅当存在 required UI 状态时创建 `states.tsx`）
 4. **Playground 注册** → 在 `section-registry.ts` 中插入到结构锁定表定义的页面位置，**禁止追加到末尾**
-5. **Runtime 注册** → 创建 Container、更新 Store、在 `app.tsx` 中插入到正确 JSX 位置
-6. **全页预览联动**：若本 Section 有动作会触发其他弹窗（或本 Section 是弹窗被其他触发），同步更新 `phone-preview.tsx` 中的 `ACTION_WIRING` 映射表。若触发方或弹窗方尚未实现，用 `// TODO` 占位，在全部完成后再补全。
+5. **Runtime 注册** → 创建 Container、更新 Store、在 `app.tsx` 中插入到正确 JSX 位置。若 Interaction Spec 中该 Section 的 `targetSection` 不是 `self`，或 `targetChange` 会改变其他 Section 的 `content/status`，必须在 `integrations/store.ts` 中创建对应 Runtime action，并在 Container 中绑定该 action；禁止用 `console.log` 代替 Runtime 状态变化。
+6. **全页预览联动**：若本 Section 有动作会触发其他弹窗（或本 Section 是弹窗被其他触发），同步更新 `phone-preview.tsx` 中的 `ACTION_WIRING` 映射表。若触发方或弹窗方尚未实现，用 `// TODO` 占位，在全部完成后再补全。`ACTION_WIRING` 只代表 Playground 联动，不代表 Runtime 联动完成。
 7. **单 Section 验证**：`pnpm verify-section --campaign <campaign-name> <SectionName>`，结构检查、规格测试和已有 regression 测试全部通过
 8. **更新进度**：`.feedback/progress.md` 标记为 `validated`，并在对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests`
 
@@ -153,6 +153,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 - `pnpm validate-section --campaign <campaign-name> --all` 只能作为最终总验收，禁止替代逐 Section 过程验证
 - 禁止为了减少重复修改 `store / runtime / playground` 而批量实现多个 Section 后再统一验证
 - 若 Section 包含交互状态，还需在 `content.ts` 中生成 `stateTransitions`，并在 `section-registry.ts` 中注册 `defaultActions`（console.log 桩函数）
+- `section-registry.ts` 的 `defaultActions` 可以是 console.log 桩函数；Runtime Container 中凡是对应跨 Section `targetChange` 的 action，必须绑定 Store action，禁止 console.log-only
 - 禁止直接修改生成的 `*.spec.test.tsx` 来让测试通过；规格变化必须先回写组件设计卡
 
 #### 4.3 全部 Section 完成后
@@ -213,6 +214,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 10. 声明完整性（transitions 与 states 双向校验）
 11. 状态可达性（从初始状态出发 BFS 检查）
 12. 分层边界检查（index.tsx 禁止 import store/API/埋点）
+13. Runtime 联动实现（`ACTION_WIRING` 中需要 Store 状态更新的 action，Runtime Container 禁止 console.log-only）
 
 `content.ts` 必须导出以下字段供验证工具检查：
 

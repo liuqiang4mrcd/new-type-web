@@ -57,6 +57,7 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
 
   const registryPath = join(options.rootDir, 'playground', 'section-registry.ts');
   const storePath = join(options.rootDir, 'integrations', 'store.ts');
+  const phonePreviewPath = join(options.rootDir, 'playground', 'phone-preview.tsx');
 
   const registryResult = readFileSafe(registryPath);
   if (!registryResult.ok) {
@@ -66,12 +67,23 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
   if (!storeResult.ok) {
     fatal(storeResult.error);
   }
+  const phonePreviewResult = readFileSafe(phonePreviewPath);
+  if (!phonePreviewResult.ok) {
+    fatal(phonePreviewResult.error);
+  }
 
   const registrySource = registryResult.ok ? registryResult.text : '';
   const storeSource = storeResult.ok ? storeResult.text : '';
+  const phonePreviewSource = phonePreviewResult.ok ? phonePreviewResult.text : '';
 
   const results = sectionNames.map((name) =>
-    validateSection(name, options.rootDir, registrySource, storeSource),
+    validateSection(
+      name,
+      options.rootDir,
+      registrySource,
+      storeSource,
+      phonePreviewSource,
+    ),
   );
 
   const report = buildReport(

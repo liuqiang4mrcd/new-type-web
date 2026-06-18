@@ -181,6 +181,7 @@ tests:
 | 14  | 声明完整性            | stateTransitions 的 from/to 均在 supportedStates 中             |
 | 15  | 状态可达性            | 从初始状态出发，所有交互状态可达                                |
 | 16  | 分层边界检查          | index.tsx 未违规 import useStore/API/埋点                       |
+| 17  | Runtime 联动实现      | `ACTION_WIRING` 中跨 Section action 在 Runtime Container 中不是 console.log-only |
 
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
 > 弹窗 Section 实现要求、phone-preview.tsx ACTION_WIRING 联动见 `agents/designer.md` §4.4-4.5。
@@ -223,7 +224,8 @@ tests:
 
 - [ ] Render order checked: `playground/section-registry.ts` and `runtime/app.tsx` match the locked structure order.
 - [ ] Layout spec checked: implemented Section order, key element placement, spacing, alignment, and layer rules match Layout Spec.
-- [ ] Action wiring checked: every Interaction Spec item is mapped to defaultActions / ACTION_WIRING / stateTransitions / Runtime actions and contains no TODO placeholders.
+- [ ] Playground wiring checked: every Interaction Spec item is mapped to defaultActions / ACTION_WIRING / stateTransitions and contains no TODO placeholders.
+- [ ] Runtime wiring checked: every cross-Section targetChange has a Store action and every Runtime Container binds that action; console.log-only handlers are allowed only for external/no-target interactions.
 - [ ] All sections validation passed: `pnpm validate-section --campaign <campaign-name> --all`
 - [ ] Unit spec tests passed: `pnpm test:unit -- apps/<campaign-name>/src`
 - [ ] Build passed: `pnpm --filter @new-type/<campaign-name> build`
@@ -235,33 +237,35 @@ tests:
 1. 检查 `playground/section-registry.ts` 的注册顺序与结构锁定表一致。
 2. 检查 `runtime/app.tsx` 的渲染顺序与结构锁定表一致。
 3. 按 Layout Spec 检查关键元素位置、尺寸、间距、对齐、层级和响应规则是否被实现保留。
-4. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 和 Runtime actions 命名是否一致，且不存在 `TODO` 占位。
-5. 运行总验收：
+4. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 命名是否一致，且不存在 `TODO` 占位。
+5. 按 Interaction Spec 逐条检查 Runtime 联动：凡 `targetSection` 不是 `self` 或 `targetChange` 会改变其他 Section 的交互，`integrations/store.ts` 必须存在对应 action，Runtime Container 必须绑定该 action，禁止 console.log-only。
+6. 运行总验收：
 
 ```bash
 pnpm validate-section --campaign <campaign-name> --all
 ```
 
-6. 运行全量单元测试：
+7. 运行全量单元测试：
 
 ```bash
 pnpm test:unit -- apps/<campaign-name>/src
 ```
 
-7. 运行 build：
+8. 运行 build：
 
 ```bash
 pnpm --filter @new-type/<campaign-name> build
 ```
 
-8. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
+9. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
 
 最终回复必须说明：
 
 - 每个 Section 的单独验证结果。
 - 渲染顺序校验结果。
 - Layout Spec 保真校验结果。
-- Interaction Spec / `ACTION_WIRING` 联动完整性校验结果。
+- Interaction Spec / `ACTION_WIRING` Playground 联动完整性校验结果。
+- Runtime Store action / Container action 联动完整性校验结果。
 - `--all` 总验收结果。
 - 全量 Vitest 结果。
 - build 结果。

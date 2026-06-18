@@ -8,6 +8,7 @@ import type {
   ParsedStoreModule,
   ParsedTransition,
   RuntimeAppInfo,
+  ParsedActionWiring,
 } from './types';
 
 export function parseSupportedStates(source: string): SupportedStateDecl[] | null {
@@ -133,6 +134,7 @@ export function parseRegistryEntries(source: string): ParsedRegistryEntry[] {
     }
 
     entries.push({
+      id: idMatch ? idMatch[1] : undefined,
       name: nameMatch ? nameMatch[1] : (idMatch ? idMatch[1] : undefined),
       stateViewKeys,
     });
@@ -227,6 +229,119 @@ export function parseRuntimeApp(source: string): RuntimeAppInfo {
   }
 
   return { containerImports: imports, containerTags: tags };
+}
+
+export function parseActionWiring(source: string): ParsedActionWiring[] {
+  const exportMatch = source.match(
+    /export\s+const\s+ACTION_WIRING[^=]*=\s*\{/,
+  );
+  if (!exportMatch || exportMatch.index === undefined) {
+    return [];
+  }
+
+  const bodyStart = exportMatch.index + exportMatch[0].length;
+  let depth = 1;
+  let bodyEnd = bodyStart;
+  for (let i = bodyStart; i < source.length; i++) {
+    if (source[i] === '{') depth++;
+    if (source[i] === '}') depth--;
+    if (depth === 0) {
+      bodyEnd = i;
+      break;
+    }
+  }
+  if (depth !== 0) return [];
+
+  const body = source.slice(bodyStart, bodyEnd);
+  const results: ParsedActionWiring[] = [];
+  const sectionRe = /^\s*([A-Za-z_]\w*)\s*:\s*\{/gm;
+  let sectionMatch: RegExpExecArray | null;
+
+  while ((sectionMatch = sectionRe.exec(body)) !== null) {
+    const sectionId = sectionMatch[1];
+    const start = sectionMatch.index + sectionMatch[0].length;
+    let sectionDepth = 1;
+    let end = start;
+    for (let i = start; i < body.length; i++) {
+      if (body[i] === '{') sectionDepth++;
+      if (body[i] === '}') sectionDepth--;
+      if (sectionDepth === 0) {
+        end = i;
+        break;
+      }
+    }
+    if (sectionDepth !== 0) continue;
+
+    const sectionBody = body.slice(start, end);
+    const actionNames = parseTopLevelObjectEntries(sectionBody)
+      .filter((entry) => requiresRuntimeStoreAction(sectionId, entry.body))
+      .map((entry) => entry.key);
+    results.push({ sectionId, actionNames: [...new Set(actionNames)] });
+  }
+
+  return results;
+}
+
+function parseTopLevelObjectEntries(source: string): Array<{ key: string; body: string }> {
+  const entries: Array<{ key: string; body: string }> = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let lineStart = true;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+    const prev = source[i - 1];
+
+    if (quote) {
+      if (char === quote && prev !== '\\') quote = null;
+      if (char === '\n') lineStart = true;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      continue;
+    }
+
+    if (depth === 0 && lineStart) {
+      const rest = source.slice(i);
+      const match = rest.match(/^\s*([A-Za-z_]\w*)\s*:\s*\{/);
+      if (match) {
+        const openIndex = i + match[0].lastIndexOf('{');
+        let entryDepth = 1;
+        let end = openIndex + 1;
+        for (; end < source.length; end++) {
+          if (source[end] === '{') entryDepth++;
+          if (source[end] === '}') entryDepth--;
+          if (entryDepth === 0) break;
+        }
+        if (entryDepth === 0) {
+          entries.push({
+            key: match[1],
+            body: source.slice(openIndex + 1, end),
+          });
+        }
+      }
+    }
+
+    if (char === '{') depth++;
+    if (char === '}') depth--;
+    if (char === '\n') {
+      lineStart = true;
+    } else if (!/\s/.test(char)) {
+      lineStart = false;
+    }
+  }
+
+  return entries;
+}
+
+function requiresRuntimeStoreAction(sectionId: string, actionBody: string): boolean {
+  const targetRe = /targetSectionId\s*:\s*['"]([^'"]+)['"]/g;
+  let targetMatch: RegExpExecArray | null;
+  while ((targetMatch = targetRe.exec(actionBody)) !== null) {
+    if (targetMatch[1] !== sectionId) return true;
+  }
+  return /isOpen\s*:/.test(actionBody);
 }
 
 /** 检查 index.tsx 中是否有分层违规（直接 import store/api/tracking） */
