@@ -6,4 +6,5 @@ nx.log
 .DS_Store
 *.local
 .nx/
+/.feedback
 .feedback/logs/
