@@ -27,7 +27,7 @@
 | 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index}.tsx` + 条件 `states.tsx` | 不要调用 store 或 API；不要修改 `apps/campaign-template/` 业务实现 |
 | 新 section 连接数据     | `runtime/sections/<Name>Container.tsx`                      | 不要改 visual 组件          |
 | 新 section 预览注册     | `playground/section-registry.ts` / `playground/scenarios/*` / `playground/phone-preview.tsx` | 不要接入真实 Store 或 API |
-| 数据接口变更            | `types.ts`（改接口）+ `runtime/`（改容器）                  | 不要直接改 index.tsx        |
+| 数据接口变更 / 接口接入 | `designer/sections/<Name>/contract.ts`（动态数据 Section 语义契约）+ `integrations/adapters/` + `integrations/fixtures/` + `runtime/` | 不要直接改 `index.tsx`；不要让 runtime 或 visual 消费 raw DTO |
 | 新增 API / Store / 埋点 | `integrations/{store,api,tracking}.ts`                      | 不要绕开 integrations       |
 | 设计师调整视觉          | 按用户明确范围修改目标活动的 `designer/sections/*`           | 不要越界修改模板、共享包或未确认的视觉结构 |
 
@@ -90,6 +90,16 @@ function HeroContainer() {
   }
 }
 ```
+
+### 接口接入边界
+
+真实接口接入必须遵守 `docs/ai/interface-integration-rules.md`。
+
+- Section 只声明自身需要的展示语义，不声明 API 字段、接口路径或后端 DTO shape。
+- 动态数据 Section 必须提供 `contract.ts`，并通过 app-local adapter contract test 验证。
+- API DTO 必须先经过 `integrations/adapters/*` 映射成 `SectionState<Content>`，再进入 store 和 runtime。
+- runtime container 禁止临时拼接接口字段、解释后端枚举或读取 raw DTO。
+- Playground 继续使用 mock content 和 scenario，不接真实 API。
 
 ## Playground 访问
 
