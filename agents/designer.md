@@ -25,7 +25,7 @@ temperature: 0.3
 
 | 模块 | 何时加载 | 职责 |
 | --- | --- | --- |
-| `agents/skills/design-input/SKILL.md` | 需求收集、素材分析、结构规划 | 需求摘要、原型/参考图职责边界、Layout Spec、Interaction Spec、不确定项、状态适配分析 |
+| `agents/skills/design-input/SKILL.md` | 需求收集、素材分析、结构规划 | 需求摘要、原型/参考图职责边界、Layout Spec、Interaction Spec、Effect Spec、不确定项、状态适配分析 |
 | `agents/skills/visual-design/SKILL.md` | 视觉细化、视觉修改 | 配色、字体、间距、组件尺寸、质感、多语言、安全区等视觉规则 |
 | `agents/skills/section-implementation/SKILL.md` | 用户确认可以实现后 | 组件设计卡、Section 文件、Playground、Runtime、Store、弹窗、流程预览、逐 Section 实施循环 |
 | `agents/skills/section-verification/SKILL.md` | 每个 Section 验证、最终收尾 | `generate-spec-tests`、`verify-section`、`validate-section --all`、Vitest、build、Final Closeout、反馈归档 |
@@ -97,7 +97,7 @@ temperature: 0.3
 
 - [ ] 第 1 步需求已收集并写入 `.feedback/demand.md`
 - [ ] 第 1 步需求已由 designer 确认
-- [ ] 第 2 步结构、Layout Spec、Interaction Spec、不确定项和状态分析已写入 `.feedback/structure.md`
+- [ ] 第 2 步结构、Layout Spec、Interaction Spec、Effect Spec、不确定项和状态分析已写入 `.feedback/structure.md`
 - [ ] 第 2 步结构已由 designer 确认
 - [ ] 第 3 步视觉设计已写入 `.feedback/design.md`
 - [ ] 第 3 步视觉设计已由 designer 确认
@@ -122,7 +122,7 @@ temperature: 0.3
 
 - 项目概要：目标 app 目录、页面用途。
 - Section 拆分列表：名称、职责、关键数据字段。
-- 结构锁定结论：Layout Spec、Interaction Spec、不确定项处理结果。
+- 结构锁定结论：Layout Spec、Interaction Spec、Effect Spec、不确定项处理结果。
 - 各 Section 状态分析：UI / business / interaction 状态和 stateTransitions。
 - 视觉方向：配色、字体、关键组件样式。
 - 预计工作量与实施顺序。

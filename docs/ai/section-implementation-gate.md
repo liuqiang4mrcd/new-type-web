@@ -6,7 +6,7 @@
 
 每个 Section 必须按以下顺序闭环：
 
-1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、Layout Spec 引用、Interaction Spec 引用、数据、交互、状态和边界。
+1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、Layout Spec 引用、Interaction Spec 引用、Effect Spec 引用、Effect Reasoning、数据、交互、状态和边界。
 2. 完成状态适配判断，明确该 Section 是否真的需要 `loading / empty / error`。
 3. 在组件设计卡中写入 `## Acceptance Tests` YAML，作为该 Section 的功能规格源。
 4. 根据组件设计卡生成规格测试：
@@ -33,7 +33,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `.feedback/progress.md` 或 `.feedback/sections/<SectionName>.md`。
 
-组件设计卡必须继承第 2 步结构规划中的 Layout Spec 和 Interaction Spec。若当前 Section 对应的几何约束、关键元素约束或交互链路缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
+组件设计卡必须继承第 2 步结构规划中的 Layout Spec、Interaction Spec 和 Effect Spec。若当前 Section 对应的几何约束、关键元素约束、交互链路或用户可见效果缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
 
 ```md
 ## <SectionName> Component Card
@@ -50,6 +50,22 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
   - Target changes:
   - Close/reset behavior:
   - Mutex rules:
+- Effect Spec refs:
+  - Effect ids:
+  - First frame:
+  - During effect:
+  - End state:
+  - Target timing:
+  - Blocking overlay:
+  - Preview parity:
+- Effect Reasoning:
+  - Static view:
+  - Trigger frame:
+  - Animation/transition:
+  - Completion:
+  - Cross-section timing:
+  - Disabled/mutex behavior:
+  - Runtime vs phone-preview:
 - Content fields:
 - Static constants:
 - Async data source: yes/no
@@ -72,7 +88,9 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 - Validation command: `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`
 ```
 
-如果组件设计卡无法判断布局、关键元素归属、状态或交互，必须先补充分析，不能先写代码。
+如果组件设计卡无法判断布局、关键元素归属、状态、交互或用户可见效果，必须先补充分析，不能先写代码。
+
+强交互 Section 没有 `Effect Spec refs` 和 `Effect Reasoning` 时禁止实现。`Effect Reasoning` 必须说明代码如何保证效果真的发生，而不是复述 Interaction Spec。若推演发现 `.feedback/structure.md` 的 Effect Spec 不完整，必须先回到结构规划补齐，再继续实现。
 
 ## Spec-First 组件测试
 
@@ -224,6 +242,7 @@ tests:
 - 禁止只在对话中口头说明进度而不更新 `.feedback/progress.md`。
 - 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
+- 禁止在组件设计卡没有引用 Effect Spec、没有完成 Effect Reasoning 的情况下实现强交互 Section。
 
 ## `.feedback/progress.md` 实现阶段模板
 

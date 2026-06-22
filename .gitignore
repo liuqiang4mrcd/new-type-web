@@ -7,4 +7,4 @@ nx.log
 *.local
 .nx/
 /.feedback
-.feedback/logs/
+**/.feedback/logs/

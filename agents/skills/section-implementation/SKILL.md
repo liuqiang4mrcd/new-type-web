@@ -36,7 +36,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 1. 读取 `.feedback/progress.md`，确认 Current phase / Current gate。
 2. 在既有 `.feedback/progress.md` 中追加 `docs/ai/section-implementation-gate.md` 的实现阶段模板。
 3. 按结构锁定表顺序逐个 Section 实施。
-4. 每个 Section 先写组件设计卡和 `## Acceptance Tests` YAML。
+4. 每个 Section 先写组件设计卡、`Effect Reasoning` 和 `## Acceptance Tests` YAML。
 5. 运行 `pnpm generate-spec-tests --campaign <campaign-name> <SectionName>`。
 6. 按 `DESIGN_OUTPUT.md` 实现 Section、Playground、Runtime、Store 和必要资源。
 7. 若存在跨 Section 交互，确保 Playground `ACTION_WIRING` 与 Runtime Store action 都按 Interaction Spec 对齐。
@@ -56,6 +56,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止越界修改其他 `apps/*`、`packages/*`、`scripts/*`。
 - 禁止默认接入真实 API 或埋点；`integrations/api.ts` / `integrations/tracking.ts` 只有用户明确要求时才可改。
 - 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
+- 禁止强交互 Section 缺少 Effect Spec 引用或 Effect Reasoning 时直接实现。
 - 禁止批量实现多个 Section 后再统一验证。
 - 禁止手改生成的 `*.spec.test.tsx`；规格变化必须先改组件设计卡再重新生成。
 - 禁止 Runtime 跨 Section targetChange 使用 console.log-only；必须绑定 Store action。

@@ -1,6 +1,6 @@
 ---
 name: design-input
-description: H5 活动页需求收集、素材分析和结构规划能力模块。用于 designer agent 的第 1-2 步，产出 demand、structure、Layout Spec、Interaction Spec、不确定项和状态适配分析。
+description: H5 活动页需求收集、素材分析和结构规划能力模块。用于 designer agent 的第 1-2 步，产出 demand、structure、Layout Spec、Interaction Spec、Effect Spec、不确定项和状态适配分析。
 ---
 
 # Design Input Skill
@@ -127,6 +127,33 @@ Section 级：
 | `closeOrReset` | 关闭、复位或回退方式 |
 | `mutex` | 禁用、互斥或节流条件 |
 
+### Effect Spec
+
+Effect Spec 是用户可见效果的设计锁定表，用于补足 Interaction Spec 只描述“动作和目标”但不描述“用户看见的过程”的问题。凡存在点击、切换、抽奖、领取、弹窗、进度推进、倒计时、滚动、展开收起、禁用态变化等效果，都必须写入 Effect Spec。
+
+| 字段 | 说明 |
+| --- | --- |
+| `id` | 稳定编号，如 E01，建议与 Interaction Spec id 对齐 |
+| `source` | 对应的 Interaction Spec id、状态变化或业务阶段 |
+| `section` | 发生效果的 Section |
+| `trigger` | 用户动作或业务触发，如 click / timeout / dataChange |
+| `firstFrame` | 触发后第一帧用户看到什么 |
+| `duringEffect` | 动画、过渡、禁用、加载或视觉反馈期间用户看到什么 |
+| `endState` | 效果结束后用户看到什么状态 |
+| `targetTiming` | 跨 Section 目标变化何时发生，如 immediately / afterAnimation / afterDelay |
+| `blockingOverlay` | 是否有弹窗、遮罩、跳转覆盖当前效果；若有，说明出现时机 |
+| `mutex` | 效果期间是否禁用按钮、节流、阻止重复触发 |
+| `previewParity` | `runtime` 与 `phone-preview` 是否必须一致，以及一致点 |
+
+强交互组件的 Effect Spec 必须明确：
+
+- 动画目标是不是关键元素本身。例如转盘应说明“盘面旋转”，不是只说明“点击暴击”。
+- 弹窗或结果态是否等待动画结束后出现。
+- 禁用态或无机会态是否仍允许点击。
+- `phone-preview` 和 Runtime 的表现是否一致。
+
+如果无法从原型图判断效果过程，必须进入 Uncertainty List 或向用户确认；禁止在实现阶段临场脑补关键效果。
+
 ### Uncertainty List
 
 以下不确定时必须暂停确认：
@@ -158,4 +185,4 @@ Section 级：
 - `.feedback/demand.md` 已存盘。
 - `.feedback/structure.md` 已存盘。
 - `.feedback/progress.md` 已更新。
-- 新项目模式下，结构锁定表、Layout Spec、Interaction Spec 和关键不确定项已获得用户确认。
+- 新项目模式下，结构锁定表、Layout Spec、Interaction Spec、Effect Spec 和关键不确定项已获得用户确认。
