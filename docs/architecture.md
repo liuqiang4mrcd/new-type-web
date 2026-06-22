@@ -1,6 +1,6 @@
 # new-type-web 项目架构设计
 
-> 基于 [需求.md](../需求.md) 生成的项目架构文档
+> 基于项目初始需求文档生成的项目架构文档
 > 日期：2026-06-12（v4，通用依赖提至根 package.json 共享）
 
 ---
@@ -85,8 +85,9 @@ packages/<name>/
 ├── package.json             # name: "@new-type/<name>"
 ├── tsconfig.json            # extends: "@new-type/config/tsconfig/react.json"
 ├── vite.config.ts           # Vite library mode 构建
-└── vitest.config.ts         # 测试配置
 ```
+
+> 测试统一使用根目录 `vitest.config.ts`，各包不独立配置。
 
 ### 3.4 `@new-type/ui` 范围说明
 
@@ -120,8 +121,6 @@ packages/<name>/
 
 ```
 apps/campaign-template/
-├── public/
-│   └── favicon.ico
 ├── src/
 │   ├── main.tsx                     # 入口，?mode=designer → Playground
 │   ├── app.tsx                      # 重导出 runtime/app （线上入口）
@@ -146,7 +145,9 @@ apps/campaign-template/
 │   │   ├── store.ts                 # Zustand 全局状态
 │   │   ├── api.ts                   # API 封装
 │   │   ├── tracking.ts              # 埋点
-│   │   └── constants.ts             # 活动配置
+│   │   ├── constants.ts             # 活动配置
+│   │   ├── adapters/                # API DTO → SectionContent 适配器
+│   │   └── fixtures/                # 接口 fixture（后端样例 JSON）
 │   │
 │   ├── playground/                  # 🔍 设计师预览环境
 │   │   ├── index.tsx                # Playground 入口

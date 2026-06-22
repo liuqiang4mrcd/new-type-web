@@ -36,7 +36,11 @@
 - 所有共享包通过 `@new-type/*` 引用
 - 使用 workspace 协议：`"@new-type/utils": "workspace:*"`
 - 禁止跨 apps 引用
-- packages 之间只向下依赖（utils → request → hooks → headless → ui）
+- packages 之间"只向下依赖"（上层包可依赖下层包，反之禁止）：
+  - `headless` 仅依赖 react（peer）
+  - `ui` 可依赖 `headless`、`hooks`
+  - `hooks`、`request`、`analytics` 可依赖 `utils`
+  - 不允许反向依赖或跨层依赖
 
 ## 文件命名
 

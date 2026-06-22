@@ -8,3 +8,4 @@ nx.log
 .nx/
 /.feedback
 **/.feedback/logs/
+/test-results/
