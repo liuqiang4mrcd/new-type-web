@@ -209,9 +209,9 @@ tests:
 - `playground/section-registry.ts` 的 `stateViews` 注册。
 - Runtime Container 中对应 `case 'loading' / 'empty' / 'error'` 分支。
 
-## 验证检查清单（Layer 0 — 17 项）
+## 验证检查清单（Layer 0 — 20 项）
 
-`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 17 项检查：
+`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 20 项检查：
 
 | #   | 检查项                | 说明                                                                             |
 | --- | --------------------- | -------------------------------------------------------------------------------- |
@@ -232,6 +232,9 @@ tests:
 | 15  | 状态可达性            | 从初始状态出发，所有交互状态可达                                                 |
 | 16  | 分层边界检查          | index.tsx 未违规 import useStore/API/埋点                                        |
 | 17  | Runtime 联动实现      | `ACTION_WIRING` 中跨 Section action 在 Runtime Container 中不是 console.log-only |
+| 18  | 动画 easing 对齐      | stateTransitions 中声明的 easing 在 index.tsx 中已使用                           |
+| 19  | 动画 duration 对齐    | stateTransitions 中声明的 duration 与 index.tsx 一致                             |
+| 20  | 强交互用 motion/react | spin/slide/scale 类型动画使用了 motion/react 而非纯 CSS transition              |
 
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
 > 弹窗 Section 实现要求、phone-preview.tsx ACTION_WIRING 联动见 `agents/skills/section-implementation/SKILL.md`。
@@ -245,6 +248,8 @@ tests:
 - 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
 - 禁止在组件设计卡没有引用 Effect Spec、没有完成 Effect Reasoning 的情况下实现强交互 Section。
+- 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）。
+- 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场。
 
 ## `.feedback/progress.md` 实现阶段模板
 

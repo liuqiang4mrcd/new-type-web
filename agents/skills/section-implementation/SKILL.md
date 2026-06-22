@@ -39,6 +39,12 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 4. 每个 Section 先写组件设计卡、`Effect Reasoning` 和 `## Acceptance Tests` YAML。
 5. 运行 `pnpm generate-spec-tests --campaign <campaign-name> <SectionName>`。
 6. 按 `DESIGN_OUTPUT.md` 实现 Section、Playground、Runtime、Store 和必要资源。
+6a. 写完 `stateTransitions` 后立即实现对应的动画落地：
+    - 强交互类型（spin / slide / scale）使用 `motion/react` 的 `motion.div` + `animate` prop，不得用纯 CSS transition
+    - 弹窗 Section 使用 `<AnimatePresence>` + `motion.div` 实现入场/退场
+    - `easing` 值从 `content.ts` 的对应 `animation.easing` 提取并应用到 `transition` 或 CSS 中
+    - `duration` 与 `content.ts` 声明一致
+    - 实现后对照 `stateTransitions` 逐条确认：每个声明的动画在 `index.tsx` 中有对应的 DOM 可见变化
 7. 若存在跨 Section 交互，确保 Playground `ACTION_WIRING` 与 Runtime Store action 都按 Interaction Spec 对齐。
 8. 交给 `section-verification` 执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 9. 单 Section 验证通过并更新 `.feedback/progress.md` 后，才能进入下一个 Section。

@@ -11,7 +11,7 @@ description: H5 活动页 Section 验证和最终收尾能力模块。用于 des
 
 开始验证前必须读取：
 
-- `docs/ai/section-implementation-gate.md`：17 项 Layer 0 检查、spec-first 测试、Final Closeout Gate。
+- `docs/ai/section-implementation-gate.md`：20 项 Layer 0 检查、spec-first 测试、Final Closeout Gate。
 - `docs/ai/development-rules.md`：目录边界、分层边界、流程预览和弹窗交互规则。
 
 ## 单 Section 验证
@@ -22,11 +22,17 @@ description: H5 活动页 Section 验证和最终收尾能力模块。用于 des
 pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 ```
 
-通过后才能开始下一个 Section。通过后必须：
+通过后才能开始下一个 Section。通过前必须人工确认以下动画实现一致性（自动检查 #18-#20 通过仅代表 AST 静态检查无异常）：
+
+- [ ] `content.ts` 每个 `stateTransitions[].animation` 在 `index.tsx` 中有对应的 DOM 可见变化
+- [ ] spin/slide/scale 类型使用了 `motion/react`（import 和 `motion.div` 存在）
+- [ ] 弹窗 Section 使用 `<AnimatePresence>` + `motion.div` 实现入场/退场，非 `if (!isOpen) return null` 硬切
+
+通过后必须：
 
 - 在 `.feedback/progress.md` 中将该 Section 标记为 `validated`。
 - 记录命令和结果。
-- 对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests`。
+- 对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests + 动画一致性确认`。
 - `.feedback/progress.md` 中的验证记录和对用户报告默认使用中文；命令、Section 名、状态 key 和测试名称按实际英文输出保留。
 
 ## 失败处理
