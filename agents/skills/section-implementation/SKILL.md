@@ -43,6 +43,12 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 8. 交给 `section-verification` 执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 9. 单 Section 验证通过并更新 `.feedback/progress.md` 后，才能进入下一个 Section。
 
+## 输出语言
+
+- 组件设计卡、`.feedback/progress.md` 实现阶段记录、验收记录和对用户的实现说明默认使用中文。
+- 代码文件中的变量名、类型名、Section 名、action 名、状态 key、命令和文件路径保留英文。
+- `content.ts` 中的用户可见默认文案，除非用户明确要求英文或多语言，否则默认使用中文。
+
 ## 硬禁令
 
 - 禁止在用户确认“可以开始实现”前写新项目代码。

@@ -15,6 +15,7 @@ temperature: 0.3
 - 新项目先方案后实现：创建新活动页面时，必须先完成设计方案提案并等待用户书面确认，才能写代码。
 - 修改模式先定范围：修改样式、布局或交互前，必须先明确目标 app、修改范围和预期效果。
 - 过程可恢复：`.feedback/progress.md` 是全局 process ledger。上下文压缩、中断或阶段不确定时，先读它，再继续。
+- 中文输出：面向用户的回复、设计方案、`.feedback/*.md`、组件设计卡、验证记录和最终收尾说明默认必须使用中文；代码标识符、文件路径、命令、类型名、状态 key 和第三方术语按工程惯例保留英文。只有用户明确要求英文时才改用英文。
 
 ## 能力模块
 
@@ -81,36 +82,36 @@ temperature: 0.3
 第 1 步开始时创建或更新项目根目录 `.feedback/progress.md`。进入每个阶段前后都必须更新它。
 
 ```md
-# Designer Task Progress
+# Designer 任务进度
 
-## Execution Context
+## 执行上下文
 
-- Campaign: `<campaign-name | pending>`
-- Target app: `apps/<campaign-name> | pending`
-- Mode: `new-project | modification`
-- Current phase: `demand | structure | visual-design | approval | section-implementation | final-closeout | completed`
-- Current gate: `<具体门禁或当前 Section>`
-- Resume rule: read this file first; continue only from Current phase / Current gate; if files and this ledger conflict, audit and update this ledger before proceeding.
+- 活动名称：`<campaign-name | pending>`
+- 目标应用：`apps/<campaign-name> | pending`
+- 模式：`new-project | modification`
+- 当前阶段：`demand | structure | visual-design | approval | section-implementation | final-closeout | completed`
+- 当前门禁：`<具体门禁或当前 Section>`
+- 恢复规则：先读取本文件，只从“当前阶段 / 当前门禁”继续；如果文件和账本冲突，先审计并更新账本。
 
-## Global Flow
+## 全局流程
 
-- [ ] Step 1 demand collected and written to `.feedback/demand.md`
-- [ ] Step 1 demand confirmed by designer
-- [ ] Step 2 structure, Layout Spec, Interaction Spec, uncertainty list, and state analysis written to `.feedback/structure.md`
-- [ ] Step 2 structure confirmed by designer
-- [ ] Step 3 visual design written to `.feedback/design.md`
-- [ ] Step 3 visual design confirmed by designer
-- [ ] Step 3.5 complete design proposal presented
-- [ ] Step 3.5 designer confirmed implementation can start
-- [ ] Step 4 implementation ledger initialized
-- [ ] Step 4 Section loop completed
-- [ ] Step 4 Final Closeout Gate completed
+- [ ] 第 1 步需求已收集并写入 `.feedback/demand.md`
+- [ ] 第 1 步需求已由 designer 确认
+- [ ] 第 2 步结构、Layout Spec、Interaction Spec、不确定项和状态分析已写入 `.feedback/structure.md`
+- [ ] 第 2 步结构已由 designer 确认
+- [ ] 第 3 步视觉设计已写入 `.feedback/design.md`
+- [ ] 第 3 步视觉设计已由 designer 确认
+- [ ] 第 3.5 步完整设计方案已呈现
+- [ ] 第 3.5 步用户已书面确认可以开始实现
+- [ ] 第 4 步实现账本已初始化
+- [ ] 第 4 步 Section 循环已完成
+- [ ] 第 4 步 Final Closeout Gate 已完成
 
-## Current Notes
+## 当前记录
 
-- Last completed action:
-- Next required action:
-- Blocking questions:
+- 最近完成动作：
+- 下一步动作：
+- 阻塞问题：
 ```
 
 第 4 步开始时，在同一个 `.feedback/progress.md` 中追加 `docs/ai/section-implementation-gate.md` 的实现阶段模板；禁止另起只覆盖实现阶段的进度文件。

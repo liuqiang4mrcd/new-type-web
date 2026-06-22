@@ -27,6 +27,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 - 在 `.feedback/progress.md` 中将该 Section 标记为 `validated`。
 - 记录命令和结果。
 - 对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests`。
+- `.feedback/progress.md` 中的验证记录和对用户报告默认使用中文；命令、Section 名、状态 key 和测试名称按实际英文输出保留。
 
 ## 失败处理
 
