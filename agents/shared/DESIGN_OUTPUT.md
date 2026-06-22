@@ -53,6 +53,7 @@ designer/sections/<Name>/
 - Section 实现必须保留第 2 步 Layout Spec 中声明的关键元素位置、尺寸、间距、对齐、层级和响应规则。
 - 交互实现必须以第 2 步 Interaction Spec 为唯一真源，`defaultActions`、`ACTION_WIRING`、`stateTransitions` 和 Runtime actions 命名必须与其一致。
 - 若实现时发现 Layout Spec 或 Interaction Spec 无法落地，必须暂停并回到结构规划/设计方案确认，禁止自行改结构或改 action 命名。
+- Section 边界必须继承第 2 步“结构归属推理”。同一视觉卡片 / 同一业务闭环内的展示、按钮、领取态和局部切换默认属于同一个 Section；禁止为了让实现更方便而拆出孤立按钮 Section 或孤立状态 Section。
 
 ## Layout Spec 保真要求
 
@@ -213,6 +214,16 @@ export const stateTransitions: StateTransition[] = [
 - 常规访问根容器（通常是 `runtime/app.tsx` 的 `<main>`）和移动端完整页预览根容器（`playground/phone-preview.tsx` 的 `<main>`）必须一致。
 - 如果 Section 之间存在 margin、透明区、弹窗关闭后的页面尾部或内容不足一屏，露出的必须是活动页面底色，而不是模板底色或 Playground 外层背景。
 - Final Closeout 前必须直接访问 `?mode=phone-preview`，检查 `main` 计算后的 `background-color` 或背景类是否与 runtime 根背景一致。
+
+### 单组件预览完整性
+
+单组件预览是 Section 验收入口，不是装饰性展示。每个 Section 在 `?mode=designer` 的 single 模式中必须满足：
+
+- 组件主体完整可见；超高组件必须在预览区域内可滚动。
+- 组件宽度不得依赖整页 viewport 才能显示完整；必要时使用预览容器适配或组件内部 `max-width`。
+- fixed / overlay / absolute 元素不得逃逸并遮住整个 Playground，弹窗按 inline/overlay 区分。
+- 不得因 Playground 外层 `max-w-lg`、`overflow-hidden` 或卡片边界导致关键按钮、进度条、列表、转盘被裁切。
+- 单组件预览失败时，优先调整 Playground 预览容器或 Section 响应约束，而不是降低 Layout Spec 中的关键元素要求。
 
 ### 场景分类
 

@@ -43,6 +43,12 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 8. 交给 `section-verification` 执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 9. 单 Section 验证通过并更新 `.feedback/progress.md` 后，才能进入下一个 Section。
 
+执行粒度硬约束：
+
+- 当前 Section 未通过自己的 `verify-section` 前，禁止创建、修改或注册后续 Section 的业务文件。
+- 允许在共享文件中为当前 Section 添加最小必要代码，例如 Store 字段、Runtime import/render、Playground 注册；不允许一次性批量创建多个 Section 目录、组件文件、设计卡或测试文件。
+- 若发现后续 Section 文件已经提前创建，必须先停止继续扩散，并在账本中记录流程偏差；后续修正仍按受影响 Section 逐个验证。
+
 ## 输出语言
 
 - 组件设计卡、`.feedback/progress.md` 实现阶段记录、验收记录和对用户的实现说明默认使用中文。
@@ -58,6 +64,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
 - 禁止强交互 Section 缺少 Effect Spec 引用或 Effect Reasoning 时直接实现。
 - 禁止批量实现多个 Section 后再统一验证。
+- 禁止批量创建多个 Section 文件后再逐个验证。
 - 禁止手改生成的 `*.spec.test.tsx`；规格变化必须先改组件设计卡再重新生成。
 - 禁止 Runtime 跨 Section targetChange 使用 console.log-only；必须绑定 Store action。
 - 禁止 Final Closeout 前遗留 `TODO` 占位。

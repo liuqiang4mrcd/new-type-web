@@ -42,3 +42,5 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 所有 Section 单独验证通过后，必须执行 `docs/ai/section-implementation-gate.md` 的 Final Closeout Gate。完成最后一个 Section 的单组件验证不代表第 4 步完成；`validate-section --all` 只是收尾门禁的一项。
 
 最终回复必须逐项说明 Final Closeout Gate 结果；若任何命令未运行或失败，必须说明原因和当前阻塞点。
+
+Final Closeout 必须包含 `?mode=designer` single 模式单组件预览完整性检查：每个 Section 应完整可见或可滚动，不得被 Playground 容器、fixed/overlay 定位、`max-width` 或 `overflow-hidden` 裁切关键元素。

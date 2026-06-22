@@ -6,6 +6,8 @@
 
 每个 Section 必须按以下顺序闭环：
 
+0. 当前 Section 未通过自己的 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>` 前，禁止创建、修改或注册后续 Section 的业务文件。
+   允许的例外仅限当前 Section 必需的共享基础设施，例如当前 Section 的 Store 字段、当前 Section 的 Runtime Container、当前 Section 的 Playground 注册，以及已经存在文件中为当前 Section 添加的最小 import/render 片段。禁止先批量创建多个 Section 目录、组件文件、设计卡或测试文件后再逐个验证。
 1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、Layout Spec 引用、Interaction Spec 引用、Effect Spec 引用、Effect Reasoning、数据、交互、状态和边界。
 2. 完成状态适配判断，明确该 Section 是否真的需要 `loading / empty / error`。
 3. 在组件设计卡中写入 `## Acceptance Tests` YAML，作为该 Section 的功能规格源。
@@ -296,6 +298,7 @@ tests:
 
 - [ ] 渲染顺序已检查：`playground/section-registry.ts` 与 `runtime/app.tsx` 符合结构锁定顺序。
 - [ ] Layout Spec 已检查：已实现的 Section 顺序、关键元素位置、间距、对齐和层级规则符合 Layout Spec。
+- [ ] 单组件预览已检查：`?mode=designer` 的 single 模式下，每个 Section 在预览面板内完整可见或可滚动，不被 Playground 容器、`max-width`、`overflow-hidden`、fixed 定位或弹窗遮罩错误裁切。
 - [ ] 移动端完整页预览背景已检查：`runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景一致，`?mode=phone-preview` 不露出模板默认底色。
 - [ ] Playground 联动已检查：每条 Interaction Spec 都映射到 defaultActions / ACTION_WIRING / stateTransitions，且无 TODO 占位。
 - [ ] 交互动效已检查：所有 `stateTransitions.animation` 均有 DOM/CSS 落地；抽奖/转盘类动画不会被结果弹窗首帧遮挡。
@@ -317,35 +320,37 @@ Final Closeout Gate 必须已在进入第 4 步时预置到 `.feedback/progress.
 1. 检查 `playground/section-registry.ts` 的注册顺序与结构锁定表一致。
 2. 检查 `runtime/app.tsx` 的渲染顺序与结构锁定表一致。
 3. 按 Layout Spec 检查关键元素位置、尺寸、间距、对齐、层级和响应规则是否被实现保留。
-4. 检查 `runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景是否一致；直接访问 `?mode=phone-preview`，确认 Section 间距、页面尾部和内容不足一屏时不会露出模板默认底色。
-5. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 命名是否一致，且不存在 `TODO` 占位。
-6. 对所有声明了 `stateTransitions.animation` 的 Section 执行动画落地检查：确认触发后实际 DOM/class/style 变化存在；若动画后会打开弹窗或遮罩，必须确认动画期间未被遮挡，动画结束后再显示结果。
-7. 按 Interaction Spec 逐条检查 Runtime 联动：凡 `targetSection` 不是 `self` 或 `targetChange` 会改变其他 Section 的交互，`integrations/store.ts` 必须存在对应 action，Runtime Container 必须绑定该 action，禁止 console.log-only。
-8. 运行总验收：
+4. 直接访问 `?mode=designer`，逐个切换 single 模式 Section，确认组件完整可见；高组件必须可滚动，宽组件必须适配预览宽度，弹窗必须限制在单组件预览框内。
+5. 检查 `runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景是否一致；直接访问 `?mode=phone-preview`，确认 Section 间距、页面尾部和内容不足一屏时不会露出模板默认底色。
+6. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 命名是否一致，且不存在 `TODO` 占位。
+7. 对所有声明了 `stateTransitions.animation` 的 Section 执行动画落地检查：确认触发后实际 DOM/class/style 变化存在；若动画后会打开弹窗或遮罩，必须确认动画期间未被遮挡，动画结束后再显示结果。
+8. 按 Interaction Spec 逐条检查 Runtime 联动：凡 `targetSection` 不是 `self` 或 `targetChange` 会改变其他 Section 的交互，`integrations/store.ts` 必须存在对应 action，Runtime Container 必须绑定该 action，禁止 console.log-only。
+9. 运行总验收：
 
 ```bash
 pnpm validate-section --campaign <campaign-name> --all
 ```
 
-9. 运行全量单元测试：
+10. 运行全量单元测试：
 
 ```bash
 pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src
 ```
 
-10. 运行 build：
+11. 运行 build：
 
 ```bash
 pnpm --filter @new-type/<campaign-name> build
 ```
 
-11. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
+12. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
 
 最终回复必须说明：
 
 - 每个 Section 的单独验证结果。
 - 渲染顺序校验结果。
 - Layout Spec 保真校验结果。
+- 单组件预览完整性校验结果。
 - Interaction Spec / `ACTION_WIRING` Playground 联动完整性校验结果。
 - Runtime Store action / Container action 联动完整性校验结果。
 - `--all` 总验收结果。
