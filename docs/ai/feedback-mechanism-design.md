@@ -10,7 +10,7 @@
 |---|------|------|--------|
 | 1 | 首页未更新新组件内容 | Runtime `app.tsx` 缺少 import 和渲染 | Layer 0 静态检查 |
 | 2 | 转盘按钮点击不旋转 | `index.tsx` 直接 import store (违规范)，Playground 无 mock actions | Layer 0 + Layer 1 |
-| 3 | 档位切换无动效 | 生成时未加入 CSS transition / framer-motion | Layer 1/2 |
+| 3 | 档位切换无动效 | 生成时未加入 CSS transition / `motion/react` | Layer 1/2 |
 | 4 | 首次无左右切换事件 | 缺少校验检查事件绑定 | Layer 0 |
 
 ## 2. 架构决策

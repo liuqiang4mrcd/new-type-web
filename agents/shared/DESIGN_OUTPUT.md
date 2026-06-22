@@ -157,6 +157,26 @@ export const stateTransitions: StateTransition[] = [
 - `trigger.duration` 仅用于 `type: 'timeout'`，单位 ms
 - 可选 `animation` 字段：`animation?: { type: 'slide' | 'fade' | 'scale', duration: number, easing: string }`，用于声明状态转换时的动效
 
+### 动画落地要求
+
+`stateTransitions.animation` 不是文档说明，必须在视觉组件中真实落地。凡 `content.ts` 声明了动画，`index.tsx` 必须有对应的 DOM / CSS / class / inline style / animation event 绑定，并能从用户操作触发到可见变化。
+
+活动页已内置 Motion for React 时，强交互动效默认优先使用 `motion` 包的 `motion/react`，包括抽奖转盘、翻牌、档位切换、卡片进出场和弹窗入退场。只有 hover、pressed、简单 opacity/transform 过渡或纯装饰微动，才优先使用 CSS transition/keyframes。若不用 `motion/react` 实现强交互动效，组件设计卡必须写明原因。
+
+强交互组件必须额外声明和实现：
+
+- 动画目标：例如转盘盘面、进度条填充、卡片滑动容器；禁止只切换状态但没有任何视觉变化。
+- 动画持续时间：实现中的 CSS/JS duration 必须与 `stateTransitions.animation.duration` 保持一致或在组件设计卡中说明差异。
+- 结果展示时机：如果动作结束会打开弹窗或切换遮罩，目标弹窗/遮罩不得在动画首帧立即覆盖动画；必须等动画完成或达到可感知时长后再打开。
+- 禁用互斥：动画期间按钮应禁用或节流，避免重复触发。
+
+转盘 / 抽奖类组件的硬性规则：
+
+- `spin` 动画必须绑定到转盘盘面或奖品环，不应只改变中心按钮状态。
+- 中心按钮是否跟随旋转必须在组件设计卡中明确；默认中心按钮不随盘面旋转。
+- 结果弹窗应在旋转动画结束后打开，`Runtime Container` 和 `phone-preview.tsx ACTION_WIRING` 都必须保持同样延迟语义。
+- Final Closeout 前必须用浏览器检查：点击抽奖后动画 class/style 生效，动画期间结果弹窗未出现，动画结束后结果弹窗出现。
+
 ## Playground 注册
 
 创建 section 后，必须在 `playground/section-registry.ts` 中注册：
@@ -182,6 +202,17 @@ export const stateTransitions: StateTransition[] = [
 ## Playground 流程预览
 
 `playground/scenarios/` 中的流程预览必须表达活动的业务阶段，而不是 Section 目录顺序。
+
+### 完整页预览背景一致性
+
+`runtime/app.tsx` 和 `playground/phone-preview.tsx` 必须使用同一个页面根背景。新活动从模板复制后，禁止保留模板默认浅灰背景（如 `#f7f8fb` / `bg-white`）作为 `phone-preview` 的 `<main>` 背景，除非该浅色正是已确认视觉方案的页面底色。
+
+实现要求：
+
+- 页面级背景色或背景图应来自 `.feedback/design.md` 的视觉方案。
+- 常规访问根容器（通常是 `runtime/app.tsx` 的 `<main>`）和移动端完整页预览根容器（`playground/phone-preview.tsx` 的 `<main>`）必须一致。
+- 如果 Section 之间存在 margin、透明区、弹窗关闭后的页面尾部或内容不足一屏，露出的必须是活动页面底色，而不是模板底色或 Playground 外层背景。
+- Final Closeout 前必须直接访问 `?mode=phone-preview`，检查 `main` 计算后的 `background-color` 或背景类是否与 runtime 根背景一致。
 
 ### 场景分类
 

@@ -15,7 +15,7 @@
 | 框架     | React 18                                |
 | 样式     | TailwindCSS + postcss-mobile-forever（px → vw，桌面端 580px 封顶居中） |
 | 状态     | Zustand                                 |
-| 动效     | framer-motion（根 package.json 共享）   |
+| 动效     | Motion for React（`motion/react`，根 package.json 共享）   |
 | 测试     | Vitest                                  |
 | 语言     | TypeScript                              |
 

@@ -59,6 +59,11 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 - Business states:
 - Interaction states:
 - State transitions:
+- Animation binding:
+  - Animated element:
+  - DOM/CSS implementation:
+  - Duration alignment:
+  - Result/modal timing:
 - Edge cases:
 - Acceptance tests:
   - Spec source: `.feedback/sections/<SectionName>.md`
@@ -132,6 +137,31 @@ tests:
 选择器优先级为 `role + name` → `label` → `text` → `testId`。可点击控件必须优先提供可访问名称；复杂视觉热区才使用 `data-testid` 作为主定位。
 
 `level: playwright` 的验收项不会生成 Vitest 用例，但必须保留在组件设计卡中，作为 Layer 2 视觉或集成验收事项。生成器遇到不支持字段时必须失败退出，禁止静默跳过。
+
+强交互组件如转盘、抽奖、翻牌、进度推进、滑动切换，必须在 `Acceptance Tests` 中补充至少一条 `level: playwright` 动画验收项，描述：
+
+- 触发动作后哪个元素应进入动画态。
+- 动画期间目标弹窗、遮罩或结果态是否应暂不出现。
+- 动画结束后目标弹窗、遮罩或结果态何时出现。
+
+示例：
+
+```yaml
+tests:
+  - id: wheel-spins-before-result-modal
+    type: animation
+    level: playwright
+    behavior: user taps crit and sees wheel spin before result modal
+    target:
+      role: button
+      name: crit
+      testId: crit-button
+    action:
+      click: true
+    expect:
+      testIdVisible: crit-wheel-disc
+    description: click 后转盘盘面必须进入 spinning class，900ms 内结果弹窗不得遮住转盘，动画结束后再出现结果弹窗
+```
 
 生成文件规则：
 
@@ -247,7 +277,9 @@ tests:
 
 - [ ] 渲染顺序已检查：`playground/section-registry.ts` 与 `runtime/app.tsx` 符合结构锁定顺序。
 - [ ] Layout Spec 已检查：已实现的 Section 顺序、关键元素位置、间距、对齐和层级规则符合 Layout Spec。
+- [ ] 移动端完整页预览背景已检查：`runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景一致，`?mode=phone-preview` 不露出模板默认底色。
 - [ ] Playground 联动已检查：每条 Interaction Spec 都映射到 defaultActions / ACTION_WIRING / stateTransitions，且无 TODO 占位。
+- [ ] 交互动效已检查：所有 `stateTransitions.animation` 均有 DOM/CSS 落地；抽奖/转盘类动画不会被结果弹窗首帧遮挡。
 - [ ] Runtime 联动已检查：每个跨 Section targetChange 都有 Store action，且每个 Runtime Container 已绑定该 action；console.log-only 只允许用于外部或无目标交互。
 - [ ] 全部 Section 验证通过：`pnpm validate-section --campaign <campaign-name> --all`
 - [ ] 单元规格测试通过：`pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src`
@@ -266,27 +298,29 @@ Final Closeout Gate 必须已在进入第 4 步时预置到 `.feedback/progress.
 1. 检查 `playground/section-registry.ts` 的注册顺序与结构锁定表一致。
 2. 检查 `runtime/app.tsx` 的渲染顺序与结构锁定表一致。
 3. 按 Layout Spec 检查关键元素位置、尺寸、间距、对齐、层级和响应规则是否被实现保留。
-4. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 命名是否一致，且不存在 `TODO` 占位。
-5. 按 Interaction Spec 逐条检查 Runtime 联动：凡 `targetSection` 不是 `self` 或 `targetChange` 会改变其他 Section 的交互，`integrations/store.ts` 必须存在对应 action，Runtime Container 必须绑定该 action，禁止 console.log-only。
-6. 运行总验收：
+4. 检查 `runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景是否一致；直接访问 `?mode=phone-preview`，确认 Section 间距、页面尾部和内容不足一屏时不会露出模板默认底色。
+5. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 命名是否一致，且不存在 `TODO` 占位。
+6. 对所有声明了 `stateTransitions.animation` 的 Section 执行动画落地检查：确认触发后实际 DOM/class/style 变化存在；若动画后会打开弹窗或遮罩，必须确认动画期间未被遮挡，动画结束后再显示结果。
+7. 按 Interaction Spec 逐条检查 Runtime 联动：凡 `targetSection` 不是 `self` 或 `targetChange` 会改变其他 Section 的交互，`integrations/store.ts` 必须存在对应 action，Runtime Container 必须绑定该 action，禁止 console.log-only。
+8. 运行总验收：
 
 ```bash
 pnpm validate-section --campaign <campaign-name> --all
 ```
 
-7. 运行全量单元测试：
+9. 运行全量单元测试：
 
 ```bash
 pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src
 ```
 
-8. 运行 build：
+10. 运行 build：
 
 ```bash
 pnpm --filter @new-type/<campaign-name> build
 ```
 
-9. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
+11. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
 
 最终回复必须说明：
 

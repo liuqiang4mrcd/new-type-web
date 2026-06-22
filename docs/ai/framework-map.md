@@ -36,7 +36,7 @@
 
 - **设计稿基准宽度：750px（@2x）**
 - CSS 中的 px 由 `postcss-mobile-forever`（`viewportWidth: 750`）在构建时自动转换为 vw
-- JS 中使用 px 的地方（如 framer-motion 动画、IntersectionObserver rootMargin 等）不会经过 PostCSS 编译，需手动处理：
+- JS 中使用 px 的地方（如 `motion/react` 动画、IntersectionObserver rootMargin 等）不会经过 PostCSS 编译，需手动处理：
   - 用 `vw()` 工具函数：`vw(100)` → `13.333vw`
   - IntersectionObserver 的 `rootMargin`：直接翻倍（如设计稿 200px → 代码写 `400px`，因为 observer 是逻辑像素）
 
