@@ -312,6 +312,7 @@ tests:
 - [ ] 单元规格测试通过：`pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src`
 - [ ] 构建通过：`pnpm --filter @new-type/<campaign-name> build`
 - [ ] 反馈归档完成：根目录 `.feedback/` 已移动到 `apps/<campaign-name>/.feedback/`
+- [ ] 反馈归档机器检查通过：`pnpm final-closeout-check --campaign <campaign-name>`
 ```
 
 ## 最终验收
@@ -350,6 +351,18 @@ pnpm --filter @new-type/<campaign-name> build
 
 12. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
 
+13. 运行反馈归档机器检查；该命令必须通过后才能最终回复：
+
+```bash
+pnpm final-closeout-check --campaign <campaign-name>
+```
+
+该命令至少检查：
+
+- `apps/<campaign-name>/.feedback/` 已存在。
+- `apps/<campaign-name>/.feedback/progress.md` 已存在。
+- 根目录 `.feedback/` 不存在。
+
 最终回复必须说明：
 
 - 每个 Section 的单独验证结果。
@@ -362,3 +375,4 @@ pnpm --filter @new-type/<campaign-name> build
 - 全量 Vitest 结果。
 - build 结果。
 - `.feedback` 归档结果。
+- `pnpm final-closeout-check --campaign <campaign-name>` 结果。
