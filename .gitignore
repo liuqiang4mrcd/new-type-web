@@ -1,11 +1,25 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
+*.tsbuildinfo
+
+# Monorepo and task-runner caches
+.nx/
 .turbo/
 nx.log
-*.tsbuildinfo
-.DS_Store
+
+# Local environment files
 *.local
-.nx/
+
+# OS metadata
+.DS_Store
+
+# Test and browser automation artifacts
+/test-results/
+/.playwright-mcp/
+
+# AI feedback artifacts
 /.feedback
 **/.feedback/logs/
-/test-results/
