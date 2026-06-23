@@ -1,22 +1,28 @@
 import { create } from 'zustand';
-import type { SectionState } from '../contracts/section';
-import type { ScaffoldContent } from '../designer/sections/ScaffoldSection/types';
-import { defaultContent as scaffoldContent } from '../designer/sections/ScaffoldSection/content';
+import { createInitialAppState } from '../activity/initial-state';
+import { activityReducer } from '../activity/reducer';
+import type { AppAction, AppState } from '../activity/types';
 
 export interface AppStore {
-  scaffold: SectionState<ScaffoldContent>;
+  appState: AppState;
+  dispatch: (action: AppAction) => void;
+  setAppState: (state: AppState) => void;
   loadCampaign: () => Promise<void>;
 }
 
 export const useStore = create<AppStore>((set) => ({
-  scaffold: { status: 'ready', content: scaffoldContent },
+  appState: createInitialAppState(),
+
+  dispatch: (action) =>
+    set((state) => ({
+      appState: activityReducer(state.appState, action),
+    })),
+
+  setAppState: (appState) => set({ appState }),
 
   loadCampaign: async () => {
     set({
-      scaffold: {
-        status: 'ready',
-        content: scaffoldContent,
-      },
+      appState: createInitialAppState(),
     });
   },
 }));

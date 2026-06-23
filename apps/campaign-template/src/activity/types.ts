@@ -1,0 +1,33 @@
+import type { SectionState } from '../contracts/section';
+import type { ScaffoldContent } from '../designer/sections/ScaffoldSection/types';
+
+export type ModalId = string;
+
+export interface ModalEntry {
+  id: ModalId;
+  payload?: unknown;
+}
+
+export interface DomainState {
+  // Activity-specific business facts are added by each campaign.
+}
+
+export interface UiState {
+  modalStack: ModalEntry[];
+}
+
+export interface AppState {
+  domain: DomainState;
+  ui: UiState;
+}
+
+export type AppAction =
+  | { type: 'modal/push'; id: ModalId; payload?: unknown }
+  | { type: 'modal/pop' }
+  | { type: 'modal/close'; id: ModalId }
+  | { type: 'modal/replace'; id: ModalId; payload?: unknown }
+  | { type: 'modal/clear' };
+
+export interface SectionStateMap {
+  scaffold: SectionState<ScaffoldContent>;
+}

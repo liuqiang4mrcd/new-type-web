@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { SectionPanel } from './SectionPanel';
 import { PhoneFrame } from './PhoneFrame';
 import { ScenarioRunner } from './ScenarioRunner';
@@ -8,6 +8,14 @@ import { registerSections } from './section-registry';
 import { scenarios, scenarioMeta } from './scenarios';
 import type { PreviewMode } from './types';
 import type { Scenario } from './types';
+
+const FALLBACK_SCENARIO: Scenario = {
+  id: '__fallback__',
+  label: '无可用场景',
+  description: '请先在 scenarios/index.ts 中添加业务场景',
+  group: 'fullpage',
+  steps: [],
+};
 
 const sections = registerSections();
 
@@ -20,12 +28,16 @@ export function Playground() {
   const [actionsLog, setActionsLog] = useState<
     Array<{ time: string; action: string; args: unknown[] }>
   >([]);
-  const [selectedScenario, setSelectedScenario] = useState<Scenario>(scenarios[0]);
+  const [selectedScenario, setSelectedScenario] = useState<Scenario>(
+    scenarios[0] ?? FALLBACK_SCENARIO,
+  );
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [flowCollapsed, setFlowCollapsed] = useState(false);
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId) ?? null;
+
+  const hasNoSteps = selectedScenario.steps.length === 0;
 
   // 为 selectedSection 包装带日志的 actions
   const loggedActions = selectedSection?.defaultActions
@@ -58,11 +70,12 @@ export function Playground() {
   );
 
   const handlePlayToggle = useCallback(() => {
+    if (hasNoSteps) return;
     if (activeStepIndex >= selectedScenario.steps.length - 1) {
       setActiveStepIndex(0);
     }
     setIsPlaying((p) => !p);
-  }, [activeStepIndex, selectedScenario.steps.length]);
+  }, [activeStepIndex, hasNoSteps, selectedScenario.steps.length]);
 
   const handleReset = useCallback(() => {
     setIsPlaying(false);
@@ -71,7 +84,7 @@ export function Playground() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && !hasNoSteps) {
       timerRef.current = setInterval(() => {
         setActiveStepIndex((prev) => {
           const next = prev + 1;
@@ -89,7 +102,12 @@ export function Playground() {
         timerRef.current = null;
       }
     };
-  }, [isPlaying, selectedScenario.steps.length, selectedScenario.autoPlayDelay]);
+  }, [isPlaying, hasNoSteps, selectedScenario.steps.length, selectedScenario.autoPlayDelay]);
+
+  const currentStep = useMemo(
+    () => selectedScenario.steps[activeStepIndex],
+    [selectedScenario.steps, activeStepIndex],
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -157,10 +175,10 @@ export function Playground() {
         />
       </div>
 
-      {mode === 'flow' && !flowCollapsed && (
+      {mode === 'flow' && !flowCollapsed && currentStep && (
         <FlowInspector
           scenario={selectedScenario}
-          currentStep={selectedScenario.steps[activeStepIndex]}
+          currentStep={currentStep}
           currentIndex={activeStepIndex}
           totalSteps={selectedScenario.steps.length}
           isPlaying={isPlaying}

@@ -15,8 +15,9 @@
 | 目录            | 负责人   | 职责                      | AI 能否修改 |
 | --------------- | -------- | ------------------------- | ----------- |
 | `designer/`     | 设计师   | 纯视觉组件、展示数据      | ✅ 目标活动内可创建/修改 |
-| `runtime/`      | AI       | 连接 store 和视觉组件     | ✅ 主力     |
-| `integrations/` | 开发者   | Store / API / 埋点 / 配置 | 按需        |
+| `activity/`     | AI/开发者 | 页面内部交互内核：AppState、reducer、actions、selectors（纯 TS） | ✅          |
+| `runtime/`      | AI       | 连接 activity/store 和视觉组件 | ✅ 主力     |
+| `integrations/` | 开发者   | Store 外壳 / API / adapter / 埋点 / 配置 | 按需        |
 | `playground/`   | 设计师   | 预览环境、Section 注册、流程预览 | ✅ 按需     |
 | `contracts/`    | 所有角色 | 类型定义                  | ✅          |
 
@@ -30,6 +31,28 @@
 | 数据接口变更 / 接口接入 | `designer/sections/<Name>/contract.ts`（动态数据 Section 语义契约）+ `integrations/adapters/` + `integrations/fixtures/` + `runtime/` | 不要直接改 `index.tsx`；不要让 runtime 或 visual 消费 raw DTO |
 | 新增 API / Store / 埋点 | `integrations/{store,api,tracking}.ts`                      | 不要绕开 integrations       |
 | 设计师调整视觉          | 按用户明确范围修改目标活动的 `designer/sections/*`           | 不要越界修改模板、共享包或未确认的视觉结构 |
+
+### Activity 交互内核
+
+`activity/` 是 Playground 与 runtime 共用的页面内部交互内核，用于避免同一交互规则同时写在 `playground/phone-preview.tsx` 和 `integrations/store.ts`。
+
+允许：
+
+- 定义 `AppState`、`DomainState`、`UiState`、`AppAction`
+- 定义纯 reducer、业务 command/action creator
+- 定义 `AppState -> SectionState<Content>` selectors
+- 引用 `contracts/` 类型和 `designer/sections/*/{types,content}` 作为 selector 输出的类型与视觉默认值
+
+禁止：
+
+- import React、Zustand、API、tracking、toast 或浏览器副作用
+- 发请求、打埋点、读写 localStorage
+- 保存或解释后端 raw DTO
+- 把 Playground 专属状态写入 `AppState`
+
+普通页面交互必须通过 `dispatch(AppAction)` 进入 activity reducer；API 初始化、重载可以由 `integrations/store.ts` 调用 adapter 后 `hydrate` / `setAppState`。
+
+Section `Content` 是最终渲染 ViewModel，不是业务事实源。动态业务事实应保存在 `domain/ui`，再由 selectors 派生成 `SectionState<Content>`。
 
 ## 引用规则
 
@@ -101,7 +124,7 @@ function HeroContainer() {
 
 - Section 只声明自身需要的展示语义，不声明 API 字段、接口路径或后端 DTO shape。
 - 动态数据 Section 必须提供 `contract.ts`，并通过 app-local adapter contract test 验证。
-- API DTO 必须先经过 `integrations/adapters/*` 映射成 `SectionState<Content>`，再进入 store 和 runtime。
+- API DTO 必须先经过 `integrations/adapters/*` 映射成 `DomainState` 或 `createInitialAppState()` 的输入，再进入 store 和 runtime。
 - runtime container 禁止临时拼接接口字段、解释后端枚举或读取 raw DTO。
 - Playground 继续使用 mock content 和 scenario，不接真实 API。
 
@@ -174,7 +197,8 @@ interface ScenarioStep {
 - 展示数据 = `{...section.defaultContent, ...step.section.content}`（浅合并）
 - **禁止** import `useStore` 或 `integrations/store`——场景数据完全在 Playground 内部自洽
 - `ScenarioRunner.tsx` 负责数据合并和渲染，不经过真实 Store
-- `phone-preview.tsx` 以 `defaultContent` 作为初始 mock 数据；跨 Section 的弹窗/结果联动只能通过本文件内的 `ACTION_WIRING` 浅合并覆盖，不接入真实 Store。接入接口后完整页面预览切换到 `runtime/app.tsx`
+- `phone-preview.tsx` 的完整页面交互必须走 `activity` reducer/actions/selectors；禁止使用 `ACTION_WIRING` 维护跨 Section content patch
+- `playground/` 禁止 import `integrations/*`，包括 `integrations/store`、`integrations/api`、`integrations/tracking`
 
 #### 命名要求
 

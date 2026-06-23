@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import type {
   SectionPaths,
@@ -36,6 +36,25 @@ function check(partial: {
 
 function pascal(key: string): string {
   return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+function camel(key: string): string {
+  return key.charAt(0).toLowerCase() + key.slice(1);
+}
+
+function collectSourceFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  const files: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const fullPath = join(dir, entry);
+    const stat = statSync(fullPath);
+    if (stat.isDirectory()) {
+      files.push(...collectSourceFiles(fullPath));
+    } else if (/\.(ts|tsx)$/.test(entry)) {
+      files.push(fullPath);
+    }
+  }
+  return files;
 }
 
 function checkFilesExist(paths: SectionPaths): CheckResult {
@@ -355,22 +374,54 @@ function checkContainerRouting(
 function checkStoreAlignment(
   baseName: string,
   storeSource: string,
+  rootDir: string,
 ): CheckResult {
   const parsed = parseStoreSectionStateTypes(storeSource);
   const expectedType = `${baseName}Content`;
-  if (!parsed.stateContentTypes.includes(expectedType)) {
+  if (parsed.stateContentTypes.includes(expectedType)) {
     return check({
       name: 'Store 对齐',
-      passed: false,
-      errors: [
-        `Store 中未找到 SectionState<${expectedType}> 类型字段`,
-      ],
+      passed: true,
+      errors: [],
     });
   }
+
+  const selectorFile = join(
+    rootDir,
+    'activity',
+    'selectors',
+    `${camel(baseName)}.ts`,
+  );
+  const selectorResult = readFileSafe(selectorFile);
+  const selectorHasSectionState =
+    selectorResult.ok &&
+    selectorResult.text.includes(`SectionState<${expectedType}>`);
+
+  const activityTypesFile = join(rootDir, 'activity', 'types.ts');
+  const activityTypesResult = readFileSafe(activityTypesFile);
+  const sectionKey = camel(baseName);
+  const activityMapHasSectionState =
+    activityTypesResult.ok &&
+    new RegExp(`${sectionKey}\\s*:\\s*SectionState<${expectedType}>`).test(
+      activityTypesResult.text,
+    );
+
+  if (selectorHasSectionState && activityMapHasSectionState) {
+    return check({
+      name: 'Store 对齐',
+      passed: true,
+      errors: [],
+    });
+  }
+
   return check({
     name: 'Store 对齐',
-    passed: true,
-    errors: [],
+    passed: false,
+    errors: [
+      `未找到 SectionState<${expectedType}>：旧模式需在 Store 中声明；activity 模式需在 selectors/${camel(
+        baseName,
+      )}.ts 和 activity/types.ts 的 SectionStateMap 中声明`,
+    ],
   });
 }
 
@@ -591,6 +642,27 @@ function checkLayerBoundaries(
   }
 
   const violations = checkLayerViolations(result.text);
+  for (const filePath of collectSourceFiles(join(rootDir, 'playground'))) {
+    const file = readFileSafe(filePath);
+    if (file.ok && /from\s+['"](?:\.\.\/)+integrations\//.test(file.text)) {
+      violations.push(
+        `${filePath.replace(rootDir + '/', '')} import integrations/*（Playground 必须走 activity mock/reducer）`,
+      );
+    }
+  }
+
+  for (const filePath of collectSourceFiles(join(rootDir, 'activity'))) {
+    const file = readFileSafe(filePath);
+    if (!file.ok) continue;
+    const relativePath = filePath.replace(rootDir + '/', '');
+    if (/from\s+['"]react['"]|from\s+['"]zustand['"]/.test(file.text)) {
+      violations.push(`${relativePath} import React/Zustand（activity 必须保持纯 TS）`);
+    }
+    if (/from\s+['"].*integrations\/(api|store|tracking)/.test(file.text)) {
+      violations.push(`${relativePath} import integrations runtime/API/tracking`);
+    }
+  }
+
   return check({
     name: '分层边界检查',
     passed: violations.length === 0,
@@ -829,7 +901,7 @@ export function validateSection(
   allChecks.push(checkContainerRouting(rootDir, naming.baseName, supportedStates));
 
   // 11. Store 对齐
-  allChecks.push(checkStoreAlignment(naming.baseName, storeSource));
+  allChecks.push(checkStoreAlignment(naming.baseName, storeSource, rootDir));
 
   // 12. Runtime 注册
   allChecks.push(checkRuntimeAppRegistration(rootDir, naming.baseName));
