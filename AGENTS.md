@@ -88,6 +88,7 @@ packages/
 ```
 agents/
 ├── designer.md          # AI 设计师助手 — H5 活动页流程编排者
+├── integration.md       # API 数据集成助手 — 真实接口接入与联调
 ├── skills/              # designer 调用的项目内能力模块
 │   ├── design-input/SKILL.md          # 需求收集、素材分析、结构规划
 │   ├── visual-design/SKILL.md         # 视觉细化与视觉修改
@@ -96,7 +97,8 @@ agents/
 └── shared/
     ├── DESIGN.md        # H5 活动页设计规范（画布、布局、色彩、字体、组件尺寸等）
     ├── DESIGN_INPUT.md  # 设计素材输入规则（原型图/视觉参考图职责边界）
-    └── DESIGN_OUTPUT.md # 端到端实施输出规则（操作范围、Section 格式、Playground/Runtime 注册）
+    ├── DESIGN_OUTPUT.md # 端到端实施输出规则（操作范围、Section 格式、Playground/Runtime 注册）
+    └── STRUCTURE_OUTPUT.md # Section 拆分决策树与结构输出模板
 ```
 
 - `agents/*.md` — 可调用的 agent 定义
@@ -130,6 +132,31 @@ agents/
 - `agents/shared/DESIGN.md` — 设计规范底线
 - `agents/shared/DESIGN_INPUT.md` — 素材输入与冲突处理规则
 - `agents/shared/DESIGN_OUTPUT.md` — 端到端实施范围与格式规范
+
+### integration — API 数据集成与接口联调
+
+当用户需求明确涉及 H5 活动页的**接口接入、后端联调或数据集成**时，自动调用 `integration` agent：
+
+| 触发场景 | 示例 |
+|---|---|
+| 接口接入 / API 接入 | "接一下活动首页接口"、"把这个页面对接后端 API" |
+| 接口联调 / 后端对接 | "联调领奖接口"、"根据接口文档接真实数据" |
+| DTO 映射 / adapter | "写 activityHome adapter"、"把后端 DTO 映射到 SectionState" |
+| fixture / adapter test | "补接口 fixture"、"给 adapter 加 contract test" |
+| store 真实数据 action | "把 integrations/store.ts 改成真实 load/refresh/claim" |
+| 动态 Section contract 校验 | "检查动态 Section 的 contract" |
+| defaultContent 泄漏检查 | "检查 runtime 有没有用 defaultContent fallback" |
+| integration 验证 | "跑 validate-integration"、"验证接口接入完成度" |
+
+`integration` 不覆盖以下场景：创建活动页、视觉修改、布局/样式调整、Playground 视觉预览、Section 视觉组件实现。这些仍归 `designer` agent。
+
+> **人工阶段边界**：Designer Final Closeout 后不会自动进入 Integration。只有当用户另起请求或明确提出接口接入类任务时，才触发 `integration` agent。
+
+Integration 依据：
+- `agents/integration.md` — integration agent 定义
+- `docs/ai/interface-integration-rules.md` — 接口接入规则
+- `docs/ai/development-rules.md` — 三层架构和数据边界
+- `agents/shared/STRUCTURE_OUTPUT.md` — 动态 Section 与跨 Section Tab 结构来源
 
 ---
 

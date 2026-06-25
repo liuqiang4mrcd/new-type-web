@@ -20,6 +20,123 @@ API DTO
 - `runtime/sections/*Container.tsx` 只读取 `SectionState`、按 status 渲染、绑定 actions，不允许临时拼接口字段。
 - `integrations/store.ts` 的渲染主状态只保存 adapter 输出后的 `SectionState<Content>`；raw DTO 不能进入 runtime/render path。
 
+## Integration Agent 工作流
+
+接口接入由 `agents/integration.md` 负责。它是独立人工入口：Designer Final Closeout 后不会自动继续进入接口接入；只有用户明确提出接口接入、接口联调、adapter、fixture、真实数据 store action、动态 Section contract 校验、`defaultContent` 泄漏检查或 `validate-integration` 相关任务时才触发。
+
+Integration Agent 触发时目标 app 必须已经存在，禁止创建新活动项目，禁止修改 `apps/campaign-template/`。
+
+开始前必须确认：
+
+- 目标 app：`apps/<campaign>/`。
+- 接口文档、API 路径/参数/响应说明，或后端提供的响应样例。
+- 至少一个 normal response 样例，才能进入 `normal-path`。
+- `apps/<campaign>/.feedback/structure.md` 存在，并能识别 `数据来源 = 动态数据` 的 Section。
+
+没有接口文档或响应样例时，只能产出 `skeleton` 预接入骨架，不能标记接口接入完成。
+
+### 权限边界
+
+允许修改：
+
+- `apps/<campaign>/src/integrations/api.ts`
+- `apps/<campaign>/src/integrations/store.ts`
+- `apps/<campaign>/src/integrations/adapters/*`
+- `apps/<campaign>/src/integrations/fixtures/*`
+- `apps/<campaign>/src/runtime/sections/*Container.tsx`，仅限数据读取、状态分支和 action 绑定
+- `apps/<campaign>/src/activity/types.ts`
+- `apps/<campaign>/src/activity/actions.ts`
+- `apps/<campaign>/src/activity/reducer.ts`
+- `apps/<campaign>/.feedback/integration.md`
+
+默认只读：
+
+- `designer/sections/*/types.ts`
+- `designer/sections/*/content.ts`
+- `designer/sections/*/index.tsx`
+- `designer/sections/*/states.tsx`
+- 已有 `designer/sections/*/contract.ts`
+- `playground/*`
+
+允许新增：
+
+- 动态 Section 缺失时，可新增 `designer/sections/<Name>/contract.ts`。
+- 新增 `contract.ts` 只能依据已确认的 `.feedback/structure.md`、组件设计卡和 `types.ts`，禁止从后端 DTO 反推视觉契约。
+
+禁止修改：
+
+- `apps/campaign-template/`
+- `packages/*`
+- `designer/sections/*/types.ts`
+- `designer/sections/*/content.ts`
+- `designer/sections/*/index.tsx`
+- `designer/sections/*/states.tsx`
+- `playground/`，除非修复其违规接入真实数据流的边界问题
+
+如果接口现实要求改变已有 `contract.ts`、`types.ts` 或用户可见信息结构，必须停止实现并输出契约变更请求，等待用户或 Designer 确认。
+
+### 状态分级
+
+`apps/<campaign>/.feedback/integration.md` 必须记录当前状态：
+
+| 状态 | 含义 |
+|---|---|
+| `skeleton` | 没有真实接口样例，仅有 contract、adapter 骨架或 placeholder fixture |
+| `normal-path` | confirmed/captured normal fixture 接通，normal adapter test 通过，runtime 能显示正常数据，但边界样例不足 |
+| `verified` | normal 和至少一个业务边界 fixture 为 confirmed/captured，missing-required / malformed 本地负例通过，runtime 不消费 raw DTO，`validate-integration` 和 `pnpm build` 通过 |
+| `blocked` | 缺接口文档、缺样例、鉴权/环境不可用、结构缺失、契约冲突或需要用户确认 |
+
+只有 `verified` 可以称为接口接入完成。后端只提供 normal 样例时，只能称为 `normal-path`。
+
+### 进度账本
+
+Integration 进度账本写入目标 app：
+
+```txt
+apps/<campaign>/.feedback/integration.md
+```
+
+推荐格式：
+
+```md
+# Integration 进度
+
+- campaign:
+- 当前状态: skeleton | normal-path | verified | blocked
+- 输入来源:
+- 动态 Section 清单:
+- adapter 清单:
+- fixture 可信度:
+- adapter test 结果:
+- runtime 联调结果:
+- build 结果:
+- 阻塞项:
+```
+
+### 验证门禁
+
+`validate-integration` 是独立门禁，不并入 `validate-section --all`。
+
+推荐命令形态：
+
+```bash
+pnpm validate-integration --campaign <campaign-name>
+pnpm validate-integration --campaign <campaign-name> --section <SectionName>
+pnpm validate-integration --campaign <campaign-name> --adapter <adapterName>
+```
+
+`validate-integration` 至少应覆盖：
+
+- 解析 `apps/<campaign>/.feedback/structure.md` 的动态 Section 清单；缺失或格式不符合 `agents/shared/STRUCTURE_OUTPUT.md` 时失败。
+- 检查 `Tab归属 = 跨Section控制` 时存在 `AFFECTED_SECTIONS`。
+- 动态 Section 存在 `contract.ts`。
+- adapter、fixture 和 adapter test 存在并通过。
+- `integrations/`、`activity/`、`runtime/` 不 import `designer/sections/*/content.ts` 或 `defaultContent`。
+- runtime/render path 不消费 raw DTO。
+- Playground 不 import API、adapter、fixture 或真实数据流。
+
+在脚本尚未实现时，必须手动执行等价检查并在 `apps/<campaign>/.feedback/integration.md` 记录。
+
 ## Section 语义契约
 
 当 Section 的 `content` 会被真实业务数据覆盖时，必须提供机器可读的 Section 语义契约：

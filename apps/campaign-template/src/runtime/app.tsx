@@ -4,6 +4,15 @@ import { useStore } from '../integrations/store';
 import { ScaffoldContainer } from './sections/ScaffoldContainer';
 import { trackPageView } from '../integrations/tracking';
 
+export function RuntimePage() {
+  return (
+    <main className="min-h-screen bg-[#f7f8fb]">
+      <ScaffoldContainer />
+      <ToastContainer />
+    </main>
+  );
+}
+
 export function App() {
   const loadCampaign = useStore((s) => s.loadCampaign);
 
@@ -12,10 +21,5 @@ export function App() {
     trackPageView();
   }, [loadCampaign]);
 
-  return (
-    <main className="min-h-screen bg-[#f7f8fb]">
-      <ScaffoldContainer />
-      <ToastContainer />
-    </main>
-  );
+  return <RuntimePage />;
 }

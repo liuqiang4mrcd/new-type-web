@@ -10,6 +10,7 @@ export interface ModalEntry {
 
 export interface DomainState {
   // Activity-specific business facts are added by each campaign.
+  sections?: Partial<SectionStateMap>;
 }
 
 export interface UiState {
