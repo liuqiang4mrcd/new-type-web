@@ -102,6 +102,7 @@ Runtime 联动要求：
 
 - `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`。
 - `integrations/store.ts` 生成初始 `sections` 时必须读取结构规划的 `数据来源` 判断：`静态展示` Section 可显式写入 runtime 静态文案；`动态数据` Section 禁止手写设计态假数据并标记为 `ready`，只能进入 `loading / empty / error` 或缺省不渲染，直到 integration 通过 adapter 写入真实 `SectionState<Content>`。
+- 国际化文案按 `docs/ai/i18n-rules.md` 执行：`defaultContent` 可由默认语言 content factory 生成，但禁止读取当前 URL / store 语言；runtime 静态文案由 `src/i18n/` 和 container / adapter 组装后传给视觉组件。
 - Runtime 所需的静态文案、按钮名、空态文案必须在 adapter / container 中显式定义，或由业务配置/接口返回；禁止通过 `...defaultContent` 继承。
 - 动态 Section 缺少真实 `SectionState<Content>` 时，Runtime Container 返回空或显式状态视图，不得返回 `ready + defaultContent`。
 - Runtime Container 只在 `section.status === 'ready' && section.content` 时渲染主视觉组件；否则渲染显式状态视图或返回 `null`。

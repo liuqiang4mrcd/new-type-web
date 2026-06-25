@@ -1,4 +1,5 @@
 import type { AppState, DomainState, UiState } from './types';
+import { DEFAULT_LANG } from '../i18n';
 
 interface InitialStateInput {
   domain?: Partial<DomainState>;
@@ -12,6 +13,8 @@ export function createInitialAppState(input: InitialStateInput = {}): AppState {
     },
     ui: {
       modalStack: [],
+      lang: DEFAULT_LANG,
+      textDirection: 'ltr',
       ...input.ui,
     },
   };

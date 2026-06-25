@@ -4,7 +4,9 @@ export function PhoneFrame() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const baseUrl = window.location.origin + window.location.pathname;
-  const iframeSrc = `${baseUrl}?mode=phone-preview`;
+  const iframeParams = new URLSearchParams(window.location.search);
+  iframeParams.set('mode', 'phone-preview');
+  const iframeSrc = `${baseUrl}?${iframeParams.toString()}`;
 
   return (
     <div className="flex justify-center items-start min-h-full py-8">

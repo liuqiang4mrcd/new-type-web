@@ -1,19 +1,17 @@
 import type { StateDeclaration } from '../../../contracts/section';
+import { DEFAULT_LANG, getI18nMessages } from '../../../i18n';
 import type { ScaffoldContent } from './types';
 
 export const supportedStates: StateDeclaration[] = [
   { key: 'draft', type: 'business', required: true },
 ] as const;
 
+const scaffoldMessages = getI18nMessages(DEFAULT_LANG).scaffold;
+
 export const defaultContent: ScaffoldContent = {
-  title: 'Campaign Scaffold',
-  description:
-    'Replace this neutral scaffold with real Sections after the component design cards are confirmed.',
-  checklist: [
-    'Define each Section purpose before writing code.',
-    'Declare only states that really exist.',
-    'Validate one Section before starting the next.',
-  ],
+  title: scaffoldMessages.title,
+  description: scaffoldMessages.description,
+  checklist: scaffoldMessages.checklist,
 };
 
 export const stateData: Record<string, Partial<ScaffoldContent>> = {

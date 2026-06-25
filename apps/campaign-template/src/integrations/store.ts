@@ -10,6 +10,7 @@ import type {
 } from "../activity/types";
 import { adaptCampaignInfo } from "./adapters/campaignInfo.adapter";
 import { getCampaignInfo } from "./api";
+import { getCurrentCampaignLocale } from "../i18n";
 
 export interface AppStore {
   domain: DomainState;
@@ -30,9 +31,15 @@ export interface RuntimeViewState {
 }
 
 function createTemplateAppState() {
+  const locale = getCurrentCampaignLocale();
+
   return createInitialAppState({
     domain: {
       sections: {},
+    },
+    ui: {
+      lang: locale.lang,
+      textDirection: locale.dir,
     },
   });
 }
@@ -130,8 +137,7 @@ export const useStore = create<AppStore>((set) => ({
           ...state.sections,
           scaffold: {
             status: "error",
-            error:
-              error instanceof Error ? error.message : "campaign_load_failed",
+            error: "campaign_load_failed",
           },
         },
       }));

@@ -77,6 +77,7 @@ const section = useStore((s) => selectHeroSection(s.appState));
 
 - 所有共享包通过 `@new-type/*` 引用
 - 使用 workspace 协议：`"@new-type/utils": "workspace:*"`
+- 国际化 URL 解析等跨活动纯函数放在 `@new-type/utils`；具体语言文案放在各 campaign 的 `src/i18n/`，不得放入共享 utils。
 - 禁止跨 apps 引用
 - packages 之间"只向下依赖"（上层包可依赖下层包，反之禁止）：
   - `headless` 仅依赖 react（peer）

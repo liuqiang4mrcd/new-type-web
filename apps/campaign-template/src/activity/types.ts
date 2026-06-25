@@ -1,5 +1,7 @@
 import type { SectionState } from '../contracts/section';
 import type { ScaffoldContent } from '../designer/sections/ScaffoldSection/types';
+import type { SupportedLang } from '../i18n';
+import type { TextDirection } from '@new-type/utils';
 
 export type ModalId = string;
 
@@ -15,6 +17,8 @@ export interface DomainState {
 
 export interface UiState {
   modalStack: ModalEntry[];
+  lang: SupportedLang;
+  textDirection: TextDirection;
 }
 
 export interface AppState {

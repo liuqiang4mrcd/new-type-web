@@ -1,6 +1,6 @@
 # 活动页模板说明
 
-> 最后更新：2026-06-17（中性 Scaffold 模板 + Playground 3 模式预览）
+> 最后更新：2026-06-25（中性 Scaffold 模板 + i18n / RTL 基础能力）
 
 `apps/campaign-template` 是新活动的最小可运行脚手架，不承载具体业务示例。它只保留中性的 `ScaffoldSection`，用于确认工程链路、Playground 和 runtime 能正常工作。
 
@@ -38,6 +38,13 @@ apps/campaign-template/
 │   │   ├── tracking.ts
 │   │   └── constants.ts
 │   │
+│   ├── i18n/                        # 🌐 活动本地国际化资源
+│   │   ├── en.ts                    # 英文文案
+│   │   ├── zh.ts                    # 中文文案
+│   │   ├── ar.ts                    # 阿拉伯语文案（RTL 示例）
+│   │   ├── types.ts                 # I18nMessages / SupportedLang
+│   │   └── index.ts                 # 语言选择、文案读取、content factory
+│   │
 │   └── playground/                  # 🔍 设计师预览
 │       ├── index.tsx                # 左主区域 + 右控制面板 flex 布局
 │       ├── ControlPanel.tsx         # 右侧控制面板（模式选择/编辑/日志）
@@ -60,6 +67,42 @@ apps/campaign-template/
 - 输出真实 Section 前必须先写组件设计卡，明确作用、展示方式、数据、交互、状态和边界。
 - 不要从 scaffold 默认状态推导业务状态；每个 Section 必须独立做状态适配。
 - 如果需要业务示例，应放在 `docs/` 或独立示例目录，不应放入 `apps/campaign-template` 复制源。
+
+## 国际化与 RTL
+
+模板默认支持 app-local i18n：
+
+- 默认语言：`en`
+- 默认方向：`ltr`
+- URL 语言参数：`?lang=en`、`?lang=zh`、`?lang=ar`
+- URL 方向覆盖：`?dir=ltr`、`?dir=rtl`
+- `ar` 默认推导为 `rtl`
+
+通用 URL 解析能力放在 `@new-type/utils` 的 `parseLocaleSearch`，活动文案只能放在当前 app 的 `src/i18n/`。
+
+`defaultContent` 可以使用默认语言生成静态视觉样例：
+
+```ts
+import { DEFAULT_LANG, getI18nMessages } from "../../../i18n";
+
+const scaffoldMessages = getI18nMessages(DEFAULT_LANG).scaffold;
+
+export const defaultContent = {
+  title: scaffoldMessages.title,
+  description: scaffoldMessages.description,
+  checklist: scaffoldMessages.checklist,
+};
+```
+
+禁止 `defaultContent` 读取 URL、store 或当前 runtime 语言。runtime 需要多语言文案时，由 container / adapter 按 `ui.lang` 生成最终字符串并传给视觉组件。
+
+runtime 根节点会设置：
+
+```tsx
+<main lang={lang} dir={textDirection}>
+```
+
+并同步 `document.documentElement.lang / dir`。创建真实 Section 时，方向敏感的箭头、进度方向和左右布局必须在组件设计卡中说明 RTL 行为。
 
 ## 创建新 Section
 
@@ -194,6 +237,11 @@ import { Tab } from "@new-type/headless";
 ```bash
 # 线上页面
 pnpm dev
+
+# 指定语言 / RTL 调试
+pnpm dev  →  http://localhost:5173/?lang=zh
+pnpm dev  →  http://localhost:5173/?lang=ar
+pnpm dev  →  http://localhost:5173/?lang=en&dir=rtl
 
 # mock 数据调试
 VITE_USE_MOCK=true pnpm dev
