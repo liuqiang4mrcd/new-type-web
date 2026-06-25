@@ -68,6 +68,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止越界修改其他 `apps/*`、`packages/*`、`scripts/*`。
 - 禁止默认接入真实 API 或埋点；`integrations/api.ts` / `integrations/tracking.ts` 只有用户明确要求时才可改。
 - 禁止在 `integrations/`、`activity/`、`runtime/` 中 import `designer/sections/*/content.ts` 或用 `defaultContent` 作为接口/mock/runtime fallback；`defaultContent` 只能用于 `designer/` 和 `playground/`。
+- 禁止在 `integrations/store.ts` 中手写等价于设计态 `defaultContent` 的假数据来填充 `.feedback/structure.md` 标记为 `数据来源 = 动态数据` 的 Section；新活动未接入接口时，动态 Section 只能初始化为 `loading / empty / error` 或不渲染，完整视觉预览交给 `playground/preview-state.ts`。
 - 禁止 Runtime 中使用 `useStore((s) => selectXxxSection(s.appState))`；Zustand selector 只能订阅原始字段或 primitive。派生 content 放在组件 render/useMemo 或拆分订阅。
 - 禁止新增 `activity/selectors/*` 或 `phone-preview` 专用 `ACTION_WIRING`；完整页面预览必须通过 `preview-state` 初始化 `RuntimeViewState` 并复用 runtime container。
 - 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
