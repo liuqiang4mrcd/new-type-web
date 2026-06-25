@@ -31,7 +31,10 @@ apps/campaign-template/
 │   │
 │   ├── integrations/                # 👨‍💻 生产逻辑层
 │   │   ├── store.ts                 # Zustand 外壳，包 activity appState/dispatch
-│   │   ├── api.ts
+│   │   ├── api.ts                   # API 函数；VITE_USE_MOCK=true 时动态加载 mock
+│   │   ├── adapters/                # DTO → SectionState<Content>
+│   │   ├── fixtures/                # 后端样例 / mock JSON + fixture source 记录
+│   │   ├── mock/                    # mock 唯一运行时入口
 │   │   ├── tracking.ts
 │   │   └── constants.ts
 │   │
@@ -121,6 +124,49 @@ designer/sections/<Name>/
 // playground/preview-state.ts 可使用 defaultContent 初始化 RuntimeViewState
 ```
 
+### 3.1 Mock 入口
+
+模板只允许一个运行时 mock 入口：
+
+```txt
+integrations/mock/index.ts
+```
+
+`integrations/api.ts` 通过 `VITE_USE_MOCK === 'true'` 判断是否动态加载 mock：
+
+```ts
+async function loadMockApi() {
+  return import("./mock");
+}
+```
+
+约束：
+
+- 只有字符串 `'true'` 启用 mock；其他值都走真实请求。
+- 禁止在 `api.ts` 顶层静态 `import './mock'` 或 `import './fixtures/*'`。
+- `runtime/`、`activity/`、`playground/` 禁止 import `integrations/mock` 或 `integrations/fixtures`。
+- mock 返回接口 DTO data，不返回 adapter 后的 `SectionState`。
+- fixture 放在 `integrations/fixtures/`，并用 `*.fixture.md` 标注来源可信度。
+- 模板 fixture 必须标注为 `placeholder`，不能作为接口接入完成证据。
+
+### 3.2 请求封装
+
+真实请求统一使用 `@new-type/request`，活动项目不再自建 `fetch/requestJson` 封装。
+
+```ts
+import { createRequest } from "@new-type/request";
+
+const request = createRequest({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api",
+});
+
+export function getCampaignInfo() {
+  return request.get<CampaignInfoDto>("/campaign/info");
+}
+```
+
+多端 token、headers、登录失效处理通过 `@new-type/request` 的 provider 注入，详见 `packages/request/README.md`。
+
 ### 4. 创建 runtime 容器（runtime/）
 
 ```
@@ -148,6 +194,12 @@ import { Tab } from "@new-type/headless";
 ```bash
 # 线上页面
 pnpm dev
+
+# mock 数据调试
+VITE_USE_MOCK=true pnpm dev
+
+# 生产构建默认不启用 mock
+VITE_USE_MOCK=false pnpm build
 
 # 设计师 Playground（三种预览模式 + 控制面板）
 pnpm dev  →  http://localhost:5173/?mode=designer

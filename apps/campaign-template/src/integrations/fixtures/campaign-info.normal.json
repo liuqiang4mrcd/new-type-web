@@ -1,0 +1,13 @@
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "name": "Campaign Template",
+    "description": "Replace this scaffold section with campaign-specific sections.",
+    "checklist": [
+      "Define each Section purpose before writing code.",
+      "Keep design sample data out of runtime fallbacks.",
+      "Validate one Section before starting the next."
+    ]
+  }
+}

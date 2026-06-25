@@ -1,10 +1,5 @@
 #!/usr/bin/env tsx
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-} from "fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { spawnSync } from "child_process";
 import { basename, join, relative } from "path";
 
@@ -90,7 +85,10 @@ function readText(filePath: string): string | null {
   return readFileSync(filePath, "utf-8");
 }
 
-function collectFiles(dir: string, predicate: (filePath: string) => boolean): string[] {
+function collectFiles(
+  dir: string,
+  predicate: (filePath: string) => boolean,
+): string[] {
   if (!existsSync(dir)) return [];
   const files: string[] = [];
   for (const entry of readdirSync(dir)) {
@@ -186,10 +184,14 @@ function parseStructure(text: string): {
       errors.push(`Section ${row.section} 的 数据来源 非法: ${row.dataSource}`);
     }
     if (!BUSINESS_LOOP_VALUES.has(row.businessLoop)) {
-      errors.push(`Section ${row.section} 的 业务闭环 非法: ${row.businessLoop}`);
+      errors.push(
+        `Section ${row.section} 的 业务闭环 非法: ${row.businessLoop}`,
+      );
     }
     if (!TAB_OWNERSHIP_VALUES.has(row.tabOwnership)) {
-      errors.push(`Section ${row.section} 的 Tab归属 非法: ${row.tabOwnership}`);
+      errors.push(
+        `Section ${row.section} 的 Tab归属 非法: ${row.tabOwnership}`,
+      );
     }
     if (!MODAL_COMPLEXITY_VALUES.has(row.modalComplexity)) {
       errors.push(
@@ -234,7 +236,9 @@ function findAdapterFiles(rootDir: string): {
     /\.(ts|tsx)$/.test(filePath),
   );
   return {
-    adapters: sourceFiles.filter((filePath) => !/\.test\.(ts|tsx)$/.test(filePath)),
+    adapters: sourceFiles.filter(
+      (filePath) => !/\.test\.(ts|tsx)$/.test(filePath),
+    ),
     tests: sourceFiles.filter((filePath) => /\.test\.(ts|tsx)$/.test(filePath)),
   };
 }
@@ -265,7 +269,9 @@ function matchingAdapterFiles(files: string[], sectionName: string): string[] {
 
 function matchingAdapterByName(files: string[], adapterName: string): string[] {
   const target = normalizeName(adapterName);
-  return files.filter((filePath) => normalizeName(basename(filePath)).includes(target));
+  return files.filter((filePath) =>
+    normalizeName(basename(filePath)).includes(target),
+  );
 }
 
 function checkStructureFile(options: Options): {
@@ -314,19 +320,29 @@ function checkStructureFile(options: Options): {
       (row) =>
         `${row.section} 标记为 跨Section控制，但 ## Tab 跨 Section 控制 中缺少对应 AFFECTED_SECTIONS 行`,
     );
-  checks.push(check("Tab 跨 Section 控制", crossTabErrors.length === 0, crossTabErrors));
+  checks.push(
+    check("Tab 跨 Section 控制", crossTabErrors.length === 0, crossTabErrors),
+  );
 
   return { checks, rows, dynamicRows, structureText };
 }
 
 function checkContracts(rootDir: string, dynamicRows: StructureRow[]): Check {
   if (dynamicRows.length === 0) {
-    return skipped("动态 Section contract", "没有 数据来源 = 动态数据 的 Section");
+    return skipped(
+      "动态 Section contract",
+      "没有 数据来源 = 动态数据 的 Section",
+    );
   }
   const errors = dynamicRows
-    .map((row) => join(rootDir, "designer", "sections", row.section, "contract.ts"))
+    .map((row) =>
+      join(rootDir, "designer", "sections", row.section, "contract.ts"),
+    )
     .filter((contractPath) => !existsSync(contractPath))
-    .map((contractPath) => `缺少 contract.ts: ${relative(process.cwd(), contractPath)}`);
+    .map(
+      (contractPath) =>
+        `缺少 contract.ts: ${relative(process.cwd(), contractPath)}`,
+    );
   return check("动态 Section contract", errors.length === 0, errors);
 }
 
@@ -337,10 +353,14 @@ function checkAdapters(
 ): { checks: Check[]; testFiles: string[] } {
   const { adapters, tests } = findAdapterFiles(rootDir);
   const fixturesDir = join(rootDir, "integrations", "fixtures");
-  const fixtures = collectFiles(fixturesDir, (filePath) =>
-    /\.(json|ts|md)$/.test(filePath) && !basename(filePath).startsWith("."),
+  const fixtures = collectFiles(
+    fixturesDir,
+    (filePath) =>
+      /\.(json|ts|md)$/.test(filePath) && !basename(filePath).startsWith("."),
   );
-  const dataFixtures = fixtures.filter((filePath) => /\.(json|ts)$/.test(filePath));
+  const dataFixtures = fixtures.filter((filePath) =>
+    /\.(json|ts)$/.test(filePath),
+  );
   const sourceDocs = fixtures.filter((filePath) => /\.md$/.test(filePath));
 
   if (adapterName) {
@@ -351,18 +371,36 @@ function checkAdapters(
     );
     return {
       checks: [
-        check("adapter 文件", matchedAdapters.length > 0, [
-          `未找到匹配 --adapter ${adapterName} 的 adapter 文件`,
-        ].filter(() => matchedAdapters.length === 0)),
-        check("adapter test", matchedTests.length > 0, [
-          `未找到匹配 --adapter ${adapterName} 的 *.test.ts adapter contract test`,
-        ].filter(() => matchedTests.length === 0)),
-        check("fixture 文件", matchedFixtures.length > 0 || dataFixtures.length > 0, [
-          `未找到匹配 --adapter ${adapterName} 的 fixture 文件，且 integrations/fixtures 下没有可用数据 fixture`,
-        ].filter(() => matchedFixtures.length === 0 && dataFixtures.length === 0)),
-        check("fixture 来源记录", sourceDocs.length > 0, [
-          "integrations/fixtures 下缺少 fixture source markdown 记录",
-        ].filter(() => sourceDocs.length === 0)),
+        check(
+          "adapter 文件",
+          matchedAdapters.length > 0,
+          [`未找到匹配 --adapter ${adapterName} 的 adapter 文件`].filter(
+            () => matchedAdapters.length === 0,
+          ),
+        ),
+        check(
+          "adapter test",
+          matchedTests.length > 0,
+          [
+            `未找到匹配 --adapter ${adapterName} 的 *.test.ts adapter contract test`,
+          ].filter(() => matchedTests.length === 0),
+        ),
+        check(
+          "fixture 文件",
+          matchedFixtures.length > 0 || dataFixtures.length > 0,
+          [
+            `未找到匹配 --adapter ${adapterName} 的 fixture 文件，且 integrations/fixtures 下没有可用数据 fixture`,
+          ].filter(
+            () => matchedFixtures.length === 0 && dataFixtures.length === 0,
+          ),
+        ),
+        check(
+          "fixture 来源记录",
+          sourceDocs.length > 0,
+          ["integrations/fixtures 下缺少 fixture source markdown 记录"].filter(
+            () => sourceDocs.length === 0,
+          ),
+        ),
       ],
       testFiles: matchedTests,
     };
@@ -398,12 +436,16 @@ function checkAdapters(
 
   const fixtureErrors: string[] = [];
   if (dataFixtures.length === 0) {
-    fixtureErrors.push("integrations/fixtures 下缺少 .json 或 .ts 数据 fixture");
+    fixtureErrors.push(
+      "integrations/fixtures 下缺少 .json 或 .ts 数据 fixture",
+    );
   }
 
   const fixtureSourceErrors: string[] = [];
   if (sourceDocs.length === 0) {
-    fixtureSourceErrors.push("integrations/fixtures 下缺少 fixture source markdown 记录");
+    fixtureSourceErrors.push(
+      "integrations/fixtures 下缺少 fixture source markdown 记录",
+    );
   }
 
   return {
@@ -411,7 +453,11 @@ function checkAdapters(
       check("adapter 文件", adapterErrors.length === 0, adapterErrors),
       check("adapter test", testErrors.length === 0, testErrors),
       check("fixture 文件", fixtureErrors.length === 0, fixtureErrors),
-      check("fixture 来源记录", fixtureSourceErrors.length === 0, fixtureSourceErrors),
+      check(
+        "fixture 来源记录",
+        fixtureSourceErrors.length === 0,
+        fixtureSourceErrors,
+      ),
     ],
     testFiles: Array.from(matchedTestFiles),
   };
@@ -464,7 +510,9 @@ function checkDefaultContentLeak(rootDir: string): Check {
     const importsDesignerContent =
       /from\s+['"][^'"]*designer\/sections\/[^'"]*\/content['"]/.test(source);
     const importsDefaultContent =
-      /import\s+\{[^}]*defaultContent[^}]*\}\s+from\s+['"][^'"]+['"]/.test(source);
+      /import\s+\{[^}]*defaultContent[^}]*\}\s+from\s+['"][^'"]+['"]/.test(
+        source,
+      );
     if (importsDesignerContent || importsDefaultContent) {
       errors.push(`${relativePath} import designer content/defaultContent`);
     }
@@ -481,8 +529,14 @@ function checkRuntimeDtoLeak(rootDir: string): Check {
   for (const filePath of files) {
     const source = readText(filePath) ?? "";
     const relativePath = relative(process.cwd(), filePath);
-    if (/from\s+['"][^'"]*integrations\/(api|adapters|fixtures|mock-data)[^'"]*['"]/.test(source)) {
-      errors.push(`${relativePath} import integrations API/adapter/fixture/mock-data`);
+    if (
+      /from\s+['"][^'"]*integrations\/(api|adapters|fixtures|mock|mock-data)[^'"]*['"]/.test(
+        source,
+      )
+    ) {
+      errors.push(
+        `${relativePath} import integrations API/adapter/fixture/mock/mock-data`,
+      );
     }
     if (/\b[A-Za-z0-9_]*DTO\b|\b[A-Za-z0-9_]*Dto\b|\bdto\./.test(source)) {
       errors.push(`${relativePath} 出现 DTO/dto render-path 痕迹`);
@@ -493,17 +547,62 @@ function checkRuntimeDtoLeak(rootDir: string): Check {
 
 function checkPlaygroundBoundary(rootDir: string): Check {
   const playgroundDir = join(rootDir, "playground");
-  const files = collectFiles(playgroundDir, (filePath) => /\.(ts|tsx)$/.test(filePath));
+  const files = collectFiles(playgroundDir, (filePath) =>
+    /\.(ts|tsx)$/.test(filePath),
+  );
   const errors: string[] = [];
   for (const filePath of files) {
     const source = readText(filePath) ?? "";
-    if (/from\s+['"][^'"]*integrations\/(api|adapters|fixtures|tracking|mock-data)[^'"]*['"]/.test(source)) {
+    if (
+      /from\s+['"][^'"]*integrations\/(api|adapters|fixtures|tracking|mock|mock-data)[^'"]*['"]/.test(
+        source,
+      )
+    ) {
       errors.push(
-        `${relative(process.cwd(), filePath)} import integrations API/adapter/fixture/tracking/mock-data`,
+        `${relative(process.cwd(), filePath)} import integrations API/adapter/fixture/tracking/mock/mock-data`,
       );
     }
   }
   return check("Playground 数据边界", errors.length === 0, errors);
+}
+
+function checkMockTreeShakingBoundary(rootDir: string): Check {
+  const apiPath = join(rootDir, "integrations", "api.ts");
+  const source = readText(apiPath);
+  if (!source) {
+    return skipped("mock tree-shaking 边界", "缺少 integrations/api.ts");
+  }
+
+  const errors: string[] = [];
+  const staticMockImport =
+    /^\s*import\s+(?:[^'"]+\s+from\s+)?['"][^'"]*\.\/mock(?:\/[^'"]*)?['"];?/m.test(
+      source,
+    );
+  const staticFixtureImport =
+    /^\s*import\s+(?:[^'"]+\s+from\s+)?['"][^'"]*\.\/fixtures(?:\/[^'"]*)?['"];?/m.test(
+      source,
+    );
+
+  if (staticMockImport) {
+    errors.push(
+      "integrations/api.ts 顶层静态 import mock；应使用 import('./mock')",
+    );
+  }
+  if (staticFixtureImport) {
+    errors.push(
+      "integrations/api.ts 顶层静态 import fixtures；fixture 只能经 mock/adapter test 使用",
+    );
+  }
+  if (
+    source.includes("VITE_USE_MOCK") &&
+    !/import\(\s*['"]\.\/mock['"]\s*\)/.test(source)
+  ) {
+    errors.push(
+      "integrations/api.ts 使用 VITE_USE_MOCK 但没有动态 import('./mock')",
+    );
+  }
+
+  return check("mock tree-shaking 边界", errors.length === 0, errors);
 }
 
 function printCompact(options: Options, checks: Check[]): string {
@@ -566,10 +665,12 @@ function main(argv = process.argv.slice(2)): void {
   checks.push(checkDefaultContentLeak(options.rootDir));
   checks.push(checkRuntimeDtoLeak(options.rootDir));
   checks.push(checkPlaygroundBoundary(options.rootDir));
+  checks.push(checkMockTreeShakingBoundary(options.rootDir));
 
   process.stdout.write(
-    (options.verbose ? printVerbose(options, checks) : printCompact(options, checks)) +
-      "\n",
+    (options.verbose
+      ? printVerbose(options, checks)
+      : printCompact(options, checks)) + "\n",
   );
 
   if (checks.some((item) => !item.passed && !item.skipped)) {

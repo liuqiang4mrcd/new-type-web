@@ -1,8 +1,15 @@
-import { create } from 'zustand';
-import { createInitialAppState } from '../activity/initial-state';
-import { activityReducer } from '../activity/reducer';
-import type { AppAction, AppState, DomainState, SectionStateMap, UiState } from '../activity/types';
-import type { ScaffoldContent } from '../designer/sections/ScaffoldSection/types';
+import { create } from "zustand";
+import { createInitialAppState } from "../activity/initial-state";
+import { activityReducer } from "../activity/reducer";
+import type {
+  AppAction,
+  AppState,
+  DomainState,
+  SectionStateMap,
+  UiState,
+} from "../activity/types";
+import { adaptCampaignInfo } from "./adapters/campaignInfo.adapter";
+import { getCampaignInfo } from "./api";
 
 export interface AppStore {
   domain: DomainState;
@@ -22,16 +29,6 @@ export interface RuntimeViewState {
   sections: Partial<SectionStateMap>;
 }
 
-const scaffoldContent: ScaffoldContent = {
-  title: 'Campaign Template',
-  description: 'Replace this scaffold section with campaign-specific sections.',
-  checklist: [
-    'Define each Section purpose before writing code.',
-    'Keep design sample data out of runtime fallbacks.',
-    'Validate one Section before starting the next.',
-  ],
-};
-
 function createTemplateAppState() {
   return createInitialAppState({
     domain: {
@@ -43,13 +40,14 @@ function createTemplateAppState() {
 function createTemplateSections(): Partial<SectionStateMap> {
   return {
     scaffold: {
-      status: 'ready',
-      content: scaffoldContent,
+      status: "loading",
     },
   };
 }
 
-function toAppState(state: Pick<AppStore, 'domain' | 'ui' | 'sections'>): AppState {
+function toAppState(
+  state: Pick<AppStore, "domain" | "ui" | "sections">,
+): AppState {
   return {
     domain: {
       ...state.domain,
@@ -117,5 +115,26 @@ export const useStore = create<AppStore>((set) => ({
       ...applyAppState(appState),
       sections: createTemplateSections(),
     });
+
+    try {
+      const campaignInfo = await getCampaignInfo();
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          scaffold: adaptCampaignInfo(campaignInfo),
+        },
+      }));
+    } catch (error) {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          scaffold: {
+            status: "error",
+            error:
+              error instanceof Error ? error.message : "campaign_load_failed",
+          },
+        },
+      }));
+    }
   },
 }));
