@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { existsSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 interface Options {
@@ -34,6 +34,35 @@ function fail(errors: string[]): never {
   process.exit(1);
 }
 
+function rootDraftsForCampaign(rootFeedbackDir: string, campaign: string): string[] {
+  const draftsDir = join(rootFeedbackDir, 'drafts');
+  if (!existsSync(draftsDir)) return [];
+
+  const matches: string[] = [];
+  for (const entry of readdirSync(draftsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const metaPath = join(draftsDir, entry.name, 'meta.json');
+    if (!existsSync(metaPath)) continue;
+
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8')) as {
+        campaignName?: unknown;
+        targetApp?: unknown;
+      };
+      if (
+        meta.campaignName === campaign ||
+        meta.targetApp === `apps/${campaign}`
+      ) {
+        matches.push(`.feedback/drafts/${entry.name}`);
+      }
+    } catch {
+      // Ignore malformed unrelated drafts; integration/implementation gates validate target app feedback.
+    }
+  }
+
+  return matches;
+}
+
 function main(argv = process.argv.slice(2)): void {
   const { campaign } = parseArgs(argv);
   const rootDir = process.cwd();
@@ -48,12 +77,20 @@ function main(argv = process.argv.slice(2)): void {
     errors.push(`活动目录不存在：apps/${campaign}`);
   }
 
-  if (existsSync(rootFeedbackDir)) {
-    errors.push('根目录仍存在 .feedback/，请先移动到目标活动目录');
+  const legacyRootProgress = join(rootFeedbackDir, 'progress.md');
+  if (existsSync(legacyRootProgress)) {
+    errors.push('根目录存在旧式 .feedback/progress.md，请迁移到目标活动目录或 drafts 工作区');
+  }
+
+  const rootDraftMatches = rootDraftsForCampaign(rootFeedbackDir, campaign);
+  if (rootDraftMatches.length > 0) {
+    errors.push(
+      `目标活动仍存在 root draft：${rootDraftMatches.join(', ')}，请迁移到 apps/${campaign}/.feedback/`,
+    );
   }
 
   if (!existsSync(appFeedbackDir)) {
-    errors.push(`缺少归档目录：apps/${campaign}/.feedback/`);
+    errors.push(`缺少反馈账本目录：apps/${campaign}/.feedback/`);
   }
 
   if (!existsSync(progressFile)) {
@@ -65,7 +102,7 @@ function main(argv = process.argv.slice(2)): void {
   }
 
   process.stdout.write(
-    `OK final-closeout-check ${campaign}\n反馈归档：apps/${campaign}/.feedback/，根目录无 .feedback/\n`,
+    `OK final-closeout-check ${campaign}\n反馈账本：apps/${campaign}/.feedback/，目标活动无 root draft\n`,
   );
 }
 

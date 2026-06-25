@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, React 18, AST-grep, Vitest
 
-**设计文档:** `docs/ai/feedback-mechanism-design.md`
+**设计文档:** `docs/superpowers/specs/2026-06-16-feedback-mechanism-design.md`
 
 ---
 

@@ -79,7 +79,7 @@
 
 ## 二、Section 列表输出模板
 
-结构规划阶段的 `.feedback/structure.md` 必须使用以下表格格式：
+结构规划阶段当前 feedback 工作区的 `structure.md` 必须使用以下表格格式：
 
 ```markdown
 | 顺序 | Section | 职责 | 数据来源 | 业务闭环 | Tab归属 | 弹窗复杂度 | 关键数据字段 |
@@ -163,7 +163,7 @@ export function RuntimePage() {
 
 ## 五、验证清单
 
-结构规划完成并写入 `.feedback/structure.md` 后，设计者必须逐条确认：
+结构规划完成并写入当前 feedback 工作区的 `structure.md` 后，设计者必须逐条确认：
 
 - [ ] 每个 Section 的 4 个枚举字段都已填写，没有遗漏
 - [ ] `数据来源` 为 `动态数据` 的 Section 在后续实现中会创建 contract.ts + adapter

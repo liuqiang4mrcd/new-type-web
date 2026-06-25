@@ -4,11 +4,11 @@
 
 ## 操作范围
 
-`designer` agent 在新活动端到端实施时，操作范围限定在目标活动应用 `apps/<campaign>/src/` 和该活动的 `.feedback/` 记录内，不得越界修改其他活动或共享工程代码。
+`designer` agent 在新活动端到端实施时，操作范围限定在目标活动应用 `apps/<campaign>/src/` 和当前活动 feedback 工作区内，不得越界修改其他活动或共享工程代码。
 
 ## 输出语言
 
-- `.feedback/` 下所有需求、结构、设计、组件设计卡、进度账本、验证记录和最终收尾说明默认使用中文。
+- 当前活动 feedback 工作区下所有需求、结构、设计、组件设计卡、进度账本、验证记录和最终收尾说明默认使用中文。
 - 活动页用户可见默认文案默认使用中文；只有用户明确要求英文、多语言或按素材英文还原时，才输出英文或多语言文案。
 - 代码标识符、类型名、Section 名、action 名、状态 key、命令、文件路径、CSS/Tailwind 类名和第三方库名按工程惯例保留英文。
 
@@ -19,7 +19,7 @@
 | `runtime/` | Container、线上渲染顺序、Runtime actions | ✅ 创建/修改 |
 | `integrations/store.ts` | SectionState、mock 状态、端到端联动所需本地状态 | ✅ 按需修改 |
 | `assets/` | 图片/资源文件 | ✅ 添加 |
-| `.feedback/` | 需求、结构、设计、进度和组件设计卡 | ✅ 创建/更新 |
+| 当前活动 feedback 工作区 | 需求、结构、设计、进度和组件设计卡 | ✅ 创建/更新 |
 
 ## 禁止操作
 
@@ -222,7 +222,7 @@ export const stateTransitions: StateTransition[] = [
 
 实现要求：
 
-- 页面级背景色或背景图应来自 `.feedback/design.md` 的视觉方案。
+- 页面级背景色或背景图应来自当前活动 feedback 工作区的 `design.md` 视觉方案。
 - 常规访问根容器和移动端完整页预览根容器必须来自同一个 `RuntimePage`。
 - 如果 Section 之间存在 margin、透明区、弹窗关闭后的页面尾部或内容不足一屏，露出的必须是活动页面底色，而不是模板底色或 Playground 外层背景。
 - Final Closeout 前必须直接访问 `?mode=phone-preview`，检查 `main` 计算后的 `background-color` 或背景类是否与 runtime 根背景一致。

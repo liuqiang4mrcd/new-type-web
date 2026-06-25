@@ -1,7 +1,6 @@
-# new-type-web 项目架构设计
+# new-type-web 项目架构导览
 
-> 基于项目初始需求文档生成的项目架构文档
-> 日期：2026-06-12（v4，通用依赖提至根 package.json 共享）
+> 面向人类读者的架构说明，最后校准：2026-06-25。
 
 ---
 
@@ -37,13 +36,15 @@ new-type-web/
 │   └── config/                    # 共享配置（eslint/tsconfig/tailwind/vite preset）
 ├── scripts/                       # 工程化脚本
 │   ├── create-campaign.ts         # 创建新活动页
+│   ├── validate-section.ts        # Section 结构验证
+│   ├── verify-section.ts          # 单 Section 验证
+│   ├── validate-integration.ts    # 接口集成验证
 │   └── build-campaign.ts          # 构建指定活动页
 ├── docs/                          # 文档
 │   ├── architecture.md            # 本架构文档
+│   ├── campaign-template.md       # 活动页模板说明
 │   └── ai/
-│       ├── development-rules.md   # AI 开发规则（AI 读取）
-│       └── framework-map.md       # 共享包引用地图（AI 读取）
-│   └── campaign-template.md       # 活动页模板说明
+│       └── README.md              # 自动化开发规则入口
 ├── pnpm-workspace.yaml
 ├── nx.json                        # Nx 配置
 ├── package.json                   # 根 package.json
@@ -105,17 +106,20 @@ packages/<name>/
 
 ---
 
-## 4. 活动页模板（campaign-template）— 三层协作架构
+## 4. 活动页模板（campaign-template）— 多层协作架构
 
 ### 4.1 核心设计原则
 
-活动页代码按**角色职责**分为三层，各层修改边界清晰：
+活动页代码按**角色职责**分层，各层修改边界清晰：
 
-| 层           | 目录              | 负责人   | 职责                                 |
-| ------------ | ----------------- | -------- | ------------------------------------ |
-| 视觉层       | `designer/`       | 设计师   | 纯视觉组件、展示数据、各状态视图     |
-| 粘合层       | `runtime/`        | AI       | 连接 store 和视觉组件、状态路由      |
-| 生产逻辑层   | `integrations/`   | 开发者   | Store/API/埋点/配置                  |
+| 层             | 目录              | 职责                                      |
+| -------------- | ----------------- | ----------------------------------------- |
+| 视觉层         | `designer/`       | 纯视觉组件、展示数据、各状态视图          |
+| 交互内核       | `activity/`       | AppState、actions、reducer，保持纯 TS      |
+| 粘合层         | `runtime/`        | 连接 store / activity 和视觉组件、状态路由 |
+| 生产逻辑层     | `integrations/`   | Store/API/adapter/fixture/埋点/配置        |
+| 预览层         | `playground/`     | 单组件预览、流程预览、完整页面 phone-preview |
+| 本地国际化资源 | `i18n/`           | 活动内文案、语言和 RTL 配置                |
 
 ### 4.2 目录结构
 
@@ -127,6 +131,12 @@ apps/campaign-template/
 │   │
 │   ├── contracts/                   # 🔷 类型契约（所有角色共享）
 │   │   └── section.ts               # SectionStatus, SectionProps, StateViews
+│   │
+│   ├── activity/                    # 页面内部交互内核（纯 TS）
+│   │   ├── types.ts                 # AppState / DomainState / UiState / AppAction
+│   │   ├── initial-state.ts         # createInitialAppState
+│   │   ├── actions.ts               # 业务 command / action creator
+│   │   └── reducer.ts               # 纯状态变更
 │   │
 │   ├── designer/                    # 🎨 设计师视觉层
 │   │   └── sections/
@@ -142,18 +152,28 @@ apps/campaign-template/
 │   │       └── <Name>Container.tsx   # 状态路由容器
 │   │
 │   ├── integrations/                # 👨‍💻 开发者生产逻辑层
-│   │   ├── store.ts                 # Zustand 全局状态
-│   │   ├── api.ts                   # API 封装
+│   │   ├── store.ts                 # Zustand 外壳，包 activity appState/dispatch
+│   │   ├── api.ts                   # API 函数；VITE_USE_MOCK=true 时动态加载 mock
 │   │   ├── tracking.ts              # 埋点
 │   │   ├── constants.ts             # 活动配置
-│   │   ├── adapters/                # API DTO → SectionContent 适配器
-│   │   └── fixtures/                # 接口 fixture（后端样例 JSON）
+│   │   ├── adapters/                # DTO → SectionState<Content>
+│   │   ├── fixtures/                # 后端样例 / mock JSON + fixture source 记录
+│   │   └── mock/                    # mock 唯一运行时入口
+│   │
+│   ├── i18n/                        # 活动本地国际化资源
+│   │   ├── en.ts
+│   │   ├── zh.ts
+│   │   ├── ar.ts
+│   │   ├── types.ts
+│   │   └── index.ts
 │   │
 │   ├── playground/                  # 🔍 设计师预览环境
 │   │   ├── index.tsx                # Playground 入口
 │   │   ├── SectionPanel.tsx         # hover 状态切换面板
 │   │   ├── ScenarioRunner.tsx       # 场景执行器（实况渲染）
 │   │   ├── FlowInspector.tsx        # 浮动流程面板（自动播放）
+│   │   ├── phone-preview.tsx        # 完整页面手机壳独立入口
+│   │   ├── preview-state.ts         # RuntimeViewState 初始化
 │   │   ├── section-registry.ts      # Section 注册
 │   │   └── scenarios/               # 场景定义
 │   │
@@ -173,9 +193,10 @@ apps/campaign-template/
                    components (纯视觉)
                         ↑  content props
                         │
-integrations/  ───→  runtime/  ───→  UI (ui 包)
- store/api              containers
- tracking               (状态路由)
+integrations/  ───→  activity/  ───→  runtime/  ───→  UI (ui 包)
+ store/api              reducer          containers
+ adapters               actions          (状态路由)
+ tracking
 ```
 
 - 视觉组件只通过 `content` props 接收数据，不直接引用 store 或 API
@@ -199,22 +220,28 @@ main.tsx
 ### 5.1 create-campaign.ts
 
 ```bash
-pnpm create-campaign
+pnpm create-campaign <campaign-name>
 ```
 
-交互式创建新活动页，基于 `campaign-template` 复制：
-1. 输入活动名称（如 `campaign-2026-new-year`）
-2. 自动在 `apps/` 下生成目录
-3. 替换 `package.json` 中的 name
-4. 生成三层目录骨架
+创建新活动页，基于 `campaign-template` 复制。新建活动必须落在 `apps/<campaign-name>/`，禁止直接在 `apps/campaign-template/` 中做业务实现。
 
 ### 5.2 build-campaign.ts
 
 ```bash
-pnpm build --filter=@new-type/campaign-2026-new-year
+pnpm --filter @new-type/<campaign-name> build
 ```
 
-通过 Nx affected 机制只构建变更的活动页和依赖包。
+构建指定活动页。根目录 `pnpm build` 仍用于 Nx affected 构建。
+
+### 5.3 验证脚本
+
+```bash
+pnpm --silent verify-section --campaign <campaign-name> <SectionName>
+pnpm validate-section --campaign <campaign-name> --all
+pnpm validate-integration --campaign <campaign-name>
+```
+
+验证脚本用于检查 Section 结构、单 Section 闭环和接口集成边界。
 
 ---
 
@@ -252,35 +279,10 @@ packages/config/
 
 ---
 
-## 8. 文档体系
+## 8. 相关文档
 
-| 文件                           | 读者      | 用途                             |
-| ------------------------------ | --------- | -------------------------------- |
-| `docs/architecture.md`         | 人类 + AI | 项目整体架构理解                 |
-| `docs/ai/development-rules.md` | AI        | AI 辅助开发时的约束规则          |
-| `docs/ai/framework-map.md`     | AI        | 共享包引用地图（什么功能用哪个包） |
-| `docs/campaign-template.md`    | AI + 人类 | 活动页模板说明                   |
-
----
-
-## 9. 协作边界（AI 必须理解）
-
-| 场景                           | 应修改的目录              | 不应修改的目录          |
-| ------------------------------ | ------------------------- | ----------------------- |
-| 设计师调整视觉布局             | `designer/sections/*`     | `integrations/`         |
-| 开发者接入真实 API             | `integrations/api.ts`     | `designer/`（只改 content） |
-| AI 为新 section 创建数据连接   | `runtime/sections/*`      | `designer/` 视觉文件    |
-| 设计师修改默认展示数据         | `content.ts`              | 不动组件逻辑            |
-| 添加新状态视图（loading 等）   | `states.tsx`              | 不动 store              |
-| 抽奖逻辑改为真实 API           | `integrations/store.ts`   | 不动 visual             |
-
----
-
-## 10. AI 友好设计原则
-
-1. **目录即职责**：`designer/` / `runtime/` / `integrations/` / `playground/` 各自独立，AI 根据任务选择目录
-2. **Section 文件模式**：`types.ts + content.ts + index.tsx` 为核心文件，`states.tsx` 仅在存在 required UI 状态时创建，AI 可预测文件位置和接口
-3. **容器模式**：每个 visual section 对应一个 runtime container，AI 只需改 container 来调整数据流
-4. **文档内置**：架构文档、AI 规则、包引用地图都在仓库内，AI 启动时读取
-5. **命名可推断**：Container 结尾表示 runtime 粘合层，Section 结尾表示视觉组件
-6. **Playground 即契约**：场景定义文件就是开发者的需求文档，AI 读取场景即可理解需要的状态分支
+| 文件 | 用途 |
+| --- | --- |
+| `docs/campaign-template.md` | 活动页模板结构、运行方式和模板约束 |
+| `docs/ai/README.md` | 自动化开发规则入口 |
+| `docs/ai/framework-map.md` | 共享包引用地图 |

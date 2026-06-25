@@ -29,12 +29,12 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 ```
 
-11. 单组件结构检查和规格测试全部通过后，更新 `.feedback/progress.md`。
+11. 单组件结构检查和规格测试全部通过后，更新 `apps/<campaign-name>/.feedback/progress.md`。
 12. 再开始下一个 Section。
 
 ## 组件设计卡
 
-实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `.feedback/progress.md` 或 `.feedback/sections/<SectionName>.md`。
+实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `apps/<campaign-name>/.feedback/progress.md` 或 `apps/<campaign-name>/.feedback/sections/<SectionName>.md`。
 
 组件设计卡必须继承第 2 步结构规划中的 Layout Spec、Interaction Spec 和 Effect Spec。若当前 Section 对应的几何约束、关键元素约束、交互链路或用户可见效果缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
 
@@ -85,7 +85,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
   - Result/modal timing:
 - Edge cases:
 - Acceptance tests:
-  - Spec source: `.feedback/sections/<SectionName>.md`
+  - Spec source: `apps/<campaign-name>/.feedback/sections/<SectionName>.md`
   - Generated spec test: `apps/<campaign-name>/src/designer/sections/<SectionName>/__tests__/<SectionName>.spec.test.tsx`
   - Regression test: `apps/<campaign-name>/src/designer/sections/<SectionName>/__tests__/<SectionName>.regression.test.tsx`
 - Validation command: `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`
@@ -93,7 +93,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 如果组件设计卡无法判断布局、关键元素归属、状态、交互或用户可见效果，必须先补充分析，不能先写代码。
 
-强交互 Section 没有 `Effect Spec refs` 和 `Effect Reasoning` 时禁止实现。`Effect Reasoning` 必须说明代码如何保证效果真的发生，而不是复述 Interaction Spec。若推演发现 `.feedback/structure.md` 的 Effect Spec 不完整，必须先回到结构规划补齐，再继续实现。
+强交互 Section 没有 `Effect Spec refs` 和 `Effect Reasoning` 时禁止实现。`Effect Reasoning` 必须说明代码如何保证效果真的发生，而不是复述 Interaction Spec。若推演发现 `apps/<campaign-name>/.feedback/structure.md` 的 Effect Spec 不完整，必须先回到结构规划补齐，再继续实现。
 
 ## Spec-First 组件测试
 
@@ -245,20 +245,20 @@ tests:
 - 禁止批量实现多个 Section 后只运行 `--all`。
 - 禁止用最终 build 代替单组件验证。
 - 禁止当前 Section 单独验证失败时继续实现下一个 Section。
-- 禁止只在对话中口头说明进度而不更新 `.feedback/progress.md`。
+- 禁止只在对话中口头说明进度而不更新 `apps/<campaign-name>/.feedback/progress.md`。
 - 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
 - 禁止在组件设计卡没有引用 Effect Spec、没有完成 Effect Reasoning 的情况下实现强交互 Section。
 - 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）。
 - 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场。
 
-## `.feedback/progress.md` 实现阶段模板
+## `apps/<campaign-name>/.feedback/progress.md` 实现阶段模板
 
-`.feedback/progress.md` 是 designer 任务的全局 process ledger。第 4 步进入实现阶段时，必须在既有 `.feedback/progress.md` 中追加以下实现阶段账本，并预置后续所有 Final Closeout Gate 任务。
+`apps/<campaign-name>/.feedback/progress.md` 是 designer 任务的全局 process ledger。第 4 步进入实现阶段时，必须在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加以下实现阶段账本，并预置后续所有 Final Closeout Gate 任务。
 
-当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `.feedback/progress.md`，按全局“当前阶段”、实现阶段“当前门禁”和下方检查清单恢复，不得凭对话记忆继续执行。
+当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `apps/<campaign-name>/.feedback/progress.md`，按全局“当前阶段”、实现阶段“当前门禁”和下方检查清单恢复，不得凭对话记忆继续执行。
 
-模板写入要求：除命令、路径、Section 名、状态 key 和代码标识符外，`.feedback/progress.md` 的标题、字段说明、状态说明和验收记录必须使用中文。
+模板写入要求：除命令、路径、Section 名、状态 key 和代码标识符外，`progress.md` 的标题、字段说明、状态说明和验收记录必须使用中文。
 
 ```md
 # Designer 任务进度
@@ -291,7 +291,7 @@ tests:
 
 ## Section 循环检查清单
 
-- [ ] 所有组件设计卡已写入 `.feedback/sections/` 或本文件。
+- [ ] 所有组件设计卡已写入 `apps/<campaign-name>/.feedback/sections/` 或本文件。
 - [ ] 所有规格测试已从组件设计卡生成。
 - [ ] 所有 Section 已实现。
 - [ ] 所有 Section 已按结构锁定顺序注册到 Playground。
@@ -312,15 +312,15 @@ tests:
 - [ ] 全部 Section 验证通过：`pnpm validate-section --campaign <campaign-name> --all`
 - [ ] 单元规格测试通过：`pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src`
 - [ ] 构建通过：`pnpm --filter @new-type/<campaign-name> build`
-- [ ] 反馈归档完成：根目录 `.feedback/` 已移动到 `apps/<campaign-name>/.feedback/`
-- [ ] 反馈归档机器检查通过：`pnpm final-closeout-check --campaign <campaign-name>`
+- [ ] Feedback 工作区检查完成：目标活动账本位于 `apps/<campaign-name>/.feedback/`，且目标活动无 root draft。
+- [ ] Feedback 工作区机器检查通过：`pnpm final-closeout-check --campaign <campaign-name>`
 ```
 
 ## 最终验收
 
 所有 Section 均完成单独验证后，必须进入最终收尾门禁。**单 Section 全部通过后不能直接宣布完成；`--all` 只是收尾门禁中的一项。**
 
-Final Closeout Gate 必须已在进入第 4 步时预置到 `.feedback/progress.md`。执行最终验收时逐项勾选并记录结果，禁止等到最后才追加 checklist。
+Final Closeout Gate 必须已在进入第 4 步时预置到 `apps/<campaign-name>/.feedback/progress.md`。执行最终验收时逐项勾选并记录结果，禁止等到最后才追加 checklist。
 
 逐项执行：
 
@@ -350,9 +350,9 @@ pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src
 pnpm --filter @new-type/<campaign-name> build
 ```
 
-12. 将根目录 `.feedback/` 整体移动到 `apps/<campaign-name>/.feedback/`，并确认根目录不再残留该活动的反馈文件。
+12. 确认反馈账本位于 `apps/<campaign-name>/.feedback/`，且 `.feedback/drafts/` 下没有 `meta.json.campaignName = <campaign-name>` 或 `targetApp = apps/<campaign-name>` 的 root draft。
 
-13. 运行反馈归档机器检查；该命令必须通过后才能最终回复：
+13. 运行 Feedback 工作区机器检查；该命令必须通过后才能最终回复：
 
 ```bash
 pnpm final-closeout-check --campaign <campaign-name>
@@ -362,7 +362,7 @@ pnpm final-closeout-check --campaign <campaign-name>
 
 - `apps/<campaign-name>/.feedback/` 已存在。
 - `apps/<campaign-name>/.feedback/progress.md` 已存在。
-- 根目录 `.feedback/` 不存在。
+- 目标活动不存在 root draft；允许 `.feedback/drafts/` 下保留其他未创建 app 的任务草稿。
 
 最终回复必须说明：
 
@@ -375,5 +375,5 @@ pnpm final-closeout-check --campaign <campaign-name>
 - `--all` 总验收结果。
 - 全量 Vitest 结果。
 - build 结果。
-- `.feedback` 归档结果。
+- Feedback 工作区检查结果。
 - `pnpm final-closeout-check --campaign <campaign-name>` 结果。

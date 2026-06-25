@@ -14,8 +14,8 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 从以下来源继承约束：
 
-- `.feedback/demand.md`
-- `.feedback/structure.md`
+- 当前 feedback 工作区的 `demand.md`
+- 当前 feedback 工作区的 `structure.md`
 - 用户提供的视觉参考图、品牌规范、文字描述。
 - 用户显式指定的视觉方向。
 
@@ -23,7 +23,7 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 ## 视觉细化内容
 
-必须写入 `.feedback/design.md`：
+必须写入当前 feedback 工作区的 `design.md`：
 
 - 配色：主色、辅助色、中性色、状态色、背景色。
 - 字体：字体族、字号层级、字重、行高。
@@ -36,7 +36,7 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 语言要求：
 
-- `.feedback/design.md` 和对用户输出的视觉方案默认使用中文。
+- 当前 feedback 工作区的 `design.md` 和对用户输出的视觉方案默认使用中文。
 - 颜色值、字体名、CSS/Tailwind 写法、文件路径、命令和代码标识符保留英文。
 - UI 文案策略默认以中文活动页为基准；仅当用户明确要求英文、多语言或素材必须英文还原时，才输出英文或多语言文案方案。
 
@@ -61,7 +61,7 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 ## 完成标准
 
-- `.feedback/design.md` 已存盘。
-- `.feedback/progress.md` 已更新。
+- 当前 feedback 工作区的 `design.md` 已存盘。
+- 当前 feedback 工作区的 `progress.md` 已更新。
 - 新项目模式下，用户已书面确认视觉设计。
 - 进入实现前，designer agent 已输出完整设计方案摘要并获得“可以开始实现”的书面确认。

@@ -1,6 +1,6 @@
 ---
 name: section-verification
-description: H5 活动页 Section 验证和最终收尾能力模块。用于 designer agent 执行 spec 生成、单 Section 验证、总验收、Vitest、build 和反馈归档。
+description: H5 活动页 Section 验证和最终收尾能力模块。用于 designer agent 执行 spec 生成、单 Section 验证、总验收、Vitest、build 和 Feedback 工作区检查。
 ---
 
 # Section Verification Skill
@@ -30,10 +30,10 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 通过后必须：
 
-- 在 `.feedback/progress.md` 中将该 Section 标记为 `validated`。
+- 在 `apps/<campaign-name>/.feedback/progress.md` 中将该 Section 标记为 `validated`。
 - 记录命令和结果。
 - 对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests + 动画一致性确认`。
-- `.feedback/progress.md` 中的验证记录和对用户报告默认使用中文；命令、Section 名、状态 key 和测试名称按实际英文输出保留。
+- `apps/<campaign-name>/.feedback/progress.md` 中的验证记录和对用户报告默认使用中文；命令、Section 名、状态 key 和测试名称按实际英文输出保留。
 
 ## 失败处理
 

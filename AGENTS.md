@@ -27,13 +27,14 @@ packages/
 
 | 文件 | 用途 |
 |---|---|
+| `docs/ai/README.md` | AI 执行规范入口（读取顺序、权威边界、常用门禁） |
 | `docs/campaign-template.md` | 活动页模板结构、Section 创建流程、Playground 注册方式 |
-| `docs/architecture.md` | 项目整体架构理解 |
 | `docs/ai/development-rules.md` | AI 开发约束（三层架构、目录边界、命名规范） |
 | `docs/ai/framework-map.md` | 共享包引用地图（什么功能用哪个包） |
 | `docs/ai/section-implementation-gate.md` | Section 实现阶段门禁：完成一个、验证一个 |
-| `docs/ai/feedback-mechanism-design.md` | Designer Agent 反馈机制设计 |
 | `docs/ai/interface-integration-rules.md` | 接口接入规则 |
+
+人类架构导览见 `docs/architecture.md`；历史设计说明不作为当前执行入口。
 
 ---
 
@@ -168,6 +169,8 @@ Integration 依据：
 - `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
 - 写代码前必须先确认目标 app 目录；如果目标 app 不存在，必须优先使用 `pnpm create-campaign <campaign-name>` 创建项目。
 - 只有当 `pnpm create-campaign` 不可用或明确失败且原因已记录时，才允许手动复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
+- app 创建前的需求、结构和视觉设计账本写入 `.feedback/drafts/<task-id>/`；活动名确认并创建 app 后，必须立即迁移到 `apps/<campaign-name>/.feedback/`。
+- 实现阶段、Final Closeout 和 Integration 阶段禁止继续读取 root draft，只能使用 `apps/<campaign-name>/.feedback/`。
 - 业务 Section、runtime、store、playground 注册都只能写入目标 app。
 - 完成前必须检查 `apps/campaign-template` 无非预期 diff。
 - 实现阶段必须遵守 `docs/ai/section-implementation-gate.md`：完成一个 Section 后立即单独执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`，通过后才允许进入下一个 Section；最终 `validate-section --all` 只能作为总验收的一项。

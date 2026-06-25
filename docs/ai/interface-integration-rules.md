@@ -61,7 +61,7 @@ Integration Agent 触发时目标 app 必须已经存在，禁止创建新活动
 允许新增：
 
 - 动态 Section 缺失时，可新增 `designer/sections/<Name>/contract.ts`。
-- 新增 `contract.ts` 只能依据已确认的 `.feedback/structure.md`、组件设计卡和 `types.ts`，禁止从后端 DTO 反推视觉契约。
+- 新增 `contract.ts` 只能依据已确认的 `apps/<campaign>/.feedback/structure.md`、组件设计卡和 `types.ts`，禁止从后端 DTO 反推视觉契约。
 
 禁止修改：
 

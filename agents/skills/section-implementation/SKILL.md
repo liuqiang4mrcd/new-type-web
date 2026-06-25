@@ -22,10 +22,11 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 新项目模式必须满足：
 
-- `.feedback/demand.md`、`.feedback/structure.md`、`.feedback/design.md` 已存盘。
+- `apps/<campaign-name>/.feedback/demand.md`、`structure.md`、`design.md` 已存盘。
 - 第 3.5 步完整设计方案摘要已呈现。
 - 用户已书面确认“可以开始实现”。
 - 目标 app 是 `apps/<campaign-name>/`；不存在时优先运行 `pnpm create-campaign <campaign-name>` 创建。
+- root draft 已迁移到 `apps/<campaign-name>/.feedback/`；实现阶段禁止继续读取 `.feedback/drafts/<task-id>/`。
 
 修改模式必须满足：
 
@@ -34,8 +35,8 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 ## 执行顺序
 
-1. 读取 `.feedback/progress.md`，确认 Current phase / Current gate。
-2. 在既有 `.feedback/progress.md` 中追加 `docs/ai/section-implementation-gate.md` 的实现阶段模板。
+1. 读取 `apps/<campaign-name>/.feedback/progress.md`，确认 Current phase / Current gate。
+2. 在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加 `docs/ai/section-implementation-gate.md` 的实现阶段模板。
 3. 按结构锁定表顺序逐个 Section 实施。
 4. 每个 Section 先写组件设计卡、`Effect Reasoning` 和 `## Acceptance Tests` YAML。
 5. 运行 `pnpm generate-spec-tests --campaign <campaign-name> <SectionName>`。
@@ -48,7 +49,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
     - 实现后对照 `stateTransitions` 逐条确认：每个声明的动画在 `index.tsx` 中有对应的 DOM 可见变化
 7. 若存在跨 Section 交互，确保 `phone-preview` 复用 Runtime Store action；`playground/preview-state.ts` 只初始化预览数据，不维护 content patch 表。
 8. 交给 `section-verification` 执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
-9. 单 Section 验证通过并更新 `.feedback/progress.md` 后，才能进入下一个 Section。
+9. 单 Section 验证通过并更新 `apps/<campaign-name>/.feedback/progress.md` 后，才能进入下一个 Section。
 
 执行粒度硬约束：
 
@@ -58,7 +59,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 ## 输出语言
 
-- 组件设计卡、`.feedback/progress.md` 实现阶段记录、验收记录和对用户的实现说明默认使用中文。
+- 组件设计卡、`apps/<campaign-name>/.feedback/progress.md` 实现阶段记录、验收记录和对用户的实现说明默认使用中文。
 - 代码文件中的变量名、类型名、Section 名、action 名、状态 key、命令和文件路径保留英文。
 - `content.ts` 中的用户可见默认文案，除非用户明确要求英文或多语言，否则默认使用中文。
 
@@ -69,7 +70,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止越界修改其他 `apps/*`、`packages/*`、`scripts/*`。
 - 禁止默认接入真实 API 或埋点；`integrations/api.ts` / `integrations/tracking.ts` 只有用户明确要求时才可改。
 - 禁止在 `integrations/`、`activity/`、`runtime/` 中 import `designer/sections/*/content.ts` 或用 `defaultContent` 作为接口/mock/runtime fallback；`defaultContent` 只能用于 `designer/` 和 `playground/`。
-- 禁止在 `integrations/store.ts` 中手写等价于设计态 `defaultContent` 的假数据来填充 `.feedback/structure.md` 标记为 `数据来源 = 动态数据` 的 Section；新活动未接入接口时，动态 Section 只能初始化为 `loading / empty / error` 或不渲染，完整视觉预览交给 `playground/preview-state.ts`。
+- 禁止在 `integrations/store.ts` 中手写等价于设计态 `defaultContent` 的假数据来填充 `apps/<campaign-name>/.feedback/structure.md` 标记为 `数据来源 = 动态数据` 的 Section；新活动未接入接口时，动态 Section 只能初始化为 `loading / empty / error` 或不渲染，完整视觉预览交给 `playground/preview-state.ts`。
 - 禁止视觉组件直接读取 URL、store 或 i18n 当前语言；需要国际化时，由 runtime container / adapter 使用当前 `ui.lang` 生成最终字符串后通过 `content` 传入。
 - 禁止 Runtime 中使用 `useStore((s) => selectXxxSection(s.appState))`；Zustand selector 只能订阅原始字段或 primitive。派生 content 放在组件 render/useMemo 或拆分订阅。
 - 禁止新增 `activity/selectors/*` 或 `phone-preview` 专用 `ACTION_WIRING`；完整页面预览必须通过 `preview-state` 初始化 `RuntimeViewState` 并复用 runtime container。
