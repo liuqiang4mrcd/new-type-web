@@ -12,6 +12,7 @@
     "generate-tests": "tsx scripts/generate-section-tests.ts",
     "generate-spec-tests": "tsx scripts/generate-section-spec-tests.ts",
     "verify-section": "tsx scripts/verify-section.ts",
+    "validate-integration": "tsx scripts/validate-integration.ts",
     "final-closeout-check": "tsx scripts/final-closeout-check.ts",
     "format": "prettier --write '**/*.{ts,tsx,js,json,css,md}'",
     "test:unit": "vitest run",
