@@ -22,6 +22,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 7. 接入 `integrations/store.ts` 的 `SectionState<<SectionName>Content>`。
 8. 创建 `runtime/sections/<BaseName>Container.tsx`。
 9. 在 `runtime/app.tsx` import 并渲染 Container。
+   `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`；runtime 缺少真实 content 时返回 `loading / empty / error` 或 `null`，不得 fallback 到 `defaultContent`。
 10. 立即运行单组件验证：
 
 ```bash
@@ -231,13 +232,13 @@ tests:
 | 14  | 声明完整性            | stateTransitions 的 from/to 均在 supportedStates 中                              |
 | 15  | 状态可达性            | 从初始状态出发，所有交互状态可达                                                 |
 | 16  | 分层边界检查          | index.tsx 未违规 import useStore/API/埋点                                        |
-| 17  | Runtime 联动实现      | `ACTION_WIRING` 中跨 Section action 在 Runtime Container 中不是 console.log-only |
+| 17  | Runtime 联动实现      | 跨 Section action 在 Runtime Container 中不是 console.log-only                  |
 | 18  | 动画 easing 对齐      | stateTransitions 中声明的 easing 在 index.tsx 中已使用                           |
 | 19  | 动画 duration 对齐    | stateTransitions 中声明的 duration 与 index.tsx 一致                             |
 | 20  | 强交互用 motion/react | spin/slide/scale 类型动画使用了 motion/react 而非纯 CSS transition              |
 
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
-> 弹窗 Section 实现要求、phone-preview.tsx ACTION_WIRING 联动见 `agents/skills/section-implementation/SKILL.md`。
+> 弹窗 Section 实现要求、phone-preview 完整页预览联动见 `agents/skills/section-implementation/SKILL.md`。
 
 ## 禁止事项
 
@@ -296,7 +297,7 @@ tests:
 - [ ] 所有 Section 已按结构锁定顺序注册到 Playground。
 - [ ] 所有 Runtime Container 已创建，并按结构锁定顺序渲染。
 - [ ] 所有必需 Store actions 已实现。
-- [ ] 所有 phone-preview `ACTION_WIRING` 已完成。
+- [ ] `phone-preview` 已通过 `preview-state` 初始化 `RuntimeViewState` 并复用 Runtime Container。
 - [ ] 每个 Section 均已通过自己的 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 
 ## Final Closeout Gate
@@ -305,7 +306,7 @@ tests:
 - [ ] Layout Spec 已检查：已实现的 Section 顺序、关键元素位置、间距、对齐和层级规则符合 Layout Spec。
 - [ ] 单组件预览已检查：`?mode=designer` 的 single 模式下，每个 Section 在预览面板内完整可见或可滚动，不被 Playground 容器、`max-width`、`overflow-hidden`、fixed 定位或弹窗遮罩错误裁切。
 - [ ] 移动端完整页预览背景已检查：`runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景一致，`?mode=phone-preview` 不露出模板默认底色。
-- [ ] Playground 联动已检查：每条 Interaction Spec 都映射到 defaultActions / ACTION_WIRING / stateTransitions，且无 TODO 占位。
+- [ ] Playground 联动已检查：每条 Interaction Spec 都映射到 defaultActions / preview-state / stateTransitions / Runtime actions，且无 TODO 占位。
 - [ ] 交互动效已检查：所有 `stateTransitions.animation` 均有 DOM/CSS 落地；抽奖/转盘类动画不会被结果弹窗首帧遮挡。
 - [ ] Runtime 联动已检查：每个跨 Section targetChange 都有 Store action，且每个 Runtime Container 已绑定该 action；console.log-only 只允许用于外部或无目标交互。
 - [ ] 全部 Section 验证通过：`pnpm validate-section --campaign <campaign-name> --all`
@@ -328,7 +329,7 @@ Final Closeout Gate 必须已在进入第 4 步时预置到 `.feedback/progress.
 3. 按 Layout Spec 检查关键元素位置、尺寸、间距、对齐、层级和响应规则是否被实现保留。
 4. 直接访问 `?mode=designer`，逐个切换 single 模式 Section，确认组件完整可见；高组件必须可滚动，宽组件必须适配预览宽度，弹窗必须限制在单组件预览框内。
 5. 检查 `runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景是否一致；直接访问 `?mode=phone-preview`，确认 Section 间距、页面尾部和内容不足一屏时不会露出模板默认底色。
-6. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/phone-preview.tsx` 的 `ACTION_WIRING`、各 Section `content.ts` 的 `stateTransitions` 命名是否一致，且不存在 `TODO` 占位。
+6. 按 Interaction Spec 逐条检查 `playground/section-registry.ts` 的 `defaultActions`、`playground/preview-state.ts`、各 Section `content.ts` 的 `stateTransitions` 和 Runtime actions 命名是否一致，且不存在 `TODO` 占位。
 7. 对所有声明了 `stateTransitions.animation` 的 Section 执行动画落地检查：确认触发后实际 DOM/class/style 变化存在；若动画后会打开弹窗或遮罩，必须确认动画期间未被遮挡，动画结束后再显示结果。
 8. 按 Interaction Spec 逐条检查 Runtime 联动：凡 `targetSection` 不是 `self` 或 `targetChange` 会改变其他 Section 的交互，`integrations/store.ts` 必须存在对应 action，Runtime Container 必须绑定该 action，禁止 console.log-only。
 9. 运行总验收：
@@ -369,7 +370,7 @@ pnpm final-closeout-check --campaign <campaign-name>
 - 渲染顺序校验结果。
 - Layout Spec 保真校验结果。
 - 单组件预览完整性校验结果。
-- Interaction Spec / `ACTION_WIRING` Playground 联动完整性校验结果。
+- Interaction Spec / `preview-state` / Runtime actions 联动完整性校验结果。
 - Runtime Store action / Container action 联动完整性校验结果。
 - `--all` 总验收结果。
 - 全量 Vitest 结果。

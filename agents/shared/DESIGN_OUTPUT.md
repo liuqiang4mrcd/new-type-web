@@ -51,7 +51,7 @@ designer/sections/<Name>/
 - 只有 `supportedStates` 中存在 `{ type: 'ui', required: true }` 时，才创建 `states.tsx` 并导出对应 UI 状态组件
 - 禁止为了满足固定文件数量而给没有 UI 状态的 Section 生成空 `states.tsx` 或伪 loading/empty/error
 - Section 实现必须保留第 2 步 Layout Spec 中声明的关键元素位置、尺寸、间距、对齐、层级和响应规则。
-- 交互实现必须以第 2 步 Interaction Spec 为唯一真源，`defaultActions`、`ACTION_WIRING`、`stateTransitions` 和 Runtime actions 命名必须与其一致。
+- 交互实现必须以第 2 步 Interaction Spec 为唯一真源，`defaultActions`、`stateTransitions`、`preview-state` 初始化数据和 Runtime actions 命名必须与其一致。
 - 若实现时发现 Layout Spec 或 Interaction Spec 无法落地，必须暂停并回到结构规划/设计方案确认，禁止自行改结构或改 action 命名。
 - Section 边界必须继承第 2 步“结构归属推理”。同一视觉卡片 / 同一业务闭环内的展示、按钮、领取态和局部切换默认属于同一个 Section；禁止为了让实现更方便而拆出孤立按钮 Section 或孤立状态 Section。
 
@@ -82,19 +82,29 @@ designer/sections/<Name>/
 | Interaction Spec 字段 | 代码落点 |
 |---|---|
 | `actionHandler` | `section-registry.ts` 的 `defaultActions`、Runtime Container actions |
-| `targetSection` / `targetChange` | `phone-preview.tsx` 的 `ACTION_WIRING` 和 Runtime Store action 状态更新 |
+| `targetSection` / `targetChange` | Runtime Store action 状态更新；`phone-preview.tsx` 复用 Runtime Store action |
 | `userAction` | 视觉组件 `index.tsx` 中绑定的事件 |
 | `mutex` | disabled、loading、spinning、claimed 等互斥逻辑 |
 | `closeOrReset` | 弹窗关闭、状态复位或重新进入 idle 的 action |
 
-跨 Section 交互必须同时在 `phone-preview.tsx` 的 `ACTION_WIRING` 和 Runtime Store action 中体现；组件内部交互状态必须在 `content.ts` 的 `stateTransitions` 中体现。所有 TODO 占位必须在最终 4.3 收尾前清除。
+跨 Section 交互必须在 Runtime Store action 中体现；`phone-preview.tsx` 只能安装 `preview-state` 并复用 Runtime Store action，不得维护独立 content patch 表。组件内部交互状态必须在 `content.ts` 的 `stateTransitions` 中体现。所有 TODO 占位必须在最终 4.3 收尾前清除。
 
 Runtime 联动要求：
 
 - 若 Interaction Spec 的 `targetSection` 不是 `self`，或 `targetChange` 会改变其他 Section 的 `content/status`，`integrations/store.ts` 必须声明并实现对应 action，例如 `openRule / closeRule / openReward / closeReward / openCritResult / closeCritResult / openTip / closeTip`。
 - Runtime Container 必须将该 Store action 绑定到视觉组件的 `actions` props。`console.log` 只能用于 back/share/recharge 等外部跳转或暂未接入真实能力的非目标状态变化事件。
-- `phone-preview.tsx` 的 `ACTION_WIRING` 只负责设计阶段 mock 预览，不能替代 Runtime Store 联动。
-- Final Closeout 前必须逐条核对 `defaultActions / ACTION_WIRING / stateTransitions / Store actions / Runtime Container actions`，确保命名和目标变化均与 Interaction Spec 一致。
+- `phone-preview.tsx` 只负责安装 `playground/preview-state.ts` 并渲染 `RuntimePage`，不能替代 Runtime Store 联动。
+- Final Closeout 前必须逐条核对 `defaultActions / preview-state / stateTransitions / Store actions / Runtime Container actions`，确保命名和目标变化均与 Interaction Spec 一致。
+
+### Runtime 数据边界
+
+`defaultContent` 是 `designer/` 和 `playground/` 的乐观视觉样例，不是 runtime 或接口联调的数据源。
+
+- `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`。
+- Runtime 所需的静态文案、按钮名、空态文案必须在 adapter / container 中显式定义，或由业务配置/接口返回；禁止通过 `...defaultContent` 继承。
+- 动态 Section 缺少真实 `SectionState<Content>` 时，Runtime Container 返回空或显式状态视图，不得返回 `ready + defaultContent`。
+- Runtime Container 只在 `section.status === 'ready' && section.content` 时渲染主视觉组件；否则渲染显式状态视图或返回 `null`。
+- Zustand `useStore` selector 禁止调用 projection helper 或返回每次新建的对象/数组；Runtime 应直接订阅 `s.sections.<name>`、`s.domain.*`、`s.ui.*` 等原始字段。派生 content 应在组件 render/useMemo 中组装，或拆成多个 primitive / 原始引用订阅。
 
 ### 状态声明要求
 
@@ -175,7 +185,7 @@ export const stateTransitions: StateTransition[] = [
 
 - `spin` 动画必须绑定到转盘盘面或奖品环，不应只改变中心按钮状态。
 - 中心按钮是否跟随旋转必须在组件设计卡中明确；默认中心按钮不随盘面旋转。
-- 结果弹窗应在旋转动画结束后打开，`Runtime Container` 和 `phone-preview.tsx ACTION_WIRING` 都必须保持同样延迟语义。
+- 结果弹窗应在旋转动画结束后打开，Runtime Container 和 `phone-preview` 复用的 Runtime Store action 都必须保持同样延迟语义。
 - Final Closeout 前必须用浏览器检查：点击抽奖后动画 class/style 生效，动画期间结果弹窗未出现，动画结束后结果弹窗出现。
 
 ## Playground 注册
@@ -206,12 +216,12 @@ export const stateTransitions: StateTransition[] = [
 
 ### 完整页预览背景一致性
 
-`runtime/app.tsx` 和 `playground/phone-preview.tsx` 必须使用同一个页面根背景。新活动从模板复制后，禁止保留模板默认浅灰背景（如 `#f7f8fb` / `bg-white`）作为 `phone-preview` 的 `<main>` 背景，除非该浅色正是已确认视觉方案的页面底色。
+`runtime/app.tsx` 导出的 `RuntimePage` 必须承载唯一页面根背景，`playground/phone-preview.tsx` 复用该页面根。新活动从模板复制后，禁止保留模板默认浅灰背景（如 `#f7f8fb` / `bg-white`），除非该浅色正是已确认视觉方案的页面底色。
 
 实现要求：
 
 - 页面级背景色或背景图应来自 `.feedback/design.md` 的视觉方案。
-- 常规访问根容器（通常是 `runtime/app.tsx` 的 `<main>`）和移动端完整页预览根容器（`playground/phone-preview.tsx` 的 `<main>`）必须一致。
+- 常规访问根容器和移动端完整页预览根容器必须来自同一个 `RuntimePage`。
 - 如果 Section 之间存在 margin、透明区、弹窗关闭后的页面尾部或内容不足一屏，露出的必须是活动页面底色，而不是模板底色或 Playground 外层背景。
 - Final Closeout 前必须直接访问 `?mode=phone-preview`，检查 `main` 计算后的 `background-color` 或背景类是否与 runtime 根背景一致。
 
@@ -263,7 +273,7 @@ interface Scenario {
 - 每个 Section 的最终展示数据通过浅合并生成：`{...defaultContent, ...step.section.content}`。只覆盖需要变化的字段，未覆盖的保持 `defaultContent` 原值。
 - **禁止**在场景中 import `useStore`、`integrations/store` 或任何真实数据流模块——场景数据必须全部来自 `defaultContent` + `content` override。
 - 场景数据的处理（合并、渲染）全部在 `playground/ScenarioRunner.tsx` 内部自洽完成。
-- `phone-preview.tsx`（完整页面预览）永远是设计阶段的 mock 数据排版工具，它以 `defaultContent` 作为初始内容，跨 Section 的弹窗/结果联动只能通过 `ACTION_WIRING` 浅合并覆盖。接入真实接口后，完整页面预览应切换至 `runtime/app.tsx`（真实 Store + Container）。
+- `phone-preview.tsx`（完整页面预览）必须通过 `playground/preview-state.ts` 把设计态数据初始化为 `RuntimeViewState`，然后渲染 `runtime/app.tsx` 导出的 `RuntimePage`。跨 Section 的弹窗/结果联动复用 Runtime Store action，禁止维护 `ACTION_WIRING` 或专用 content patch 表。
 
 ### 命名要求
 

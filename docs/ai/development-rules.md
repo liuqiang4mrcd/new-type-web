@@ -15,7 +15,7 @@
 | 目录            | 负责人   | 职责                      | AI 能否修改 |
 | --------------- | -------- | ------------------------- | ----------- |
 | `designer/`     | 设计师   | 纯视觉组件、展示数据      | ✅ 目标活动内可创建/修改 |
-| `activity/`     | AI/开发者 | 页面内部交互内核：AppState、reducer、actions、selectors（纯 TS） | ✅          |
+| `activity/`     | AI/开发者 | 页面内部交互内核：AppState、reducer、actions（纯 TS） | ✅          |
 | `runtime/`      | AI       | 连接 activity/store 和视觉组件 | ✅ 主力     |
 | `integrations/` | 开发者   | Store 外壳 / API / adapter / 埋点 / 配置 | 按需        |
 | `playground/`   | 设计师   | 预览环境、Section 注册、流程预览 | ✅ 按需     |
@@ -27,21 +27,19 @@
 | ----------------------- | ----------------------------------------------------------- | --------------------------- |
 | 新 section 视觉 + 数据  | `designer/sections/<Name>/{types,content,index}.tsx` + 条件 `states.tsx` | 不要调用 store 或 API；不要修改 `apps/campaign-template/` 业务实现 |
 | 新 section 连接数据     | `runtime/sections/<Name>Container.tsx`                      | 不要改 visual 组件          |
-| 新 section 预览注册     | `playground/section-registry.ts` / `playground/scenarios/*` / `playground/phone-preview.tsx` | 不要接入真实 Store 或 API |
+| 新 section 预览注册     | `playground/section-registry.ts` / `playground/scenarios/*` / `playground/preview-state.ts` | 完整页预览只初始化 RuntimeViewState，不接入真实 API |
 | 数据接口变更 / 接口接入 | `designer/sections/<Name>/contract.ts`（动态数据 Section 语义契约）+ `integrations/adapters/` + `integrations/fixtures/` + `runtime/` | 不要直接改 `index.tsx`；不要让 runtime 或 visual 消费 raw DTO |
 | 新增 API / Store / 埋点 | `integrations/{store,api,tracking}.ts`                      | 不要绕开 integrations       |
 | 设计师调整视觉          | 按用户明确范围修改目标活动的 `designer/sections/*`           | 不要越界修改模板、共享包或未确认的视觉结构 |
 
 ### Activity 交互内核
 
-`activity/` 是 Playground 与 runtime 共用的页面内部交互内核，用于避免同一交互规则同时写在 `playground/phone-preview.tsx` 和 `integrations/store.ts`。
+`activity/` 是 Playground 与 runtime 共用的页面内部交互内核，用于避免同一交互规则同时写在预览态和 `integrations/store.ts`。
 
 允许：
 
 - 定义 `AppState`、`DomainState`、`UiState`、`AppAction`
 - 定义纯 reducer、业务 command/action creator
-- 定义 `AppState -> SectionState<Content>` selectors
-- 引用 `contracts/` 类型和 `designer/sections/*/{types,content}` 作为 selector 输出的类型与视觉默认值
 
 禁止：
 
@@ -49,10 +47,31 @@
 - 发请求、打埋点、读写 localStorage
 - 保存或解释后端 raw DTO
 - 把 Playground 专属状态写入 `AppState`
+- 新增 `activity/selectors/*` 作为 runtime 或完整页预览的 ViewModel 拼装层
 
-普通页面交互必须通过 `dispatch(AppAction)` 进入 activity reducer；API 初始化、重载可以由 `integrations/store.ts` 调用 adapter 后 `hydrate` / `setAppState`。
+普通页面交互必须通过 `dispatch(AppAction)` 进入 activity reducer；API 初始化、重载由 `integrations/store.ts` 调用 adapter 后写入顶层 `domain/ui/sections`。
 
-Section `Content` 是最终渲染 ViewModel，不是业务事实源。动态业务事实应保存在 `domain/ui`，再由 selectors 派生成 `SectionState<Content>`。
+Section `Content` 是最终渲染 ViewModel，不是业务事实源。接口 adapter 可以产出 `SectionState<Content>` 写入 `sections`；用户交互事实保存在 `domain/ui`。
+
+### Zustand Runtime 规则
+
+Runtime 使用 Zustand 时，hook selector 只能订阅 store 的原始字段引用或 primitive：
+
+```ts
+const section = useStore((s) => s.sections.hero);
+const activeTab = useStore((s) => s.ui.activeContentTab);
+const dispatch = useStore((s) => s.dispatch);
+```
+
+禁止在 `useStore` selector 中调用会创建新对象/数组的 projection：
+
+```ts
+const section = useStore((s) => selectHeroSection(s.appState));
+```
+
+需要组合 `section + ui/domain` 时，在 runtime container 或专用 hook 中用 render/useMemo 派生，不把派生对象作为 Zustand snapshot 返回。
+
+完整页面 Playground 预览也不维护 `selectXxxSection` 或 `ACTION_WIRING` content patch 表；应通过 `playground/preview-state.ts` 初始化 `RuntimeViewState`，然后复用 `runtime` container 渲染。
 
 ## 引用规则
 
@@ -126,6 +145,9 @@ function HeroContainer() {
 - 动态数据 Section 必须提供 `contract.ts`，并通过 app-local adapter contract test 验证。
 - API DTO 必须先经过 `integrations/adapters/*` 映射成 `DomainState` 或 `createInitialAppState()` 的输入，再进入 store 和 runtime。
 - runtime container 禁止临时拼接接口字段、解释后端枚举或读取 raw DTO。
+- `defaultContent` 是设计态 / Playground 乐观假数据，只能在 `designer/` 和 `playground/` 使用。真实接口联调、mock API、adapter、runtime containers 禁止 import `designer/sections/*/content.ts` 或用 `...defaultContent` 补齐数据。
+- 缺少真实动态数据时，runtime 不得 fallback 到 `ready + defaultContent`。
+- Zustand hook selector 不得返回每次新建的对象或数组，也不得调用 projection helper 派生 ViewModel；需要派生 content 时在组件 render/useMemo 中组装，或拆成多个原始字段订阅。
 - Playground 继续使用 mock content 和 scenario，不接真实 API。
 
 ## Playground 访问
@@ -197,8 +219,8 @@ interface ScenarioStep {
 - 展示数据 = `{...section.defaultContent, ...step.section.content}`（浅合并）
 - **禁止** import `useStore` 或 `integrations/store`——场景数据完全在 Playground 内部自洽
 - `ScenarioRunner.tsx` 负责数据合并和渲染，不经过真实 Store
-- `phone-preview.tsx` 的完整页面交互必须走 `activity` reducer/actions/selectors；禁止使用 `ACTION_WIRING` 维护跨 Section content patch
-- `playground/` 禁止 import `integrations/*`，包括 `integrations/store`、`integrations/api`、`integrations/tracking`
+- `phone-preview.tsx` 的完整页面交互必须复用 `runtime` container + store；禁止使用 `ACTION_WIRING` 或 `selectXxxSection` 维护跨 Section content patch
+- `playground/phone-preview.tsx` 仅允许 import `integrations/store` 的 store 入口和 `runtime/app.tsx` 的 `RuntimePage` 来安装预览态；其他 `playground/` 文件禁止 import `integrations/*`，尤其是 API 和 tracking
 
 #### 命名要求
 
@@ -207,7 +229,7 @@ interface ScenarioStep {
 - 阶段差异通过 `content` 覆盖表达，不能靠临时文案
 
 > 流程预览的验收要求见 `docs/ai/section-implementation-gate.md` §最终验收。
-> `actions` 联动和 `phone-preview.tsx` 的 ACTION_WIRING 细节见 `agents/skills/section-implementation/SKILL.md`。
+> `actions` 联动和完整页面预览规则见 `agents/skills/section-implementation/SKILL.md`。
 
 ### 弹窗交互规则
 

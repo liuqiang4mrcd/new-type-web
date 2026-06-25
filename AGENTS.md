@@ -32,6 +32,8 @@ packages/
 | `docs/ai/development-rules.md` | AI 开发约束（三层架构、目录边界、命名规范） |
 | `docs/ai/framework-map.md` | 共享包引用地图（什么功能用哪个包） |
 | `docs/ai/section-implementation-gate.md` | Section 实现阶段门禁：完成一个、验证一个 |
+| `docs/ai/feedback-mechanism-design.md` | Designer Agent 反馈机制设计 |
+| `docs/ai/interface-integration-rules.md` | 接口接入规则 |
 
 ---
 

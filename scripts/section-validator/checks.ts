@@ -386,17 +386,6 @@ function checkStoreAlignment(
     });
   }
 
-  const selectorFile = join(
-    rootDir,
-    'activity',
-    'selectors',
-    `${camel(baseName)}.ts`,
-  );
-  const selectorResult = readFileSafe(selectorFile);
-  const selectorHasSectionState =
-    selectorResult.ok &&
-    selectorResult.text.includes(`SectionState<${expectedType}>`);
-
   const activityTypesFile = join(rootDir, 'activity', 'types.ts');
   const activityTypesResult = readFileSafe(activityTypesFile);
   const sectionKey = camel(baseName);
@@ -406,7 +395,7 @@ function checkStoreAlignment(
       activityTypesResult.text,
     );
 
-  if (selectorHasSectionState && activityMapHasSectionState) {
+  if (activityMapHasSectionState) {
     return check({
       name: 'Store 对齐',
       passed: true,
@@ -418,9 +407,7 @@ function checkStoreAlignment(
     name: 'Store 对齐',
     passed: false,
     errors: [
-      `未找到 SectionState<${expectedType}>：旧模式需在 Store 中声明；activity 模式需在 selectors/${camel(
-        baseName,
-      )}.ts 和 activity/types.ts 的 SectionStateMap 中声明`,
+      `未找到 SectionState<${expectedType}>：需在 Store 中声明，或在 activity/types.ts 的 SectionStateMap 中声明 ${sectionKey}: SectionState<${expectedType}>`,
     ],
   });
 }
@@ -644,9 +631,23 @@ function checkLayerBoundaries(
   const violations = checkLayerViolations(result.text);
   for (const filePath of collectSourceFiles(join(rootDir, 'playground'))) {
     const file = readFileSafe(filePath);
-    if (file.ok && /from\s+['"](?:\.\.\/)+integrations\//.test(file.text)) {
+    if (!file.ok) continue;
+    const relativePath = filePath.replace(rootDir + '/', '');
+    const importsIntegration = /from\s+['"](?:\.\.\/)+integrations\//.test(file.text);
+    const importsRuntimeApi =
+      /from\s+['"](?:\.\.\/)+integrations\/(?:api|tracking|adapters|fixtures|mock-data)/.test(
+        file.text,
+      );
+    const isFullPagePreviewBoundary =
+      /playground\/(?:phone-preview|preview-state)\.tsx?$/.test(relativePath);
+
+    if (importsRuntimeApi) {
       violations.push(
-        `${filePath.replace(rootDir + '/', '')} import integrations/*（Playground 必须走 activity mock/reducer）`,
+        `${relativePath} import integrations API/tracking/adapter/mock-data（Playground 禁止接入真实数据流）`,
+      );
+    } else if (importsIntegration && !isFullPagePreviewBoundary) {
+      violations.push(
+        `${relativePath} import integrations/*（仅 phone-preview/preview-state 可受控复用 runtime store）`,
       );
     }
   }

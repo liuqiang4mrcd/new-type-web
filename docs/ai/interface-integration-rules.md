@@ -90,18 +90,66 @@ adapter 允许做：
 - 数字、金额、时间、单位等展示格式化。
 - 后端枚举到前端展示语义枚举的翻译。
 - 数组裁剪、排序、过滤和空数组归一化。
-- optional 字段缺失时使用 `defaultContent` 或明确 fallback。
+- optional 字段缺失时使用 adapter 内明确声明的 runtime fallback。
 - required 字段缺失时输出 `error / empty / disabled` 等非 ready 状态。
 
 adapter 不允许做：
 
 - 临时发明新的视觉结构或产品决策。
+- import 或 spread `designer/sections/*/content.ts` 的 `defaultContent`。
 - 把后端字段名、接口路径、DTO shape 写入 Section 契约。
 - 把后端 enum/code 直接传入 `designer/sections/*/types.ts`。
 - 让 runtime container 读取 raw DTO 后再拼接展示字段。
 - 让 visual component 自己判断接口异常或后端业务状态。
 
 硬规则：adapter 可以补字段，不能补产品决策。真实业务能力改变用户可见信息架构时，必须先修改 Section 契约和设计卡。
+
+### defaultContent 边界
+
+`designer/sections/*/content.ts` 的 `defaultContent` 是设计态 / Playground 乐观假数据，只用于：
+
+- 单 Section 视觉开发和状态预览。
+- `playground/section-registry.ts`、`SectionPanel`、`phone-preview` 等设计预览。
+- 生成 spec test 的默认视觉样例。
+
+真实接口联调、mock API、adapter、store、runtime render path 禁止依赖 `defaultContent`：
+
+- `integrations/adapters/*` 不得 import `designer/sections/*/content.ts`，不得用 `...defaultContent` 补齐接口数据。
+- `integrations/mock-data.ts` 应读取 fixture 或显式构造 API DTO；动态时间可在 mock 层 clone fixture 后注入，但不能借用 Section `defaultContent`。
+- 完整页面预览使用 `playground/preview-state.ts` 把设计态数据初始化为 `RuntimeViewState`，再复用 `runtime` container 渲染；不要新增 `activity/selectors/*` 或 Playground 专用 `selectXxxSection`。
+- `runtime/sections/*Container.tsx` 直接订阅 Zustand 顶层 `sections/domain/ui` 原始字段，只渲染 `section.status === 'ready' && section.content` 的真实内容；缺 content 时不渲染或渲染显式状态视图，不能 fallback 到 `defaultContent`。
+- Runtime 中禁止 `useStore((s) => selectXxxSection(s.appState))`；需要组合多个字段时，在 container/hook 中派生。
+- 静态文案、按钮名、空态文案如果属于 runtime 体验，必须在 adapter / runtime 显式定义，不能从设计假数据继承。
+
+禁止示例：
+
+```ts
+import { defaultContent } from '../../designer/sections/HeroSection/content';
+
+return {
+  status: 'ready',
+  content: {
+    ...defaultContent,
+    title: dto.name,
+  },
+};
+```
+
+允许示例：
+
+```ts
+return {
+  status: 'ready',
+  content: {
+    title: dto.name,
+    subtitle: 'Collect gifts to unlock rewards.',
+    dateRange: formatDateRange(dto.start_at, dto.end_at),
+    countdown: countdown(dto.end_at, dto.now_timestamp),
+    ruleLabel: 'Rules',
+    decorations: { showLanterns: true, showGifts: true },
+  },
+};
+```
 
 ## 状态和错误策略
 
@@ -315,7 +363,8 @@ Playground 继续使用 mock content 和 scenario，不接真实 API：
 - adapter 位于目标 app 的 `integrations/adapters/`。
 - adapter test 覆盖 normal、required 缺失、optional 缺失、业务空态或禁用态、malformed。
 - fixtures 位于目标 app 的 `integrations/fixtures/`，并有 fixture source 记录。
-- store 主状态保存 `SectionState<Content>`，不把 raw DTO 暴露给 runtime/render path。
+- store 顶层 `sections` 保存 `SectionState<Content>`，顶层 `domain/ui` 保存交互事实，不把 raw DTO 暴露给 runtime/render path。
+- `integrations/`、`activity/`、`runtime/` 不 import `designer/sections/*/content.ts`；`defaultContent` 只留在 `designer/` 和 `playground/`。
 - runtime container 没有解释后端字段、后端枚举或拼接展示文案。
 - visual component 没有 import API、store、tracking，也没有后端字段或后端 enum。
 - 只有 normal 样例时，结论写为“normal path 接通”，不写“接口接入完成”。

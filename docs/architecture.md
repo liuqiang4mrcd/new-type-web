@@ -179,7 +179,9 @@ integrations/  ───→  runtime/  ───→  UI (ui 包)
 ```
 
 - 视觉组件只通过 `content` props 接收数据，不直接引用 store 或 API
-- Runtime container 负责：从 store 读取状态 → 选择渲染 designer 组件或状态视图
+- `integrations/store.ts` 使用 Zustand 暴露顶层 `domain / ui / sections`，其中 `sections` 保存 adapter 输出后的 `SectionState<Content>`
+- Runtime container 负责：用 Zustand hook selector 直接订阅 `s.sections.<name>`、`s.domain.*`、`s.ui.*` 等原始字段 → 选择渲染 designer 组件或状态视图
+- Runtime container 禁止把 projection helper 作为 Zustand hook selector；需要组合多个字段时，在 container/hook 中派生 ViewModel
 - 开发者修改 `integrations/` 不影响 `designer/` 的视觉代码
 
 ### 4.4 入口路由

@@ -35,6 +35,7 @@ temperature: 0.3
 - `agents/shared/DESIGN.md`
 - `agents/shared/DESIGN_INPUT.md`
 - `agents/shared/DESIGN_OUTPUT.md`
+- `agents/shared/STRUCTURE_OUTPUT.md` — ⚠️ 结构规划阶段必须引用：Section 拆分决策树 + 输出模板
 - `docs/ai/section-implementation-gate.md`
 - `docs/ai/development-rules.md`
 - `docs/ai/framework-map.md`

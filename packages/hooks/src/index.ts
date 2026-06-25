@@ -6,15 +6,18 @@ export function useCountdown(targetTime: number) {
     return diff > 0 ? Math.floor(diff / 1000) : 0;
   }, [targetTime]);
 
-  const [remaining, setRemaining] = useState(calcRemaining);
+  const [remaining, setRemaining] = useState(0);
 
+  // 当 targetTime 变化时重新计算剩余时间（包括从 0 变为有效值的情况）
   useEffect(() => {
-    if (remaining <= 0) return;
+    const value = calcRemaining();
+    setRemaining(value);
+    if (value <= 0) return;
     const timer = setInterval(() => {
       setRemaining(calcRemaining());
     }, 1000);
     return () => clearInterval(timer);
-  }, [remaining, calcRemaining]);
+  }, [calcRemaining]);
 
   const days = Math.floor(remaining / 86400);
   const hours = Math.floor((remaining % 86400) / 3600);

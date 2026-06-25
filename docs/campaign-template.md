@@ -20,8 +20,6 @@ apps/campaign-template/
 │   │   ├── initial-state.ts         # createInitialAppState
 │   │   ├── actions.ts               # 业务 command / action creator
 │   │   ├── reducer.ts               # 纯状态变更
-│   │   └── selectors/               # AppState → SectionState<Content>
-│   │       └── index.ts
 │   │
 │   ├── designer/sections/           # 🎨 设计师视觉层
 │   │   └── ScaffoldSection/         # 中性占位 Section，创建新活动后替换
@@ -92,7 +90,7 @@ designer/sections/<Name>/
 
 ### 2.1 流程预览
 
-`playground/scenarios/` 用于预览真实业务阶段，不用于按 Section 顺序逐个播放。完整页面预览应尽量描述 `domain/ui` 初始状态，并通过 `activity` reducer/actions/selectors 渲染真实交互链路。
+`playground/scenarios/` 用于预览真实业务阶段，不用于按 Section 顺序逐个播放。完整页面预览通过 `playground/preview-state.ts` 初始化 `RuntimeViewState`，并复用 runtime container 渲染真实交互链路。
 
 - 推荐步骤：`活动开始前`、`活动进行中`、`活动结束`，或按实际活动补充 `已领取`、`无次数`、`奖励为空` 等阶段。
 - 每个步骤可以组合多个 Section，展示该阶段用户实际看到的页面。
@@ -113,17 +111,14 @@ designer/sections/<Name>/
 - 调试用触发按钮只允许出现在单组件预览或右侧控制区域，禁止出现在完整页面底部。
 - 弹窗单组件预览必须限制在组件预览框内部，禁止 fixed 全屏覆盖 Playground。完整页面需要全屏遮罩时，应由 content 字段或预览包装区分 inline / overlay 模式。
 - 单组件预览中，`SectionPanel` 会检测 `defaultContent.isOpen` 并注入 `{ isOpen: true, displayMode: 'inline' }`，因此弹窗的 `defaultContent.isOpen` 必须保持 `false`。
-- 完整页面预览中，跨 Section 的弹窗/结果联动必须走 `activity` reducer/actions/selectors，禁止新增 `ACTION_WIRING` 式 content patch 表。
+- 完整页面预览中，跨 Section 的弹窗/结果联动必须复用 `runtime` container + store；`playground/preview-state.ts` 只负责把设计态数据初始化为 `RuntimeViewState`，禁止新增 `ACTION_WIRING` 式 content patch 表或 `activity/selectors/*`。
 
 ### 3. 添加 store 状态（integrations/）
 
 ```
-// activity/selectors/<name>.ts 中添加 SectionState selector
-export function select<Name>Section(state: AppState): SectionState<<Name>Content> {
-  // domain/ui/defaultContent -> SectionState<Content>
-}
-
-// integrations/store.ts 只维护 appState + dispatch 外壳
+// integrations/store.ts 维护顶层 domain / ui / sections + dispatch 外壳
+// runtime 中 useStore selector 只能订阅原始字段或 primitive
+// playground/preview-state.ts 可使用 defaultContent 初始化 RuntimeViewState
 ```
 
 ### 4. 创建 runtime 容器（runtime/）
@@ -131,7 +126,11 @@ export function select<Name>Section(state: AppState): SectionState<<Name>Content
 ```
 // runtime/sections/<Name>Container.tsx
 // 从 store 读取状态 → 按 status 渲染对应视图
+// ready 但无 content 时不渲染或渲染显式状态视图，不要 fallback 到 defaultContent
+// 不要在 useStore selector 中调用 projection helper；直接订阅 s.sections.<name> / s.domain / s.ui
 ```
+
+> `defaultContent` 只用于 `designer/` 视觉默认态和 `playground/` 设计预览。真实接口联调、mock API、adapter、runtime containers 禁止 import `designer/sections/*/content.ts` 或用 `...defaultContent` 补齐数据。
 
 ## 引入共享包
 

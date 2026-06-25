@@ -141,7 +141,7 @@ Layout Spec 采用“关键元素强约束 + 普通装饰弱约束”。
 
 ### Interaction Spec（交互链路表）
 
-Interaction Spec 是交互链路的唯一真源。代码中的 `defaultActions`、`ACTION_WIRING`、`stateTransitions` 和 Runtime actions 命名必须与 Interaction Spec 对齐。
+Interaction Spec 是交互链路的唯一真源。代码中的 `defaultActions`、`preview-state`、`stateTransitions` 和 Runtime actions 命名必须与 Interaction Spec 对齐。
 
 每条交互链路必须记录：
 

@@ -45,7 +45,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
     - `easing` 值从 `content.ts` 的对应 `animation.easing` 提取并应用到 `transition` 或 CSS 中
     - `duration` 与 `content.ts` 声明一致
     - 实现后对照 `stateTransitions` 逐条确认：每个声明的动画在 `index.tsx` 中有对应的 DOM 可见变化
-7. 若存在跨 Section 交互，确保 Playground `ACTION_WIRING` 与 Runtime Store action 都按 Interaction Spec 对齐。
+7. 若存在跨 Section 交互，确保 `phone-preview` 复用 Runtime Store action；`playground/preview-state.ts` 只初始化预览数据，不维护 content patch 表。
 8. 交给 `section-verification` 执行 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
 9. 单 Section 验证通过并更新 `.feedback/progress.md` 后，才能进入下一个 Section。
 
@@ -67,6 +67,9 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止直接修改 `apps/campaign-template/` 业务实现。
 - 禁止越界修改其他 `apps/*`、`packages/*`、`scripts/*`。
 - 禁止默认接入真实 API 或埋点；`integrations/api.ts` / `integrations/tracking.ts` 只有用户明确要求时才可改。
+- 禁止在 `integrations/`、`activity/`、`runtime/` 中 import `designer/sections/*/content.ts` 或用 `defaultContent` 作为接口/mock/runtime fallback；`defaultContent` 只能用于 `designer/` 和 `playground/`。
+- 禁止 Runtime 中使用 `useStore((s) => selectXxxSection(s.appState))`；Zustand selector 只能订阅原始字段或 primitive。派生 content 放在组件 render/useMemo 或拆分订阅。
+- 禁止新增 `activity/selectors/*` 或 `phone-preview` 专用 `ACTION_WIRING`；完整页面预览必须通过 `preview-state` 初始化 `RuntimeViewState` 并复用 runtime container。
 - 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
 - 禁止强交互 Section 缺少 Effect Spec 引用或 Effect Reasoning 时直接实现。
 - 禁止批量实现多个 Section 后再统一验证。

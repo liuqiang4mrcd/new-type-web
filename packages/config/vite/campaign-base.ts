@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import mobile from 'postcss-mobile-forever';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..', '..', '..');
 
 interface CampaignViteOptions {
   port?: number;
@@ -13,6 +18,11 @@ export function defineCampaignConfig(options: CampaignViteOptions = {}): UserCon
 
   return defineConfig({
     plugins: [react()],
+    resolve: {
+      alias: {
+        '@new-type/hooks': path.resolve(ROOT, 'packages/hooks/src/index.ts'),
+      },
+    },
     css: {
       postcss: {
         plugins: [
