@@ -86,15 +86,15 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
   );
 
   const registryResult = readFileSafe(registryPath);
-  if (!registryResult.ok) {
+  if (registryResult.ok === false) {
     fatal(registryResult.error);
   }
   const storeResult = readFileSafe(storePath);
-  if (!storeResult.ok) {
+  if (storeResult.ok === false) {
     fatal(storeResult.error);
   }
   const phonePreviewResult = readFileSafe(phonePreviewPath);
-  if (!phonePreviewResult.ok) {
+  if (phonePreviewResult.ok === false) {
     fatal(phonePreviewResult.error);
   }
 

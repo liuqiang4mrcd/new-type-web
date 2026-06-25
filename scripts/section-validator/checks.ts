@@ -7,7 +7,11 @@ import type {
   SupportedStateDecl,
   SectionNaming,
 } from './types';
-import { readFileSafe, buildSectionNaming, resolveSectionPaths } from './discovery';
+import {
+  readFileSafe,
+  buildSectionNaming,
+  resolveSectionPaths,
+} from './discovery';
 import {
   parseContentModule,
   parseStatesExports,
@@ -76,9 +80,10 @@ function checkFilesExist(paths: SectionPaths): CheckResult {
   });
 }
 
-function checkSupportedStates(
-  source: string,
-): { result: CheckResult; states: SupportedStateDecl[] | null } {
+function checkSupportedStates(source: string): {
+  result: CheckResult;
+  states: SupportedStateDecl[] | null;
+} {
   const content = parseContentModule(source);
   if (!content.supportedStates) {
     return {
@@ -148,7 +153,9 @@ function checkUiStates(
     const expectedName = `${baseName}${pascal(s.key)}`;
     const found = parsed.exportedNames.includes(expectedName);
     if (!found && s.required) {
-      errors.push(`缺少必要 UI 状态组件: ${expectedName}（states.tsx 中未导出）`);
+      errors.push(
+        `缺少必要 UI 状态组件: ${expectedName}（states.tsx 中未导出）`,
+      );
     } else if (!found) {
       // optional, just note
     }
@@ -280,10 +287,7 @@ function checkStateViewsAlignment(
   });
 }
 
-function checkRuntimeContainer(
-  rootDir: string,
-  baseName: string,
-): CheckResult {
+function checkRuntimeContainer(rootDir: string, baseName: string): CheckResult {
   const containerFile = join(
     rootDir,
     'runtime',
@@ -298,7 +302,7 @@ function checkRuntimeContainer(
     });
   }
   const result = readFileSafe(containerFile);
-  if (!result.ok) {
+  if (result.ok === false) {
     return check({
       name: 'Runtime Container',
       passed: false,
@@ -340,7 +344,7 @@ function checkContainerRouting(
     });
   }
   const result = readFileSafe(containerFile);
-  if (!result.ok) {
+  if (result.ok === false) {
     return check({
       name: 'Container 路由完整性',
       skipped: true,
@@ -354,14 +358,14 @@ function checkContainerRouting(
     .map((s) => s.key)
     .filter((key) => ['loading', 'empty', 'error'].includes(key));
   const required: string[] = ['ready', ...declaredUiStatuses];
-  const missing = required.filter((r) => !container.switchCases.includes(r as any));
+  const missing = required.filter(
+    (r) => !container.switchCases.includes(r as any),
+  );
   if (missing.length > 0) {
     return check({
       name: 'Container 路由完整性',
       passed: false,
-      errors: [
-        `Container switch 缺少以下状态的路由: ${missing.join(', ')}`,
-      ],
+      errors: [`Container switch 缺少以下状态的路由: ${missing.join(', ')}`],
     });
   }
   return check({
@@ -508,10 +512,14 @@ function checkStateTransitionCoverage(
   const allKeys = new Set(states.map((s) => s.key));
   for (const t of transitions) {
     if (!allKeys.has(t.from)) {
-      errors.push(`stateTransitions 的 from "${t.from}" 未在 supportedStates 中声明`);
+      errors.push(
+        `stateTransitions 的 from "${t.from}" 未在 supportedStates 中声明`,
+      );
     }
     if (!allKeys.has(t.to)) {
-      errors.push(`stateTransitions 的 to "${t.to}" 未在 supportedStates 中声明`);
+      errors.push(
+        `stateTransitions 的 to "${t.to}" 未在 supportedStates 中声明`,
+      );
     }
   }
 
@@ -633,7 +641,9 @@ function checkLayerBoundaries(
     const file = readFileSafe(filePath);
     if (!file.ok) continue;
     const relativePath = filePath.replace(rootDir + '/', '');
-    const importsIntegration = /from\s+['"](?:\.\.\/)+integrations\//.test(file.text);
+    const importsIntegration = /from\s+['"](?:\.\.\/)+integrations\//.test(
+      file.text,
+    );
     const importsRuntimeApi =
       /from\s+['"](?:\.\.\/)+integrations\/(?:api|tracking|adapters|fixtures|mock-data)/.test(
         file.text,
@@ -657,10 +667,14 @@ function checkLayerBoundaries(
     if (!file.ok) continue;
     const relativePath = filePath.replace(rootDir + '/', '');
     if (/from\s+['"]react['"]|from\s+['"]zustand['"]/.test(file.text)) {
-      violations.push(`${relativePath} import React/Zustand（activity 必须保持纯 TS）`);
+      violations.push(
+        `${relativePath} import React/Zustand（activity 必须保持纯 TS）`,
+      );
     }
     if (/from\s+['"].*integrations\/(api|store|tracking)/.test(file.text)) {
-      violations.push(`${relativePath} import integrations runtime/API/tracking`);
+      violations.push(
+        `${relativePath} import integrations runtime/API/tracking`,
+      );
     }
   }
 
@@ -671,7 +685,10 @@ function checkLayerBoundaries(
   });
 }
 
-function findPropertyValue(source: string, propertyName: string): string | null {
+function findPropertyValue(
+  source: string,
+  propertyName: string,
+): string | null {
   const propertyRe = new RegExp(`${propertyName}\\s*:`, 'g');
   const match = propertyRe.exec(source);
   if (!match) return null;
@@ -744,7 +761,7 @@ function checkRuntimeActionWiring(
     `${baseName}Container.tsx`,
   );
   const result = readFileSafe(containerFile);
-  if (!result.ok) {
+  if (result.ok === false) {
     return check({
       name: 'Runtime 联动实现',
       passed: false,
@@ -775,6 +792,151 @@ function checkRuntimeActionWiring(
   });
 }
 
+function transitionsWithAnimation(source: string | null) {
+  return source ? parseStateTransitions(source).filter((t) => t.animation) : [];
+}
+
+function checkAnimationEasingAlignment(
+  contentSource: string | null,
+  indexSource: string | null,
+): CheckResult {
+  const animatedTransitions = transitionsWithAnimation(contentSource);
+  if (animatedTransitions.length === 0) {
+    return check({
+      name: '动画 easing 对齐',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+  if (!indexSource) {
+    return check({
+      name: '动画 easing 对齐',
+      passed: false,
+      errors: ['index.tsx 不存在，无法检查动画 easing 落地'],
+    });
+  }
+
+  const errors = animatedTransitions
+    .filter((transition) => transition.animation?.easing)
+    .filter(
+      (transition) => !indexSource.includes(transition.animation!.easing!),
+    )
+    .map(
+      (transition) =>
+        `${transition.from} -> ${transition.to} 声明 easing "${transition.animation!.easing}"，但 index.tsx 中未使用`,
+    );
+
+  return check({
+    name: '动画 easing 对齐',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
+function durationVariants(durationMs: number): string[] {
+  const seconds = durationMs / 1000;
+  const secondsText = Number.isInteger(seconds)
+    ? String(seconds)
+    : String(seconds).replace(/0+$/, '').replace(/\.$/, '');
+  return [
+    String(durationMs),
+    `${durationMs}ms`,
+    `${secondsText}s`,
+    secondsText,
+  ];
+}
+
+function checkAnimationDurationAlignment(
+  contentSource: string | null,
+  indexSource: string | null,
+): CheckResult {
+  const animatedTransitions = transitionsWithAnimation(contentSource);
+  if (animatedTransitions.length === 0) {
+    return check({
+      name: '动画 duration 对齐',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+  if (!indexSource) {
+    return check({
+      name: '动画 duration 对齐',
+      passed: false,
+      errors: ['index.tsx 不存在，无法检查动画 duration 落地'],
+    });
+  }
+
+  const errors = animatedTransitions
+    .filter((transition) => {
+      const duration = transition.animation?.duration;
+      return (
+        duration !== undefined &&
+        !durationVariants(duration).some((value) => indexSource.includes(value))
+      );
+    })
+    .map(
+      (transition) =>
+        `${transition.from} -> ${transition.to} 声明 duration ${transition.animation!.duration}ms，index.tsx 中未找到对应毫秒或秒数值`,
+    );
+
+  return check({
+    name: '动画 duration 对齐',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
+function checkStrongInteractionUsesMotion(
+  contentSource: string | null,
+  indexSource: string | null,
+): CheckResult {
+  const strongAnimationTypes = new Set(['spin', 'slide', 'scale']);
+  const strongTransitions = transitionsWithAnimation(contentSource).filter(
+    (transition) => strongAnimationTypes.has(transition.animation!.type),
+  );
+  if (strongTransitions.length === 0) {
+    return check({
+      name: '强交互用 motion/react',
+      skipped: true,
+      passed: true,
+      errors: [],
+    });
+  }
+  if (!indexSource) {
+    return check({
+      name: '强交互用 motion/react',
+      passed: false,
+      errors: ['index.tsx 不存在，无法检查 motion/react 落地'],
+    });
+  }
+
+  const importsMotion =
+    /from\s+['"]motion\/react['"]/.test(indexSource) &&
+    /import\s+\{[^}]*motion[^}]*\}\s+from\s+['"]motion\/react['"]/.test(
+      indexSource,
+    );
+  const usesMotionElement = /<motion\.[A-Za-z]/.test(indexSource);
+  const errors: string[] = [];
+  if (!importsMotion) {
+    errors.push(
+      '声明了 spin/slide/scale 动画，但 index.tsx 未从 motion/react import motion',
+    );
+  }
+  if (!usesMotionElement) {
+    errors.push(
+      '声明了 spin/slide/scale 动画，但 index.tsx 未使用 <motion.*> 元素',
+    );
+  }
+
+  return check({
+    name: '强交互用 motion/react',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
 export function validateSection(
   sectionName: string,
   rootDir: string,
@@ -796,6 +958,9 @@ export function validateSection(
 
   const statesResult = readFileSafe(paths.statesFile);
   const statesSource = statesResult.ok ? statesResult.text : null;
+
+  const indexResult = readFileSafe(paths.indexFile);
+  const indexSource = indexResult.ok ? indexResult.text : null;
 
   // 2. supportedStates 声明
   let supportedStates: SupportedStateDecl[] | null = null;
@@ -834,7 +999,9 @@ export function validateSection(
 
   // 4. UI 状态组件覆盖
   if (supportedStates) {
-    allChecks.push(checkUiStates(naming.baseName, supportedStates, statesSource));
+    allChecks.push(
+      checkUiStates(naming.baseName, supportedStates, statesSource),
+    );
   } else {
     allChecks.push(
       check({
@@ -882,7 +1049,11 @@ export function validateSection(
   // 8. stateViews 对齐
   if (supportedStates) {
     allChecks.push(
-      checkStateViewsAlignment(naming.baseName, supportedStates, registrySource),
+      checkStateViewsAlignment(
+        naming.baseName,
+        supportedStates,
+        registrySource,
+      ),
     );
   } else {
     allChecks.push(
@@ -899,7 +1070,9 @@ export function validateSection(
   allChecks.push(checkRuntimeContainer(rootDir, naming.baseName));
 
   // 10. Container 路由完整性
-  allChecks.push(checkContainerRouting(rootDir, naming.baseName, supportedStates));
+  allChecks.push(
+    checkContainerRouting(rootDir, naming.baseName, supportedStates),
+  );
 
   // 11. Store 对齐
   allChecks.push(checkStoreAlignment(naming.baseName, storeSource, rootDir));
@@ -911,36 +1084,44 @@ export function validateSection(
   if (contentSource) {
     allChecks.push(checkStateTransitionsDeclaration(contentSource));
   } else {
-    allChecks.push(check({
-      name: 'stateTransitions 声明',
-      skipped: true,
-      passed: true,
-      errors: [],
-    }));
+    allChecks.push(
+      check({
+        name: 'stateTransitions 声明',
+        skipped: true,
+        passed: true,
+        errors: [],
+      }),
+    );
   }
 
   // 14. 声明完整性
   if (supportedStates && contentSource) {
-    allChecks.push(checkStateTransitionCoverage(supportedStates, contentSource));
+    allChecks.push(
+      checkStateTransitionCoverage(supportedStates, contentSource),
+    );
   } else {
-    allChecks.push(check({
-      name: '声明完整性',
-      skipped: true,
-      passed: true,
-      errors: [],
-    }));
+    allChecks.push(
+      check({
+        name: '声明完整性',
+        skipped: true,
+        passed: true,
+        errors: [],
+      }),
+    );
   }
 
   // 15. 状态可达性
   if (supportedStates && contentSource) {
     allChecks.push(checkStateReachability(supportedStates, contentSource));
   } else {
-    allChecks.push(check({
-      name: '状态可达性',
-      skipped: true,
-      passed: true,
-      errors: [],
-    }));
+    allChecks.push(
+      check({
+        name: '状态可达性',
+        skipped: true,
+        passed: true,
+        errors: [],
+      }),
+    );
   }
 
   // 16. 分层边界检查
@@ -956,6 +1137,15 @@ export function validateSection(
       phonePreviewSource,
     ),
   );
+
+  // 18. 动画 easing 对齐
+  allChecks.push(checkAnimationEasingAlignment(contentSource, indexSource));
+
+  // 19. 动画 duration 对齐
+  allChecks.push(checkAnimationDurationAlignment(contentSource, indexSource));
+
+  // 20. 强交互用 motion/react
+  allChecks.push(checkStrongInteractionUsesMotion(contentSource, indexSource));
 
   const failedChecks = allChecks.filter((c) => !c.passed && !c.skipped);
   return {

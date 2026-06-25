@@ -11,7 +11,9 @@ import type {
   ParsedActionWiring,
 } from './types';
 
-export function parseSupportedStates(source: string): SupportedStateDecl[] | null {
+export function parseSupportedStates(
+  source: string,
+): SupportedStateDecl[] | null {
   const re =
     /export\s+const\s+supportedStates[^=]*=\s*\[(?<body>[\s\S]*?)\]\s*as\s+const/;
   const match = source.match(re);
@@ -68,7 +70,9 @@ export function parseStateDataKeys(source: string): string[] | null {
 }
 
 export function parseContentModule(source: string): ParsedContentModule {
-  const hasDefaultContent = /export\s+const\s+defaultContent\s*[:=]/.test(source);
+  const hasDefaultContent = /export\s+const\s+defaultContent\s*[:=]/.test(
+    source,
+  );
   const supportedStates = parseSupportedStates(source);
   const stateDataKeys = parseStateDataKeys(source);
   return { hasDefaultContent, supportedStates, stateDataKeys };
@@ -123,7 +127,10 @@ export function parseRegistryEntries(source: string): ParsedRegistryEntry[] {
       for (let i = svIdx; i < block.length; i++) {
         if (block[i] === '{') svDepth++;
         if (block[i] === '}') svDepth--;
-        if (svDepth === 0) { svEnd = i; break; }
+        if (svDepth === 0) {
+          svEnd = i;
+          break;
+        }
       }
       const svBody = block.slice(svIdx, svEnd);
       const keyRe = /(\w+)\s*:/g;
@@ -135,7 +142,7 @@ export function parseRegistryEntries(source: string): ParsedRegistryEntry[] {
 
     entries.push({
       id: idMatch ? idMatch[1] : undefined,
-      name: nameMatch ? nameMatch[1] : (idMatch ? idMatch[1] : undefined),
+      name: nameMatch ? nameMatch[1] : idMatch ? idMatch[1] : undefined,
       stateViewKeys,
     });
   }
@@ -163,9 +170,7 @@ export function parseContainerModule(
   return { exists: true, switchCases };
 }
 
-export function parseStoreSectionStateTypes(
-  source: string,
-): ParsedStoreModule {
+export function parseStoreSectionStateTypes(source: string): ParsedStoreModule {
   const re = /SectionState<(\w+Content)>/g;
   const types: string[] = [];
   let m: RegExpExecArray | null;
@@ -181,32 +186,133 @@ export function parseStateTransitions(source: string): ParsedTransition[] {
 
   // Match: export const stateTransitions: StateTransition[] = [...]
   // or: export const stateTransitions = [...]
-  const arrRe = /export\s+const\s+stateTransitions[^=]*=\s*\[([\s\S]*?)\]\s*(?:as\s+const)?;?/;
+  const arrRe =
+    /export\s+const\s+stateTransitions[^=]*=\s*\[([\s\S]*?)\]\s*(?:as\s+const)?;?/;
   const arrMatch = source.match(arrRe);
   if (!arrMatch) return [];
 
   const body = arrMatch[1];
-  // Match individual transition objects
-  const objRe = /\{\s*from:\s*'([^']+)'\s*,\s*to:\s*'([^']+)'\s*,\s*trigger:\s*\{([^}]+)\}(?:[^}]*\})?/g;
-  let m: RegExpExecArray | null;
-  while ((m = objRe.exec(body)) !== null) {
-    const triggerStr = m[3];
+  for (const obj of parseTopLevelObjects(body)) {
+    const from = readStringProperty(obj, 'from');
+    const to = readStringProperty(obj, 'to');
+    const triggerStr = readObjectProperty(obj, 'trigger');
+    if (!from || !to || !triggerStr) continue;
+
     const trigger: ParsedTransition['trigger'] = { type: 'click' };
 
-    const typeMatch = triggerStr.match(/type:\s*'([^']+)'/);
+    const typeMatch = triggerStr.match(/type:\s*['"]([^'"]+)['"]/);
     if (typeMatch) trigger.type = typeMatch[1];
 
-    const handlerMatch = triggerStr.match(/handler:\s*'([^']+)'/);
+    const handlerMatch = triggerStr.match(/handler:\s*['"]([^'"]+)['"]/);
     if (handlerMatch) trigger.handler = handlerMatch[1];
 
     const durationMatch = triggerStr.match(/duration:\s*(\d+)/);
     if (durationMatch) trigger.duration = parseInt(durationMatch[1], 10);
 
-    const t: ParsedTransition = { from: m[1], to: m[2], trigger };
+    const t: ParsedTransition = { from, to, trigger };
+    const animationStr = readObjectProperty(obj, 'animation');
+    if (animationStr) {
+      const animationType = readStringProperty(animationStr, 'type');
+      const animationDuration = readNumberProperty(animationStr, 'duration');
+      if (animationType && animationDuration !== null) {
+        t.animation = {
+          type: animationType,
+          duration: animationDuration,
+        };
+        const easing = readStringProperty(animationStr, 'easing');
+        if (easing) {
+          t.animation.easing = easing;
+        }
+      }
+    }
     transitions.push(t);
   }
 
   return transitions;
+}
+
+function parseTopLevelObjects(source: string): string[] {
+  const objects: string[] = [];
+  let quote: string | null = null;
+  let depth = 0;
+  let start = -1;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+    const prev = source[i - 1];
+
+    if (quote) {
+      if (char === quote && prev !== '\\') quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      continue;
+    }
+    if (char === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        objects.push(source.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+
+  return objects;
+}
+
+function readStringProperty(
+  source: string,
+  propertyName: string,
+): string | null {
+  const match = source.match(
+    new RegExp(`${propertyName}\\s*:\\s*['"]([^'"]+)['"]`),
+  );
+  return match ? match[1] : null;
+}
+
+function readNumberProperty(
+  source: string,
+  propertyName: string,
+): number | null {
+  const match = source.match(new RegExp(`${propertyName}\\s*:\\s*(\\d+)`));
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function readObjectProperty(
+  source: string,
+  propertyName: string,
+): string | null {
+  const propertyRe = new RegExp(`${propertyName}\\s*:\\s*\\{`, 'g');
+  const match = propertyRe.exec(source);
+  if (!match) return null;
+
+  const start = match.index + match[0].lastIndexOf('{');
+  let quote: string | null = null;
+  let depth = 0;
+  for (let i = start; i < source.length; i++) {
+    const char = source[i];
+    const prev = source[i - 1];
+
+    if (quote) {
+      if (char === quote && prev !== '\\') quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      continue;
+    }
+    if (char === '{') depth++;
+    if (char === '}') {
+      depth--;
+      if (depth === 0) return source.slice(start + 1, i);
+    }
+  }
+
+  return null;
 }
 
 /** 从 runtime/app.tsx 解析 Container 引用 */
@@ -215,7 +321,8 @@ export function parseRuntimeApp(source: string): RuntimeAppInfo {
   const tags: string[] = [];
 
   // Match: import { XxxContainer } from '...sections/XxxContainer'
-  const importRe = /import\s+\{\s*(\w+Container)\s*\}\s+from\s+['"][^'"]*\/sections\/\w+['"]/g;
+  const importRe =
+    /import\s+\{\s*(\w+Container)\s*\}\s+from\s+['"][^'"]*\/sections\/\w+['"]/g;
   let impMatch: RegExpExecArray | null;
   while ((impMatch = importRe.exec(source)) !== null) {
     imports.push(impMatch[1]);
@@ -232,9 +339,7 @@ export function parseRuntimeApp(source: string): RuntimeAppInfo {
 }
 
 export function parseActionWiring(source: string): ParsedActionWiring[] {
-  const exportMatch = source.match(
-    /export\s+const\s+ACTION_WIRING[^=]*=\s*\{/,
-  );
+  const exportMatch = source.match(/export\s+const\s+ACTION_WIRING[^=]*=\s*\{/);
   if (!exportMatch || exportMatch.index === undefined) {
     return [];
   }
@@ -282,7 +387,9 @@ export function parseActionWiring(source: string): ParsedActionWiring[] {
   return results;
 }
 
-function parseTopLevelObjectEntries(source: string): Array<{ key: string; body: string }> {
+function parseTopLevelObjectEntries(
+  source: string,
+): Array<{ key: string; body: string }> {
   const entries: Array<{ key: string; body: string }> = [];
   let depth = 0;
   let quote: string | null = null;
@@ -335,7 +442,10 @@ function parseTopLevelObjectEntries(source: string): Array<{ key: string; body: 
   return entries;
 }
 
-function requiresRuntimeStoreAction(sectionId: string, actionBody: string): boolean {
+function requiresRuntimeStoreAction(
+  sectionId: string,
+  actionBody: string,
+): boolean {
   const targetRe = /targetSectionId\s*:\s*['"]([^'"]+)['"]/g;
   let targetMatch: RegExpExecArray | null;
   while ((targetMatch = targetRe.exec(actionBody)) !== null) {
@@ -349,10 +459,14 @@ export function checkLayerViolations(source: string): string[] {
   const violations: string[] = [];
 
   if (/import\s+\{[^}]*useStore[^}]*\}\s+from/.test(source)) {
-    violations.push('直接 import useStore（应从 Container 通过 actions props 传递）');
+    violations.push(
+      '直接 import useStore（应从 Container 通过 actions props 传递）',
+    );
   }
   if (/import\s+useStore\s+from/.test(source)) {
-    violations.push('直接 import useStore（应从 Container 通过 actions props 传递）');
+    violations.push(
+      '直接 import useStore（应从 Container 通过 actions props 传递）',
+    );
   }
   if (/import\s+\{[^}]*createRequest[^}]*\}\s+from/.test(source)) {
     violations.push('直接 import createRequest');
@@ -365,7 +479,9 @@ export function checkLayerViolations(source: string): string[] {
 }
 
 /** 从 index.tsx 提取所有事件的绑定情况 */
-export function parseEventHandlers(source: string): Array<{ event: string; handler: string }> {
+export function parseEventHandlers(
+  source: string,
+): Array<{ event: string; handler: string }> {
   const handlers: Array<{ event: string; handler: string }> = [];
   const eventRe = /\s(on[A-Z][a-zA-Z]*)\s*=\s*\{([^}]+)\}/g;
   let m: RegExpExecArray | null;
