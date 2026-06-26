@@ -41,7 +41,7 @@ function parseArgs(argv: string[]): CliOptions {
 }
 
 function logPath(campaign: string, sectionName: string): string {
-  const logsDir = join(process.cwd(), ".feedback", "logs");
+  const logsDir = join(process.cwd(), "apps", campaign, ".feedback", "logs");
   mkdirSync(logsDir, { recursive: true });
   return join(logsDir, `verify-${campaign}-${sectionName}.log`);
 }

@@ -17,9 +17,11 @@
 | 取值 | 含义 | 后果 |
 |------|------|------|
 | `静态展示` | 纯视觉展示，无接口数据需求（如纯装饰图、静态标题） | 无需 contract.ts 和 adapter |
-| `动态数据` | 数据由接口返回（如榜单列表、奖励进度、用户信息） | 必须创建 contract.ts + adapter + fixture |
+| `动态数据` | 数据由接口返回（如榜单列表、奖励进度、用户信息） | 结构阶段必须声明后续 integration 所需的 contract / adapter / fixture 需求；实际创建或接入只能在用户明确进入 integration 阶段后执行 |
 
 判断依据：该 Section 展示的内容是否会在运行时因用户/时间/接口状态而变化。倒计时属于计算值（非接口数据），仍算 `静态展示`。
+
+边界说明：`动态数据` 是结构规划结论，不授权 designer 在实现阶段自动创建 `contract.ts`、adapter、fixture 或接入真实 API。接口文件创建、DTO 映射、fixture 和真实 store action 归 `integration` agent，只有用户明确提出接口接入或联调任务时才执行。
 
 ### 节点 2：业务闭环完整性
 
@@ -153,7 +155,7 @@ export function RuntimePage() {
 
 | structure.md 字段 | 下游用途 | 影响文件 |
 |-------------------|----------|----------|
-| `数据来源` | 决定是否需要创建 `contract.ts` + adapter | `integrations/adapters/`、`integrations/fixtures/` |
+| `数据来源` | 决定是否需要声明 integration 阶段的 `contract.ts` + adapter + fixture 需求 | `integrations/adapters/`、`integrations/fixtures/` |
 | `业务闭环` | 决定 Section 文件结构（独立 tsx vs 合并） | `designer/sections/<Name>/` |
 | `Tab归属` | 决定 runtime 渲染架构 | `runtime/app.tsx` |
 | `弹窗复杂度` | 决定 types.ts 中 Content 接口的字段 | `designer/sections/<Name>/types.ts` |
