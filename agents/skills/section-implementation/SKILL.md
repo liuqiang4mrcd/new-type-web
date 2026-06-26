@@ -60,7 +60,9 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 执行粒度硬约束：
 
-- 当前 Section 未通过自己的 `verify-section` 前，禁止创建、修改或注册后续 Section 的业务文件。
+> 规则权威源见 `docs/ai/section-implementation-gate.md` §Mandatory Execution Order。此处只保留与 skill 操作相关的要点。
+
+- 当前 Section 未通过自己的 `verify-section` 前，禁止创建、修改或注册后续 Section 的业务文件；独立 Section 脚手架例外见 `docs/ai/section-implementation-gate.md` §Independent Section Scaffolding Exception。
 - 允许在共享文件中为当前 Section 添加最小必要代码，例如 Store 字段、Runtime import/render、Playground 注册；不允许一次性批量创建多个 Section 目录、组件文件、设计卡或测试文件。
 - 若发现后续 Section 文件已经提前创建，必须先停止继续扩散，并在账本中记录流程偏差；后续修正仍按受影响 Section 逐个验证。
 
@@ -73,24 +75,24 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 ## 硬禁令
 
-- 禁止在用户确认“可以开始实现”前写新项目代码。
+- 禁止在用户确认”可以开始实现”前写新项目代码；见权威源 `agents/designer.md` §Design Proposal Approval。
 - 禁止直接修改 `apps/campaign-template/` 业务实现。
 - 禁止越界修改其他 `apps/*`、`packages/*`、`scripts/*`。
 - 禁止默认接入真实 API 或埋点；`integrations/api.ts` / `integrations/tracking.ts` 只有用户明确要求时才可改。
-- 禁止在 `integrations/`、`activity/`、`runtime/` 中 import `designer/sections/*/content.ts` 或用 `defaultContent` 作为接口/mock/runtime fallback；`defaultContent` 只能用于 `designer/` 和 `playground/`。
-- 禁止在 `integrations/store.ts` 中手写等价于设计态 `defaultContent` 的假数据来填充 `apps/<campaign-name>/.feedback/structure.md` 标记为 `数据来源 = 动态数据` 的 Section；新活动未接入接口时，动态 Section 只能初始化为 `loading / empty / error` 或不渲染，完整视觉预览交给 `playground/preview-state.ts`。
+- 禁止在 `integrations/`、`activity/`、`runtime/` 中 import `designer/sections/*/content.ts` 或用 `defaultContent` 作为接口/mock/runtime fallback；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Runtime Data Boundary。
+- 禁止在 `integrations/store.ts` 中手写等价于设计态 `defaultContent` 的假数据来填充 `apps/<campaign-name>/.feedback/structure.md` 标记为 `数据来源 = 动态数据` 的 Section；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Runtime Data Boundary。
 - 禁止视觉组件直接读取 URL、store 或 i18n 当前语言；需要国际化时，由 runtime container / adapter 使用当前 `ui.lang` 生成最终字符串后通过 `content` 传入。
 - 禁止因为当前只交付一个语言而删除 `src/i18n/`、移除 runtime `lang/dir`、跳过 URL locale 解析，或把 runtime 静态文案硬编码到 container/store/视觉组件。
 - 禁止 Runtime 中使用 `useStore((s) => selectXxxSection(s.appState))`；Zustand selector 只能订阅原始字段或 primitive。派生 content 放在组件 render/useMemo 或拆分订阅。
 - 禁止新增 `activity/selectors/*` 或 `phone-preview` 专用 `ACTION_WIRING`；完整页面预览必须通过 `preview-state` 初始化 `RuntimeViewState` 并复用 runtime container。
-- 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
-- 禁止组件设计卡缺少当前 Section 的 `Image Asset refs` 时实现任何图片类元素。
-- 禁止用 `div` / CSS 方块 / emoji 替代头像、礼物、奖品、道具、房间头像、榜单头像、活动主图等业务图片；动态业务图片必须用 `<img>`，默认缺图使用本地 SVG 占位图。
+- 禁止组件设计卡缺少核心必填字段时直接实现。
+- 禁止命中条件必填字段时跳过对应区块直接实现；条件必填详见 `docs/ai/section-implementation-gate.md` 组件设计卡模板。
+- 禁止用 `div` / CSS 方块 / emoji 替代业务图片；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Image Asset Gate。
 - 禁止实现阶段临时发明图片字段名；图片字段必须来自 `Image Asset Inventory` 或组件设计卡。
-- 禁止使用相对路径 import app-local 图片资源；必须使用 `@/assets/...` ESM import。
-- 禁止强交互 Section 缺少 Effect Spec 引用或 Effect Reasoning 时直接实现。
-- 禁止批量实现多个 Section 后再统一验证。
-- 禁止批量创建多个 Section 文件后再逐个验证。
+- 禁止使用相对路径 import app-local 图片资源；见权威源 `agents/shared/DESIGN_OUTPUT.md` §ESM Import Rules。
+- 禁止强交互 Section 缺少 Effect Spec 引用或 Effect Reasoning 时直接实现；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Animation Landing。
+- 禁止批量实现多个 Section 后再统一验证；见权威源 `docs/ai/section-implementation-gate.md` §Mandatory Execution Order。
+- 禁止批量创建多个 Section 文件后再逐个验证；见权威源 `docs/ai/section-implementation-gate.md` §Mandatory Execution Order。
 - 禁止手改生成的 `*.spec.test.tsx`；规格变化必须先改组件设计卡再重新生成。
 - 禁止 Runtime 跨 Section targetChange 使用 console.log-only；必须绑定 Store action。
 - 禁止 Final Closeout 前遗留 `TODO` 占位。

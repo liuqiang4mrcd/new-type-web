@@ -30,9 +30,13 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 通过后才能开始下一个 Section。通过前必须人工确认以下动画实现一致性（自动检查 #18-#20 通过仅代表 AST 静态检查无异常）：
 
+> 动画落地规则的权威源见 `agents/shared/DESIGN_OUTPUT.md` §Animation Landing。
+
 - [ ] `content.ts` 每个 `stateTransitions[].animation` 在 `index.tsx` 中有对应的 DOM 可见变化
 - [ ] spin/slide/scale 类型使用了 `motion/react`（import 和 `motion.div` 存在）
-- [ ] 弹窗 Section 使用 `<AnimatePresence>` + `motion.div` 实现入场/退场，非 `if (!isOpen) return null` 硬切
+- [ ] 弹窗 Section 使用 `<AnimatePresence>` + `motion.div` 实现入场/退场，非 `if (!isOpen) return null` 硬切；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Modal Interaction Output
+
+> （可选但推荐）运行 `pnpm verify-animation --campaign <campaign-name> <SectionName>` 执行 stateTransitions handler 引用和 motion/react 用法的静态分析。该命令不替代人工确认，但可自动检出常见遗漏模式。
 
 通过后必须：
 

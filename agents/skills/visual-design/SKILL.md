@@ -66,16 +66,16 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 ### SVG 占位图策略
 
-当当前阶段没有真实图片或接口图片时，默认使用目标 app 内的 SVG 占位图，不允许用纯色 `div`、emoji 或 CSS 方块替代图片语义。
+当当前阶段没有真实图片或接口图片时，默认使用目标 app 内的 SVG 占位图，不允许用纯色 `div`、emoji 或 CSS 方块替代图片语义；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Image Asset Gate。
 
 占位图规则：
 
 - 默认目录：`apps/<campaign-name>/src/assets/placeholders/`。
 - 文件命名必须语义化，例如 `hero-bg.svg`、`gift-box.svg`、`reward-card.svg`、`room-avatar.svg`、`feast-image.svg`、`ranking-badge.svg`。
-- 实现引用必须使用 `@/assets/placeholders/...`，禁止在组件中使用相对路径引用占位图。
+- 实现引用必须使用 `@/assets/placeholders/...`；见权威源 `agents/shared/DESIGN_OUTPUT.md` §ESM Import Rules。
 - SVG 风格必须继承当前视觉方案的主色、描边、质感和圆角；同一页面占位图风格统一。
 - 占位图不写真实 UI 文案；必要标识使用简单图形，不使用会干扰多语言的文字。
-- 动态业务图片的 `defaultContent` 可以引用 SVG 占位图，但 runtime 动态 Section 未接接口时仍不得把 `defaultContent` 作为 fallback。
+- 动态业务图片的 `defaultContent` 可以引用 SVG 占位图，但 runtime 动态 Section 未接接口时仍不得把 `defaultContent` 作为 fallback；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Runtime Data Boundary。
 - 静态装饰或背景可使用 SVG 作为 CSS `background-image`；业务图片默认用 `<img>` 引用 SVG。
 
 视觉方案必须说明每个 `Image Asset Inventory` 项的占位图风格和最终替换方式。
