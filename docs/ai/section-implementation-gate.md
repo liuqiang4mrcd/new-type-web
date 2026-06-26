@@ -252,18 +252,18 @@ tests:
 - 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）。
 - 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场。
 
-## `apps/<campaign-name>/.feedback/progress.md` 实现阶段模板
+## `apps/<campaign-name>/.feedback/progress.md` 实现阶段轻量模板
 
-`apps/<campaign-name>/.feedback/progress.md` 是 designer 任务的全局 process ledger。第 4 步进入实现阶段时，必须在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加以下实现阶段账本，并预置后续所有 Final Closeout Gate 任务。
+`apps/<campaign-name>/.feedback/progress.md` 是 designer 任务的全局 process ledger。第 4 步进入实现阶段时，必须在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加轻量实现阶段账本，并预置后续所有 Final Closeout Gate 任务。
 
-当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `apps/<campaign-name>/.feedback/progress.md`，按全局“当前阶段”、实现阶段“当前门禁”和下方检查清单恢复，不得凭对话记忆继续执行。
+当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `apps/<campaign-name>/.feedback/progress.md`，按全局“当前阶段”、实现阶段“当前门禁”和下方检查清单恢复，不得凭对话记忆继续执行。恢复时不需要全文读取本文件；只在当前门禁涉及组件设计卡、单 Section 验证或 Final Closeout 时读取对应章节。
 
-模板写入要求：除命令、路径、Section 名、状态 key 和代码标识符外，`progress.md` 的标题、字段说明、状态说明和验收记录必须使用中文。
+模板写入要求：除命令、路径、Section 名、状态 key 和代码标识符外，`progress.md` 的标题、字段说明、状态说明和验收记录必须使用中文。账本只写状态和结果，不复制规则解释、示例代码或长段验收说明。
 
 ```md
 # Designer 任务进度
 
-<!-- 第 1-3.5 步的全局流程由 agents/designer.md 维护；以下内容为第 4 步追加区块。 -->
+<!-- 第 1-3.5 步的全局流程由 agents/designer.md 维护；以下内容为第 4 步轻量追加区块。规则细则以 docs/ai/section-implementation-gate.md 为准。 -->
 
 ## Section 实现进度
 

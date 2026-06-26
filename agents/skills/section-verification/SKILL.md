@@ -7,12 +7,18 @@ description: H5 活动页 Section 验证和最终收尾能力模块。用于 des
 
 用于单 Section 验证和最终收尾。本模块只保留验证流程和失败处理；检查清单与 Final Closeout 细则以 `docs/ai/section-implementation-gate.md` 为唯一真源。
 
-## 必读引用
+## 读取策略
 
-开始验证前必须读取：
+开始验证前必读：
 
-- `docs/ai/section-implementation-gate.md`：20 项 Layer 0 检查、spec-first 测试、Final Closeout Gate。
-- `docs/ai/development-rules.md`：目录边界、分层边界、流程预览和弹窗交互规则。
+- 本文件全文。
+- 当前活动 feedback 工作区的 `progress.md` 和当前 Section 组件设计卡。
+- `docs/ai/section-implementation-gate.md` 中与当前验证动作相关的章节：单 Section 验证时读 Layer 0 / spec-first / 失败处理；最终收尾时读 Final Closeout Gate。
+
+条件读取：
+
+- 验证失败涉及目录边界、分层边界、流程预览或弹窗交互时，读取 `docs/ai/development-rules.md` 的相关章节。
+- 普通单 Section 验证不预读 Final Closeout 全量细则；Final Closeout 阶段再读取。
 
 ## 单 Section 验证
 

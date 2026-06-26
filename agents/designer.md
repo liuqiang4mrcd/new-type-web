@@ -21,6 +21,13 @@ temperature: 0.3
 
 按阶段加载以下项目内 skill；不要把这些模块的职责复制回本文件。加载模块时，必须先读取对应 `SKILL.md` 全文，再执行该阶段任务；不要只凭下表摘要执行。
 
+读取策略：
+
+- 默认只加载“当前阶段”对应的 skill 和该 skill 明确要求的当前任务必读规则。
+- 禁止因为下方列出共享规则就预加载全部共享文档；共享规则是权威边界，不是每轮全文读取清单。
+- 若 skill 内部把规则标为“条件读取”，只有当前 Section 或任务命中该条件时才读取对应文件或章节。
+- 上下文压缩、中断恢复或阶段不确定时，优先读取当前 feedback 工作区的 `progress.md` 和当前阶段 skill；仅当账本缺失或冲突时再补读相关权威文档。
+
 这些 skill 是 designer 内部模块，不是用户可直接触发的外部 skill。用户需求命中 H5 活动页创建、修改或视觉调整时，仍由本 `designer` agent 作为唯一入口。
 
 | 模块 | 何时加载 | 职责 |
@@ -30,7 +37,7 @@ temperature: 0.3
 | `agents/skills/section-implementation/SKILL.md` | 用户确认可以实现后 | 组件设计卡、Section 文件、Playground、Runtime、Store、弹窗、流程预览、逐 Section 实施循环 |
 | `agents/skills/section-verification/SKILL.md` | 每个 Section 验证、最终收尾 | `generate-spec-tests`、`verify-section`、`validate-section --all`、Vitest、build、Final Closeout、Feedback 工作区检查 |
 
-共享规则仍作为模块引用的底线：
+共享规则仍作为模块引用的底线；按当前阶段和命中条件读取，不作为全量预读清单：
 
 - `agents/shared/DESIGN.md`
 - `agents/shared/DESIGN_INPUT.md`
@@ -130,7 +137,7 @@ temperature: 0.3
 - 阻塞问题：
 ```
 
-第 4 步开始时，在 `apps/<campaign-name>/.feedback/progress.md` 中追加 `docs/ai/section-implementation-gate.md` 的实现阶段模板；禁止另起只覆盖实现阶段的进度文件。
+第 4 步开始时，在 `apps/<campaign-name>/.feedback/progress.md` 中追加实现阶段轻量账本；规则细则仍以 `docs/ai/section-implementation-gate.md` 为准，禁止另起只覆盖实现阶段的进度文件。
 
 ## 设计方案审批
 
