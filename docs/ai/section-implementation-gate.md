@@ -36,7 +36,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `apps/<campaign-name>/.feedback/progress.md` 或 `apps/<campaign-name>/.feedback/sections/<SectionName>.md`。
 
-组件设计卡必须继承第 2 步结构规划中的 Layout Spec、Interaction Spec 和 Effect Spec。若当前 Section 对应的几何约束、关键元素约束、交互链路或用户可见效果缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
+组件设计卡必须继承第 2 步结构规划中的 Layout Spec、Interaction Spec、Effect Spec 和 Image Asset Inventory。若当前 Section 对应的几何约束、关键元素约束、交互链路、用户可见效果或图片资产语义缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
 
 ```md
 ## <SectionName> Component Card
@@ -61,6 +61,13 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
   - Target timing:
   - Blocking overlay:
   - Preview parity:
+- Image Asset refs:
+  - imageKeys:
+  - content fields:
+  - render methods:
+  - import paths:
+  - placeholders:
+  - fallback behavior:
 - Effect Reasoning:
   - Static view:
   - Trigger frame:
@@ -92,6 +99,8 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 ```
 
 如果组件设计卡无法判断布局、关键元素归属、状态、交互或用户可见效果，必须先补充分析，不能先写代码。
+
+如果当前 Section 含头像、礼物、奖品、道具、主视觉、背景图、装饰图或图标等图片类元素，组件设计卡必须填写 `Image Asset refs`。动态业务图片必须声明 `<img>` 渲染、语义化 `Content` 字段、本地 SVG placeholder 和加载失败 fallback；静态装饰图片必须声明 `css-background` 或 `<img aria-hidden="true">`。缺少这些信息时禁止实现。
 
 强交互 Section 没有 `Effect Spec refs` 和 `Effect Reasoning` 时禁止实现。`Effect Reasoning` 必须说明代码如何保证效果真的发生，而不是复述 Interaction Spec。若推演发现 `apps/<campaign-name>/.feedback/structure.md` 的 Effect Spec 不完整，必须先回到结构规划补齐，再继续实现。
 
@@ -210,9 +219,9 @@ tests:
 - `playground/section-registry.ts` 的 `stateViews` 注册。
 - Runtime Container 中对应 `case 'loading' / 'empty' / 'error'` 分支。
 
-## 验证检查清单（Layer 0 — 20 项）
+## 验证检查清单（Layer 0 — 23 项）
 
-`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 20 项检查：
+`pnpm validate-section --campaign <campaign> <SectionName>` 自动执行以下 23 项检查：
 
 | #   | 检查项                | 说明                                                                             |
 | --- | --------------------- | -------------------------------------------------------------------------------- |
@@ -236,6 +245,9 @@ tests:
 | 18  | 动画 easing 对齐      | stateTransitions 中声明的 easing 在 index.tsx 中已使用                           |
 | 19  | 动画 duration 对齐    | stateTransitions 中声明的 duration 与 index.tsx 一致                             |
 | 20  | 强交互用 motion/react | spin/slide/scale 类型动画使用了 motion/react 而非纯 CSS transition              |
+| 21  | Image Asset refs      | structure.md 命中 Image Asset Inventory 的 Section 必须在组件设计卡声明图片引用 |
+| 22  | 图片引用路径          | app-local 图片资源必须用 `@/assets/...` ESM import，禁止相对路径和 Tailwind url |
+| 23  | 业务图片 img 渲染     | 业务图片字段必须使用 `<img>` 渲染，并提供 `onError` fallback                    |
 
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
 > 弹窗 Section 实现要求、phone-preview 完整页预览联动见 `agents/skills/section-implementation/SKILL.md`。
@@ -248,7 +260,9 @@ tests:
 - 禁止只在对话中口头说明进度而不更新 `apps/<campaign-name>/.feedback/progress.md`。
 - 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
+- 禁止在组件设计卡没有引用 Image Asset Inventory 的情况下实现图片类元素。
 - 禁止在组件设计卡没有引用 Effect Spec、没有完成 Effect Reasoning 的情况下实现强交互 Section。
+- 禁止用 div/CSS 方块/emoji 替代动态业务图片；头像、礼物、奖品、道具、房间头像、榜单头像等必须用 `<img>`，默认缺图使用目标 app 的 SVG 占位图。
 - 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）。
 - 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场。
 

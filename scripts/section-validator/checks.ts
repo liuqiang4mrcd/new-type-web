@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import type {
   SectionPaths,
   CheckResult,
@@ -59,6 +59,337 @@ function collectSourceFiles(dir: string): string[] {
     }
   }
   return files;
+}
+
+function findSectionCard(rootDir: string, sectionName: string): string | null {
+  const appDir = dirname(rootDir);
+  const candidates = [
+    join(process.cwd(), '.feedback', 'sections', `${sectionName}.md`),
+    join(appDir, '.feedback', 'sections', `${sectionName}.md`),
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? null;
+}
+
+function readOptionalFile(filePath: string | null): string | null {
+  if (!filePath) return null;
+  const result = readFileSafe(filePath);
+  return result.ok ? result.text : null;
+}
+
+function readStructure(rootDir: string): string | null {
+  const structurePath = join(dirname(rootDir), '.feedback', 'structure.md');
+  return readOptionalFile(existsSync(structurePath) ? structurePath : null);
+}
+
+interface ImageAssetInventoryItem {
+  imageKey: string;
+  section: string;
+  imageType: string;
+  sourceType: string;
+  dynamic: string;
+  contentField: string;
+  renderMethod: string;
+  placeholder: string;
+  fallback: string;
+}
+
+function splitMarkdownTableRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => cell.trim());
+}
+
+function parseImageAssetInventory(
+  structureSource: string | null,
+): ImageAssetInventoryItem[] {
+  if (!structureSource || !/Image Asset Inventory/i.test(structureSource)) {
+    return [];
+  }
+
+  const lines = structureSource.split(/\r?\n/);
+  const headingIndex = lines.findIndex((line) =>
+    /Image Asset Inventory/i.test(line),
+  );
+  if (headingIndex < 0) return [];
+
+  const items: ImageAssetInventoryItem[] = [];
+  let headerFound = false;
+  for (const line of lines.slice(headingIndex + 1)) {
+    if (/^#{1,6}\s+/.test(line) && headerFound) break;
+    if (!line.trim()) {
+      if (headerFound && items.length > 0) break;
+      continue;
+    }
+    if (!line.trim().startsWith('|')) continue;
+
+    const cells = splitMarkdownTableRow(line);
+    const normalized = cells.map((cell) => cell.toLowerCase());
+    if (normalized.includes('imagekey') && normalized.includes('section')) {
+      headerFound = true;
+      continue;
+    }
+    if (!headerFound || cells.every((cell) => /^-+$/.test(cell))) {
+      continue;
+    }
+    if (cells.length < 9) continue;
+
+    items.push({
+      imageKey: cells[0],
+      section: cells[1],
+      imageType: cells[2],
+      sourceType: cells[3],
+      dynamic: cells[4],
+      contentField: cells[5],
+      renderMethod: cells[6],
+      placeholder: cells[7],
+      fallback: cells[8],
+    });
+  }
+
+  return items.filter((item) => item.imageKey && item.section);
+}
+
+function imageAssetsForSection(
+  structureSource: string | null,
+  sectionName: string,
+): ImageAssetInventoryItem[] {
+  return parseImageAssetInventory(structureSource).filter(
+    (item) => item.section === sectionName,
+  );
+}
+
+function normalizeInventoryAssetPath(path: string): string {
+  return path.replace(/^@\//, '').replace(/^src\//, '').replace(/^\.\//, '');
+}
+
+function inventoryPathToImportPath(path: string): string {
+  const normalized = normalizeInventoryAssetPath(path);
+  return normalized.startsWith('assets/')
+    ? `@/${normalized}`
+    : normalized.startsWith('@/assets/')
+      ? normalized
+      : path;
+}
+
+function fieldLeaf(contentField: string): string {
+  const withoutArray = contentField.replace(/\[\]/g, '');
+  const parts = withoutArray.split('.');
+  return parts[parts.length - 1] ?? contentField;
+}
+
+function hasContentField(
+  typesSource: string | null,
+  contentField: string,
+): boolean {
+  if (!typesSource || !contentField || contentField === '-') return false;
+  const leaf = fieldLeaf(contentField);
+  return new RegExp(`\\b${leaf}\\??\\s*:`, 'm').test(typesSource);
+}
+
+function hasAssetImport(source: string | null, importPath: string): boolean {
+  if (!source || !importPath.startsWith('@/assets/')) return false;
+  return (
+    source.includes(`from '${importPath}'`) ||
+    source.includes(`from "${importPath}"`)
+  );
+}
+
+function assetExists(rootDir: string, assetPath: string): boolean {
+  const normalized = normalizeInventoryAssetPath(assetPath);
+  return normalized.startsWith('assets/')
+    ? existsSync(join(rootDir, normalized))
+    : false;
+}
+
+function checkImageAssetRefs(
+  rootDir: string,
+  sectionName: string,
+  structureSource: string | null,
+  typesSource: string | null,
+  contentSource: string | null,
+  indexSource: string | null,
+): CheckResult {
+  const assets = imageAssetsForSection(structureSource, sectionName);
+  if (assets.length === 0) {
+    return check({
+      name: 'Image Asset refs',
+      passed: true,
+      skipped: true,
+      errors: [],
+    });
+  }
+
+  const cardPath = findSectionCard(rootDir, sectionName);
+  const cardSource = readOptionalFile(cardPath);
+  if (!cardSource) {
+    return check({
+      name: 'Image Asset refs',
+      passed: false,
+      errors: [
+        `structure.md 的 Image Asset Inventory 命中 ${sectionName}，但未找到组件设计卡`,
+      ],
+    });
+  }
+
+  const errors: string[] = [];
+  if (!/Image Asset refs\s*:/i.test(cardSource)) {
+    errors.push('组件设计卡缺少 Image Asset refs');
+  }
+  for (const required of [
+    'imageKeys',
+    'content fields',
+    'render methods',
+    'import paths',
+    'placeholders',
+    'fallback behavior',
+  ]) {
+    if (!new RegExp(required.replace(/\s+/g, '\\s+'), 'i').test(cardSource)) {
+      errors.push(`Image Asset refs 缺少 ${required}`);
+    }
+  }
+
+  for (const asset of assets) {
+    const importPath = inventoryPathToImportPath(asset.placeholder);
+    const renderMethod = asset.renderMethod.toLowerCase();
+    if (!cardSource.includes(asset.imageKey)) {
+      errors.push(`组件设计卡 Image Asset refs 未声明 imageKey "${asset.imageKey}"`);
+    }
+    if (!cardSource.includes(asset.contentField)) {
+      errors.push(
+        `组件设计卡 Image Asset refs 未声明 contentField "${asset.contentField}"`,
+      );
+    }
+    if (!new RegExp(`\\b${renderMethod}\\b`, 'i').test(cardSource)) {
+      errors.push(
+        `组件设计卡 Image Asset refs 未声明 ${asset.imageKey} 的 renderMethod "${asset.renderMethod}"`,
+      );
+    }
+    if (
+      !cardSource.includes(asset.placeholder) &&
+      !cardSource.includes(importPath)
+    ) {
+      errors.push(
+        `组件设计卡 Image Asset refs 未声明 ${asset.imageKey} 的 placeholder "${asset.placeholder}"`,
+      );
+    }
+    if (!asset.fallback || asset.fallback === '-') {
+      errors.push(`Image Asset Inventory 中 ${asset.imageKey} 缺少 fallback`);
+    }
+    if (!hasContentField(typesSource, asset.contentField)) {
+      errors.push(`types.ts 缺少图片字段 "${asset.contentField}"`);
+    }
+    if (!assetExists(rootDir, asset.placeholder)) {
+      errors.push(`缺少图片占位资源 "${asset.placeholder}"`);
+    }
+    if (
+      importPath.startsWith('@/assets/') &&
+      !hasAssetImport(contentSource, importPath) &&
+      !hasAssetImport(indexSource, importPath)
+    ) {
+      errors.push(
+        `content.ts 或 index.tsx 未通过 "${importPath}" 引用占位资源`,
+      );
+    }
+  }
+
+  return check({
+    name: 'Image Asset refs',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
+function checkAssetImportRules(
+  sources: Array<{ label: string; text: string | null }>,
+): CheckResult {
+  const errors: string[] = [];
+  for (const source of sources) {
+    if (!source.text) continue;
+    const importRe = /from\s+['"]([^'"]*assets\/[^'"]+)['"]/g;
+    for (const match of source.text.matchAll(importRe)) {
+      const importPath = match[1];
+      if (!importPath.startsWith('@/assets/')) {
+        errors.push(
+          `${source.label} 使用相对路径引用图片资源 "${importPath}"，必须改为 "@/assets/..."`,
+        );
+      }
+    }
+    if (/bg-\[url\(/.test(source.text)) {
+      errors.push(
+        `${source.label} 使用 Tailwind arbitrary url，图片背景必须通过 @/assets ESM import + style.backgroundImage`,
+      );
+    }
+  }
+
+  return check({
+    name: '图片引用路径',
+    passed: errors.length === 0,
+    errors,
+  });
+}
+
+function checkBusinessImagesUseImg(
+  structureSource: string | null,
+  sectionName: string,
+  indexSource: string | null,
+): CheckResult {
+  const businessAssets = imageAssetsForSection(
+    structureSource,
+    sectionName,
+  ).filter((asset) => {
+      const method = asset.renderMethod.toLowerCase();
+      const type = asset.imageType.toLowerCase();
+      return (
+        method === 'img' &&
+        ['avatar', 'gift', 'reward', 'hero'].includes(type)
+      );
+    });
+
+  if (businessAssets.length === 0) {
+    return check({
+      name: '业务图片 img 渲染',
+      passed: true,
+      skipped: true,
+      errors: [],
+    });
+  }
+
+  if (!indexSource) {
+    return check({
+      name: '业务图片 img 渲染',
+      passed: false,
+      errors: ['types.ts 声明了业务图片字段，但 index.tsx 不存在'],
+    });
+  }
+
+  const hasImg = /<img[\s>]/.test(indexSource);
+  const errors: string[] = [];
+  for (const asset of businessAssets) {
+    const leaf = fieldLeaf(asset.contentField);
+    if (!hasImg) {
+      errors.push(
+        `${asset.imageKey} 要求 img 渲染，但 index.tsx 未使用 <img>`,
+      );
+      continue;
+    }
+    if (!new RegExp(`\\b${leaf}\\b`).test(indexSource)) {
+      errors.push(
+        `${asset.imageKey} 要求使用字段 "${asset.contentField}" 渲染，但 index.tsx 未引用该字段`,
+      );
+    }
+    if (!/onError\s*=/.test(indexSource)) {
+      errors.push(`${asset.imageKey} 使用 <img> 时必须提供 onError fallback`);
+    }
+  }
+
+  return check({
+    name: '业务图片 img 渲染',
+    passed: errors.length === 0,
+    errors,
+  });
 }
 
 function checkFilesExist(paths: SectionPaths): CheckResult {
@@ -956,11 +1287,16 @@ export function validateSection(
   const contentResult = readFileSafe(paths.contentFile);
   const contentSource = contentResult.ok ? contentResult.text : null;
 
+  const typesResult = readFileSafe(paths.typesFile);
+  const typesSource = typesResult.ok ? typesResult.text : null;
+
   const statesResult = readFileSafe(paths.statesFile);
   const statesSource = statesResult.ok ? statesResult.text : null;
 
   const indexResult = readFileSafe(paths.indexFile);
   const indexSource = indexResult.ok ? indexResult.text : null;
+
+  const structureSource = readStructure(rootDir);
 
   // 2. supportedStates 声明
   let supportedStates: SupportedStateDecl[] | null = null;
@@ -1146,6 +1482,33 @@ export function validateSection(
 
   // 20. 强交互用 motion/react
   allChecks.push(checkStrongInteractionUsesMotion(contentSource, indexSource));
+
+  // 21. Image Asset refs
+  allChecks.push(
+    checkImageAssetRefs(
+      rootDir,
+      sectionName,
+      structureSource,
+      typesSource,
+      contentSource,
+      indexSource,
+    ),
+  );
+
+  // 22. 图片引用路径
+  allChecks.push(
+    checkAssetImportRules([
+      { label: 'types.ts', text: typesSource },
+      { label: 'content.ts', text: contentSource },
+      { label: 'index.tsx', text: indexSource },
+      { label: 'states.tsx', text: statesSource },
+    ]),
+  );
+
+  // 23. 业务图片 img 渲染
+  allChecks.push(
+    checkBusinessImagesUseImg(structureSource, sectionName, indexSource),
+  );
 
   const failedChecks = allChecks.filter((c) => !c.passed && !c.skipped);
   return {

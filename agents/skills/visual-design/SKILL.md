@@ -35,6 +35,7 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 - 750px 设计稿写法：CSS/Tailwind 中直接写设计稿 px，构建时由 `postcss-mobile-forever` 转换为 vw；JS 运行时尺寸使用 `@new-type/utils` 的 `vw()`。
 - 多语言和长文案策略：标题自适应、按钮文案换行或压缩、重要信息不被遮挡。
 - 可点击性和可读性：移动端触控热区、文字对比度、安全区。
+- 图片占位策略：根据 `structure.md` 的 `Image Asset Inventory`，定义默认 SVG 占位图的风格、尺寸、配色、文件命名和替换策略。
 
 语言要求：
 
@@ -54,6 +55,8 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 ## 图片资源
 
+图片引用、渲染方式、placeholder 目录、fallback 和 `@/assets/...` import 规则以 `agents/shared/DESIGN_OUTPUT.md` 的 `Image Asset Inventory Schema`、`Image Asset Gate` 和“图片引用和使用规则”为唯一实现权威。本节只补充视觉阶段如何定义图片风格。
+
 需要生成图片资源时：
 
 - 风格以视觉参考图和文字描述为依据。
@@ -61,9 +64,26 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 - prompt 明确：风格、配色、构图、`not photorealistic`、`no text` 等约束。
 - 生成资源放入目标 app 的资源目录，不写入 `apps/campaign-template/`。
 
+### SVG 占位图策略
+
+当当前阶段没有真实图片或接口图片时，默认使用目标 app 内的 SVG 占位图，不允许用纯色 `div`、emoji 或 CSS 方块替代图片语义。
+
+占位图规则：
+
+- 默认目录：`apps/<campaign-name>/src/assets/placeholders/`。
+- 文件命名必须语义化，例如 `hero-bg.svg`、`gift-box.svg`、`reward-card.svg`、`room-avatar.svg`、`feast-image.svg`、`ranking-badge.svg`。
+- 实现引用必须使用 `@/assets/placeholders/...`，禁止在组件中使用相对路径引用占位图。
+- SVG 风格必须继承当前视觉方案的主色、描边、质感和圆角；同一页面占位图风格统一。
+- 占位图不写真实 UI 文案；必要标识使用简单图形，不使用会干扰多语言的文字。
+- 动态业务图片的 `defaultContent` 可以引用 SVG 占位图，但 runtime 动态 Section 未接接口时仍不得把 `defaultContent` 作为 fallback。
+- 静态装饰或背景可使用 SVG 作为 CSS `background-image`；业务图片默认用 `<img>` 引用 SVG。
+
+视觉方案必须说明每个 `Image Asset Inventory` 项的占位图风格和最终替换方式。
+
 ## 完成标准
 
 - 当前 feedback 工作区的 `design.md` 已存盘。
+- `design.md` 已包含图片占位策略，并与 `structure.md` 的 `Image Asset Inventory` 对齐。
 - 当前 feedback 工作区的 `progress.md` 已更新。
 - 新项目模式下，用户已书面确认视觉设计。
 - 进入实现前，designer agent 已输出完整设计方案摘要并获得“可以开始实现”的书面确认。

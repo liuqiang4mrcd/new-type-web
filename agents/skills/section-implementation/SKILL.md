@@ -45,6 +45,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 2. 在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加实现阶段轻量账本；只记录当前 Section、状态、命令和 Final Closeout 勾选项，不复制大段规则说明。模板来源仍以 `docs/ai/section-implementation-gate.md` 为准。
 3. 按结构锁定表顺序逐个 Section 实施。
 4. 每个 Section 先写组件设计卡、`Effect Reasoning` 和 `## Acceptance Tests` YAML。
+4a. 若当前 Section 命中 `Image Asset Inventory`，组件设计卡必须补充 `Image Asset refs`，列出 `imageKey`、`contentField`、`renderMethod`、`@/assets/...` import path、placeholder 和 fallback；缺失时先回到结构/视觉阶段补齐。
 5. 运行 `pnpm generate-spec-tests --campaign <campaign-name> <SectionName>`。
 6. 按 `DESIGN_OUTPUT.md` 实现 Section、Playground、Runtime、Store 和必要资源。
 6a. 写完 `stateTransitions` 后立即实现对应的动画落地：
@@ -83,6 +84,10 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止 Runtime 中使用 `useStore((s) => selectXxxSection(s.appState))`；Zustand selector 只能订阅原始字段或 primitive。派生 content 放在组件 render/useMemo 或拆分订阅。
 - 禁止新增 `activity/selectors/*` 或 `phone-preview` 专用 `ACTION_WIRING`；完整页面预览必须通过 `preview-state` 初始化 `RuntimeViewState` 并复用 runtime container。
 - 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
+- 禁止组件设计卡缺少当前 Section 的 `Image Asset refs` 时实现任何图片类元素。
+- 禁止用 `div` / CSS 方块 / emoji 替代头像、礼物、奖品、道具、房间头像、榜单头像、活动主图等业务图片；动态业务图片必须用 `<img>`，默认缺图使用本地 SVG 占位图。
+- 禁止实现阶段临时发明图片字段名；图片字段必须来自 `Image Asset Inventory` 或组件设计卡。
+- 禁止使用相对路径 import app-local 图片资源；必须使用 `@/assets/...` ESM import。
 - 禁止强交互 Section 缺少 Effect Spec 引用或 Effect Reasoning 时直接实现。
 - 禁止批量实现多个 Section 后再统一验证。
 - 禁止批量创建多个 Section 文件后再逐个验证。

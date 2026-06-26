@@ -146,6 +146,7 @@ temperature: 0.3
 - 项目概要：目标 app 目录、页面用途。
 - Section 拆分列表：名称、职责、关键数据字段。
 - 结构锁定结论：Layout Spec、Interaction Spec、Effect Spec、不确定项处理结果。
+- 图片资产结论：Image Asset Inventory 摘要、动态图片字段、静态装饰资源、SVG 占位图目录和渲染方式。
 - 各 Section 状态分析：UI / business / interaction 状态和 stateTransitions。
 - 视觉方向：配色、字体、关键组件样式。
 - 预计工作量与实施顺序。

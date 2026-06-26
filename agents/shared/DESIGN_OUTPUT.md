@@ -53,7 +53,9 @@ designer/sections/<Name>/
 - 禁止为了满足固定文件数量而给没有 UI 状态的 Section 生成空 `states.tsx` 或伪 loading/empty/error
 - Section 实现必须保留第 2 步 Layout Spec 中声明的关键元素位置、尺寸、间距、对齐、层级和响应规则。
 - 交互实现必须以第 2 步 Interaction Spec 为唯一真源，`defaultActions`、`stateTransitions`、`preview-state` 初始化数据和 Runtime actions 命名必须与其一致。
+- 图片实现必须以第 2 步 `Image Asset Inventory` 为唯一真源：每个图片类元素必须有对应 `Content` 字段、默认 SVG 占位或本地资源、明确渲染方式和 fallback。
 - 若实现时发现 Layout Spec 或 Interaction Spec 无法落地，必须暂停并回到结构规划/设计方案确认，禁止自行改结构或改 action 命名。
+- 若实现时发现图片资产清单缺失或图片字段无法落地，必须暂停并回到结构规划/视觉方案补齐，禁止临场用 `div` / CSS 方块 / emoji 代替业务图片。
 - Section 边界必须继承第 2 步“结构归属推理”。同一视觉卡片 / 同一业务闭环内的展示、按钮、领取态和局部切换默认属于同一个 Section；禁止为了让实现更方便而拆出孤立按钮 Section 或孤立状态 Section。
 
 ## Layout Spec 保真要求
@@ -62,6 +64,183 @@ designer/sections/<Name>/
 
 - **关键元素**：进度条、主按钮、抽奖入口、领取按钮、弹窗入口、排行榜、任务列表、奖励卡片等，必须按 Layout Spec 保留父级归属、相对顺序、尺寸规则、间距、对齐和层级。
 - **普通装饰**：背景光效、金币、丝带、纹理、角标等，可以在不破坏关键元素可读性和点击性的前提下微调。
+
+## Image Asset Inventory Schema
+
+凡原型图、视觉参考图或文字需求中出现图片类元素，结构规划阶段必须在当前 feedback 工作区的 `structure.md` 输出 `Image Asset Inventory`。该清单是后续图片字段、占位 SVG、ESM import 和渲染方式的唯一上游依据。
+
+图片类元素包括但不限于：头像、礼物图、奖品图、道具图、房间头像、榜单头像、活动主视觉、背景图、卡片背景、装饰灯笼、金币、星光、边框纹理、图标。
+
+清单字段固定如下：
+
+| imageKey | Section | imageType | sourceType | dynamic | contentField | renderMethod | placeholder | fallback |
+|---|---|---|---|---|---|---|---|---|
+| giftBox | ActivityGiftSection | gift | api | yes | gifts[].imageUrl | img | assets/placeholders/gift-box.svg | imageUrl 为空或加载失败时显示 SVG 占位图 |
+| heroBg | FeastHeroSection | background | local-asset | no | backgroundImageUrl | css-background | assets/placeholders/hero-bg.svg | 使用同色系 SVG 背景 |
+
+字段规则：
+
+- `imageType` 可用值：`avatar` / `gift` / `reward` / `hero` / `background` / `decoration` / `icon` / `badge`。
+- `sourceType` 可用值：`api` / `local-asset` / `generated-svg` / `generated-raster` / `unknown`。
+- `dynamic = yes` 表示后续由接口或业务配置返回，必须在对应 Section `Content` 中预留语义字段。
+- `contentField` 必须是可落地的字段名，如 `avatarUrl`、`giftImageUrl`、`rewardImageUrl`、`backgroundImageUrl`、`items[].imageUrl`。
+- `renderMethod` 必须明确为 `img` 或 `css-background`。
+- `placeholder` 默认使用目标 app 内的 SVG 占位资产路径，按 app-relative asset path 记录，例如 `assets/placeholders/gift-box.svg`；组件实现和组件设计卡中的 import path 必须写成 `@/assets/placeholders/gift-box.svg`。
+- `fallback` 必须说明字段为空或图片加载失败时如何降级。
+
+分类规则：
+
+- 动态业务图片（头像、礼物、奖品、道具、榜单房间头像等）必须规划为 `<img>` 渲染，禁止规划为纯 `div` / CSS / emoji。
+- 静态装饰图片（背景纹理、灯笼、星光、边框、叶子、金币等）可以规划为 CSS `background-image` 或 `<img aria-hidden="true">`。
+- 主视觉 / 大背景若承担内容表达（活动 banner、宴席主图、奖品大图）必须有 `heroImageUrl` / `feastImageUrl` / `rewardImageUrl` 等字段；若只承担氛围背景，可以用 `backgroundImageUrl` + `css-background`。
+- 没有接口文档时也必须预留图片字段；接口阶段不确定只影响 `sourceType` 和 adapter，不影响视觉组件的图片语义。
+
+## Image Asset Gate
+
+组件不得用 CSS / `div` 伪造图片语义。凡 `structure.md` 的 `Image Asset Inventory` 中声明的图片类元素，必须按其 `renderMethod` 实现。
+
+分类实现规则：
+
+- 动态业务图片：头像、礼物图、奖品图、道具图、房间头像、榜单头像等，必须在 `types.ts` 的 `Content` 中声明语义字段，并在 `index.tsx` 使用 `<img>` 渲染。
+- 静态装饰图片：背景纹理、灯笼、星光、金币、叶子、边框等，可以使用 CSS `background-image` 或 `<img aria-hidden="true">`。
+- 主视觉 / 大背景：若是内容图，优先 `<img>`；若是纯氛围背景，可以用 CSS `background-image`，但必须有 `backgroundImageUrl` / `heroImageUrl` / `feastImageUrl` 等字段或明确的本地 asset 引用。
+- 默认占位图优先使用目标 app 的 `src/assets/placeholders/*.svg`，禁止用纯色块、emoji、CSS 图形或空 `div` 充当业务图片。
+- `<img>` 必须有稳定尺寸或外层固定比例容器，避免图片加载导致布局跳动。
+- 业务图片必须提供加载失败 fallback：字段为空、加载失败或接口缺失时显示对应 SVG 占位图。
+- 装饰图片必须避免遮挡关键文字、按钮、进度条和可点击入口。
+
+`Content` 字段要求：
+
+- 字段名必须语义化：`avatarUrl`、`roomAvatarUrl`、`giftImageUrl`、`rewardImageUrl`、`backgroundImageUrl`、`items[].imageUrl` 等。
+- 重复图片项必须把图片字段放进 item 数据结构，而不是用全局单一图片代替。
+- `defaultContent` 可引用默认 SVG 占位图，供 `designer` 和 `playground` 使用。
+- 动态 Section 的 runtime 未接接口时仍不得 fallback 到 `defaultContent`；但 Section 类型必须提前保留后续 adapter 可映射的图片字段。
+
+占位资产要求：
+
+- 默认目录：`apps/<campaign>/src/assets/placeholders/`。
+- 命名示例：`hero-bg.svg`、`gift-box.svg`、`reward-card.svg`、`room-avatar.svg`、`feast-image.svg`、`ranking-badge.svg`。
+- SVG 占位图是可替换资产，不应 inline 到组件中；除非该 SVG 是极小、不可复用、且组件局部私有的装饰。
+- 生成或添加占位资产只允许写入目标 app，禁止写入 `apps/campaign-template/`。
+
+## 图片引用和使用规则
+
+### 目录约定
+
+目标 app 的图片资源按用途放置：
+
+- `src/assets/placeholders/`：默认 SVG 占位图。
+- `src/assets/images/`：本地静态图片或生成图片。
+- `src/assets/backgrounds/`：背景、纹理和装饰图。
+- `src/assets/icons/`：活动内专用图标。
+
+禁止事项：
+
+- 禁止把活动图片写入 `apps/campaign-template/`。
+- 禁止跨 app import 图片资源。
+- 禁止把可替换图片资源散落到 Section 目录内，除非该 SVG 是极小、不可复用、组件私有的装饰。
+
+### ESM import 规则
+
+组件内引用 app-local 静态资源时，必须使用 `@/assets/...` ESM import，禁止使用相对路径跨层级引用，避免 Section 移动或目录层级变化导致路径错误。
+
+推荐：
+
+```ts
+import giftPlaceholder from "@/assets/placeholders/gift-box.svg";
+import heroBg from "@/assets/backgrounds/hero-bg.svg";
+```
+
+禁止：
+
+```ts
+import giftPlaceholder from "../../../assets/placeholders/gift-box.svg";
+```
+
+动态业务图片通过 `Content` 字段传入，不通过 import 获取：
+
+```ts
+export interface GiftItem {
+  name: string;
+  imageUrl?: string;
+}
+```
+
+### 渲染方式
+
+动态业务图片必须使用 `<img>`：
+
+```tsx
+const [imageSrc, setImageSrc] = useState(item.imageUrl || giftPlaceholder);
+
+<img
+  src={imageSrc}
+  alt={item.name}
+  className="h-[120px] w-[120px] object-contain"
+  onError={() => setImageSrc(giftPlaceholder)}
+/>
+```
+
+静态装饰图片可以使用 `<img aria-hidden="true">`：
+
+```tsx
+<img src={lantern} alt="" aria-hidden="true" />
+```
+
+背景图片可以使用 inline style 的 `backgroundImage`：
+
+```tsx
+<section style={{ backgroundImage: `url(${heroBg})` }} />
+```
+
+禁止在 Tailwind arbitrary value 中写不稳定 URL 路径：
+
+```tsx
+// 禁止
+<section className="bg-[url('/assets/hero-bg.svg')]" />
+```
+
+### fallback 和加载失败
+
+业务图片必须同时处理字段为空和加载失败：
+
+```tsx
+const [imageSrc, setImageSrc] = useState(content.imageUrl || placeholder);
+
+<img
+  src={imageSrc}
+  alt={content.name}
+  onError={() => setImageSrc(placeholder)}
+/>
+```
+
+规则：
+
+- 同一类图片必须使用同一类 placeholder，不允许每个 item 临时造不同占位。
+- fallback 资源必须来自 `@/assets/placeholders/...`。
+- 图片容器必须有稳定尺寸、`aspect-ratio` 或固定比例，避免加载前后布局跳动。
+
+### alt / aria
+
+- 业务图片必须有有意义的 `alt`，例如礼物名、奖品名、房间名。
+- 纯装饰图片必须使用 `alt=""` 或 `aria-hidden="true"`。
+- CSS background 不能承载必须被读出的业务信息；若图片内容是业务信息，必须使用 `<img>`。
+
+### runtime 边界
+
+- `designer/sections/*/content.ts` 可以 import `@/assets/placeholders/*` 作为 `defaultContent` 的视觉样例。
+- `designer/sections/*/index.tsx` 可以 import `@/assets/placeholders/*` 作为空字段或加载失败 fallback。
+- `playground/preview-state.ts` 可以通过 `defaultContent` 使用 placeholder。
+- `runtime/` 和 `integrations/` 禁止 import `designer/sections/*/content.ts` 来拿 placeholder。
+- runtime 静态图片如必须引用，应直接 import `@/assets/...`，不能借用 `defaultContent`。
+
+禁止事项：
+
+- 禁止用 `<div className="bg-...">` 表示头像、礼物、奖品、房间图片、道具图片或奖励图片。
+- 禁止用 emoji / Unicode 符号当作业务图片。
+- 禁止只用 gradient / radial-gradient 充当活动主图、宴席图、奖品图。
+- 禁止图片字段缺失时让实现阶段临时决定字段名；字段名必须来自组件设计卡或 `Image Asset Inventory`。
+- 禁止使用相对路径 import app-local 图片资源；统一使用 `@/assets/...`。
 
 实现关键布局时必须优先使用明确的布局约束：
 
