@@ -13,8 +13,9 @@ URL search
 ```
 
 - `packages/utils` 只提供通用 locale / direction 解析纯函数，不包含任何活动文案。
-- 每个 campaign 在 `src/i18n/` 维护自己的语言资源，按语言拆文件：`en.ts`、`zh.ts`、`ar.ts` 等。
-- 默认语言为英文，默认方向为 `ltr`。
+- 每个新建 campaign 默认必须是 i18n-ready 项目，即使当前只交付一个语言，也必须保留 `src/i18n/`、`DEFAULT_LANG`、`getI18nMessages`、runtime `lang/dir` 和 URL locale 解析链路。
+- 每个 campaign 在 `src/i18n/` 维护自己的语言资源，按语言拆文件：`en.ts`、`zh.ts`、`ar.ts` 等；单语言项目至少保留默认语言资源文件。
+- 默认语言为英文，默认方向为 `ltr`。用户未明确指定活动页语言时，活动页用户可见默认文案使用英文。
 - `lang` 通过 URL query 读取：`?lang=en`、`?lang=zh`、`?lang=ar`。
 - `dir` 可通过 URL query 临时覆盖：`?dir=ltr`、`?dir=rtl`，用于 RTL 调试；未传时由语言推导。
 - runtime 根节点必须设置 `lang` 和 `dir`，并同步到 `document.documentElement`。
@@ -27,6 +28,13 @@ URL search
 | runtime 静态 UI 文案 | `src/i18n/<lang>.ts` | 按当前 `ui.lang` 选择 |
 | 接口业务文案 | API DTO / adapter | 后端返回或 adapter 映射，不能反向污染 Section 类型 |
 | loading / empty / error | `src/i18n/<lang>.ts` + runtime container | `states.tsx` 可保留默认 fallback，但 runtime 正常路径必须传入 i18n message |
+
+单语言项目规则：
+
+- “只有一个语言”只表示当前语言资源文件数量为 1，不表示可以删除 i18n 架构。
+- runtime 静态 UI 文案仍从 `src/i18n/<DEFAULT_LANG>.ts` 读取并由 container / adapter 传给视觉组件。
+- 视觉组件仍不得直接读取 i18n、URL、store 或当前语言。
+- 不得把单语言文案散落硬编码到 runtime container、store、adapter 或视觉组件中；确需作为设计样例的文案放入 `defaultContent` 时，也应通过默认语言 content factory 生成。
 
 ## defaultContent 规则
 

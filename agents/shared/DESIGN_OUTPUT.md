@@ -9,7 +9,8 @@
 ## 输出语言
 
 - 当前活动 feedback 工作区下所有需求、结构、设计、组件设计卡、进度账本、验证记录和最终收尾说明默认使用中文。
-- 活动页用户可见默认文案默认使用中文；只有用户明确要求英文、多语言或按素材英文还原时，才输出英文或多语言文案。
+- 活动页用户可见默认文案默认使用英文；只有用户明确要求中文、多语言或按素材原文还原时，才输出中文、多语言或原文还原文案。
+- 新建活动默认必须保持 app-local i18n 架构；即使只交付一个语言，也必须保留 `src/i18n/`、默认语言资源、runtime `lang/dir` 和 URL locale 解析链路。
 - 代码标识符、类型名、Section 名、action 名、状态 key、命令、文件路径、CSS/Tailwind 类名和第三方库名按工程惯例保留英文。
 
 | 目录 / 文件 | 职责 | 可操作 |
@@ -102,7 +103,7 @@ Runtime 联动要求：
 
 - `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`。
 - `integrations/store.ts` 生成初始 `sections` 时必须读取结构规划的 `数据来源` 判断：`静态展示` Section 可显式写入 runtime 静态文案；`动态数据` Section 禁止手写设计态假数据并标记为 `ready`，只能进入 `loading / empty / error` 或缺省不渲染，直到 integration 通过 adapter 写入真实 `SectionState<Content>`。
-- 国际化文案按 `docs/ai/i18n-rules.md` 执行：`defaultContent` 可由默认语言 content factory 生成，但禁止读取当前 URL / store 语言；runtime 静态文案由 `src/i18n/` 和 container / adapter 组装后传给视觉组件。
+- 国际化文案按 `docs/ai/i18n-rules.md` 执行：`defaultContent` 可由默认语言 content factory 生成，但禁止读取当前 URL / store 语言；runtime 静态文案由 `src/i18n/` 和 container / adapter 组装后传给视觉组件。单语言项目也必须走同一 i18n 路径，不能把静态文案硬编码回 runtime/store/视觉组件。
 - Runtime 所需的静态文案、按钮名、空态文案必须在 adapter / container 中显式定义，或由业务配置/接口返回；禁止通过 `...defaultContent` 继承。
 - 动态 Section 缺少真实 `SectionState<Content>` 时，Runtime Container 返回空或显式状态视图，不得返回 `ready + defaultContent`。
 - Runtime Container 只在 `section.status === 'ready' && section.content` 时渲染主视觉组件；否则渲染显式状态视图或返回 `null`。

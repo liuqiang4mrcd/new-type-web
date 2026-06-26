@@ -70,7 +70,7 @@ apps/campaign-template/
 
 ## 国际化与 RTL
 
-模板默认支持 app-local i18n：
+模板默认支持 app-local i18n。复制模板创建的新活动默认必须保持 i18n-ready，即使当前只交付一个语言，也不得删除 `src/i18n/`、URL locale 解析、runtime `lang/dir` 和 `document.documentElement.lang / dir` 同步链路：
 
 - 默认语言：`en`
 - 默认方向：`ltr`
@@ -78,7 +78,7 @@ apps/campaign-template/
 - URL 方向覆盖：`?dir=ltr`、`?dir=rtl`
 - `ar` 默认推导为 `rtl`
 
-通用 URL 解析能力放在 `@new-type/utils` 的 `parseLocaleSearch`，活动文案只能放在当前 app 的 `src/i18n/`。
+通用 URL 解析能力放在 `@new-type/utils` 的 `parseLocaleSearch`，活动文案只能放在当前 app 的 `src/i18n/`。单语言项目至少保留默认语言资源文件，并通过同一 `getI18nMessages(DEFAULT_LANG)` / runtime `getI18nMessages(lang)` 路径取文案。
 
 `defaultContent` 可以使用默认语言生成静态视觉样例：
 
