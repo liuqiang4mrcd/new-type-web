@@ -1,6 +1,6 @@
 # 结构规划输出规则
 
-> `designer` agent 在结构规划阶段（design-input skill）必须遵守的 Section 拆分决策树和输出模板。
+> `designer` agent 在结构规划阶段（structure-planning skill）必须遵守的 Section 拆分决策树和输出模板。
 >
 > 本文件确保不同模型对同一张原型图产出结构一致的 Section 拆分方案。
 
@@ -163,7 +163,35 @@ export function RuntimePage() {
 
 ---
 
-## 五、验证清单
+## 七、Section 依赖矩阵
+
+结构规划阶段必须分析 Section 间的依赖关系，用于 Phase 5 判断哪些 Section 可并行创建脚手架。
+
+### 判断规则
+
+两个 Section 相互独立的条件（同时满足）：
+
+1. 在 Interaction Spec 中互不为 `targetSection`
+2. 不共享同一 Store action（open/close 类通用弹窗 action 如 `openRule`/`closeRule` 除外）
+3. 不在 runtime/app.tsx 的同一条件渲染分支内（即不受同一 Tab 显隐控制）
+
+### 输出格式
+
+```markdown
+## Section 依赖矩阵
+
+| Section A | Section B | 依赖关系 | 可并行脚手架 |
+|-----------|-----------|---------|-------------|
+| HeroSection | GiftSection | 无 | ✅ |
+| GiftSection | RuleModal | GiftSection 的 onRuleClick 打开 RuleModal | ❌ |
+| GiftSection | RewardModal | GiftSection 的 onClaimClick 打开 RewardModal | ❌ |
+| HeroSection | RuleModal | 无（HeroSection 也触发 onRuleClick，但这是通用弹窗 action） | ✅ |
+```
+
+### 用途
+
+- 实现阶段：允许对标记为 ✅ 的 Section 并行创建目录和文件骨架
+- 验证阶段：对标记为 ✅ 的 Section 仍需逐个验证，但可并行准备脚手架
 
 结构规划完成并写入当前 feedback 工作区的 `structure.md` 后，设计者必须逐条确认：
 

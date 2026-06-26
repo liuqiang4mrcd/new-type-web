@@ -218,7 +218,7 @@ Uncertainty List 必须写入结构锁定表；所有关键布局和关键交互
 - 结构锁定表必须包含 Layout Spec、Interaction Spec、Effect Spec 和 Uncertainty List。
 - 当存在图片类元素时，结构锁定表必须包含 Image Asset Inventory；当不存在时，必须明确写“无图片资产”。
 - 动态业务图片必须规划为 `<img>`，并预留语义化 `Content` 字段；静态装饰图片可规划为 CSS `background-image` 或 `<img aria-hidden="true">`。
-- 默认缺图使用目标 app 内 SVG 占位图，禁止在实现阶段用纯色 div、CSS 方块或 emoji 替代业务图片。
+- 默认缺图使用目标 app 内 SVG 占位图；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Image Asset Gate。
 - 需要生成图片资源时，风格必须以视觉参考图和文字描述为依据；不得脱离参考图自行推断。
 - 同一页面内生成图片的风格必须统一。
 - 编写图片生成 prompt 时明确指定：风格、配色、构图要求、`not photorealistic`、`no text` 等约束。

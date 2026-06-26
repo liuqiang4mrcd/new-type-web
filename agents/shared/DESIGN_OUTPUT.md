@@ -95,9 +95,11 @@ designer/sections/<Name>/
 - 主视觉 / 大背景若承担内容表达（活动 banner、宴席主图、奖品大图）必须有 `heroImageUrl` / `feastImageUrl` / `rewardImageUrl` 等字段；若只承担氛围背景，可以用 `backgroundImageUrl` + `css-background`。
 - 没有接口文档时也必须预留图片字段；接口阶段不确定只影响 `sourceType` 和 adapter，不影响视觉组件的图片语义。
 
-## Image Asset Gate
+## <a id="image-asset-gate"></a>Image Asset Gate
 
 组件不得用 CSS / `div` 伪造图片语义。凡 `structure.md` 的 `Image Asset Inventory` 中声明的图片类元素，必须按其 `renderMethod` 实现。
+
+> ⚠️ **本文是"禁止用 div/CSS 方块/emoji 替代业务图片"规则的唯一维护点。** 修改时不需要同步其他文件；其他文件应引用此章节。
 
 分类实现规则：
 
@@ -140,9 +142,11 @@ designer/sections/<Name>/
 - 禁止跨 app import 图片资源。
 - 禁止把可替换图片资源散落到 Section 目录内，除非该 SVG 是极小、不可复用、组件私有的装饰。
 
-### ESM import 规则
+## <a id="esm-import-rules"></a>ESM import 规则
 
 组件内引用 app-local 静态资源时，必须使用 `@/assets/...` ESM import，禁止使用相对路径跨层级引用，避免 Section 移动或目录层级变化导致路径错误。
+
+> ⚠️ **本文是"禁止相对路径 import 图片资源"规则的唯一维护点。**
 
 推荐：
 
@@ -276,9 +280,11 @@ Runtime 联动要求：
 - `phone-preview.tsx` 只负责安装 `playground/preview-state.ts` 并渲染 `RuntimePage`，不能替代 Runtime Store 联动。
 - Final Closeout 前必须逐条核对 `defaultActions / preview-state / stateTransitions / Store actions / Runtime Container actions`，确保命名和目标变化均与 Interaction Spec 一致。
 
-### Runtime 数据边界
+## <a id="runtime-data-boundary"></a>Runtime 数据边界
 
 `defaultContent` 是 `designer/` 和 `playground/` 的乐观视觉样例，不是 runtime 或接口联调的数据源。
+
+> ⚠️ **本文是"defaultContent 不得作为 runtime fallback"规则的唯一维护点。**
 
 - `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`。
 - `integrations/store.ts` 生成初始 `sections` 时必须读取结构规划的 `数据来源` 判断：`静态展示` Section 可显式写入 runtime 静态文案；`动态数据` Section 禁止手写设计态假数据并标记为 `ready`，只能进入 `loading / empty / error` 或缺省不渲染，直到 integration 通过 adapter 写入真实 `SectionState<Content>`。
@@ -350,11 +356,13 @@ export const stateTransitions: StateTransition[] = [
 - `trigger.duration` 仅用于 `type: 'timeout'`，单位 ms
 - 可选 `animation` 字段：`animation?: { type: 'slide' | 'fade' | 'scale', duration: number, easing: string }`，用于声明状态转换时的动效
 
-### 动画落地要求
+## <a id="animation-landing"></a>动画落地要求
 
 `stateTransitions.animation` 不是文档说明，必须在视觉组件中真实落地。凡 `content.ts` 声明了动画，`index.tsx` 必须有对应的 DOM / CSS / class / inline style / animation event 绑定，并能从用户操作触发到可见变化。
 
 活动页已内置 Motion for React 时，强交互动效默认优先使用 `motion` 包的 `motion/react`，包括抽奖转盘、翻牌、档位切换、卡片进出场和弹窗入退场。只有 hover、pressed、简单 opacity/transform 过渡或纯装饰微动，才优先使用 CSS transition/keyframes。若不用 `motion/react` 实现强交互动效，组件设计卡必须写明原因。
+
+> ⚠️ **本文是"强交互 animatiom 必须落地为 motion/react / DOM 可见变化"规则的唯一维护点。**
 
 强交互组件必须额外声明和实现：
 
@@ -473,9 +481,11 @@ interface Scenario {
 - 整页场景：`等待活动开启 -> 充值选档/领取/抽奖 -> 活动结束`。
 - 模块场景：`可抽奖 -> 抽奖动画 -> 无抽奖次数` / `未领取 -> 已领取 -> 不可领取`。
 
-## 弹窗交互输出
+## <a id="modal-interaction-output"></a>弹窗交互输出
 
 弹窗必须服务于页面真实交互链路，不能成为页面中的孤立调试入口。
+
+> ⚠️ **本文是"弹窗 inline/overlay 双模式实现、SectionPanel 自动检测、禁止 fixed inset-0 覆盖 Playground"规则的唯一维护点。**
 
 要求：
 
