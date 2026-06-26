@@ -2,12 +2,33 @@
 
 用于 H5 活动页第 4 步实现阶段，确保遵守“完成一个 Section，验证一个 Section”的过程门禁。
 
-## 强制执行顺序
+## <a id="mandatory-execution-order"></a>强制执行顺序
 
 每个 Section 必须按以下顺序闭环：
 
 0. 当前 Section 未通过自己的 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>` 前，禁止创建、修改或注册后续 Section 的业务文件。
    允许的例外仅限当前 Section 必需的共享基础设施，例如当前 Section 的 Store 字段、当前 Section 的 Runtime Container、当前 Section 的 Playground 注册，以及已经存在文件中为当前 Section 添加的最小 import/render 片段。禁止先批量创建多个 Section 目录、组件文件、设计卡或测试文件后再逐个验证。
+
+#### 独立 Section 脚手架例外
+
+满足以下全部条件时，允许在当前 Section 验证通过前创建后续 Section 的目录和文件骨架：
+
+1. 两个 Section 在 Interaction Spec 中互不为 targetSection
+2. 不共享同一 Store action（open/close 类通用弹窗 action 除外）
+3. 不在 runtime/app.tsx 的同一条件渲染分支内
+
+允许的操作：
+- 创建 Section 目录和空骨架文件（types.ts / content.ts 骨架 / index.tsx 骨架）
+- 写入组件设计卡
+
+仍然禁止：
+- 实现完整代码逻辑
+- 注册 Playground / Runtime Container / Store
+- 在上一 Section 验证通过前运行当前 Section 的 `verify-section`
+
+依赖判断由 designer agent 在结构规划阶段完成，写入 `structure.md` 的 Section 依赖矩阵。
+
+> ⚠️ **本文 §强制执行顺序 和 §执行粒度硬约束 是"逐 Section 验证、禁止批量创建/验证"规则的唯一维护点。**
 1. 先写当前 Section 的「组件设计卡」，明确作用、展示方式、Layout Spec 引用、Interaction Spec 引用、Effect Spec 引用、Effect Reasoning、数据、交互、状态和边界。
 2. 完成状态适配判断，明确该 Section 是否真的需要 `loading / empty / error`。
 3. 在组件设计卡中写入 `## Acceptance Tests` YAML，作为该 Section 的功能规格源。
@@ -22,7 +43,7 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 7. 接入 `integrations/store.ts` 的 `SectionState<<SectionName>Content>`。
 8. 创建 `runtime/sections/<BaseName>Container.tsx`。
 9. 在 `runtime/app.tsx` import 并渲染 Container。
-   `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`；runtime 缺少真实 content 时返回 `loading / empty / error` 或 `null`，不得 fallback 到 `defaultContent`。
+   `integrations/`、`activity/`、`runtime/` 禁止 import `designer/sections/*/content.ts`；runtime 缺少真实 content 时返回 `loading / empty / error` 或 `null`，不得 fallback 到 `defaultContent`；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Runtime Data Boundary。
 10. 立即运行单组件验证：
 
 ```bash
@@ -38,21 +59,38 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 组件设计卡必须继承第 2 步结构规划中的 Layout Spec、Interaction Spec、Effect Spec 和 Image Asset Inventory。若当前 Section 对应的几何约束、关键元素约束、交互链路、用户可见效果或图片资产语义缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
 
+组件设计卡字段分为**核心必填**（所有 Section 必须填写）和**条件必填**（命中特定条件才填写）。字段分层如下：
+
 ```md
 ## <SectionName> Component Card
 
+### 核心字段（所有 Section 必填）
+
 - Purpose:
 - Display:
-- Layout Spec refs:
-  - Section constraints:
-  - Key element constraints:
-  - Preserved spacing/alignment/layer rules:
+- Content fields:
+- Static constants:
+- Async data source: yes/no
+- User interactions:
+- Actions:
+- UI states:
+- Business states:
+- Edge cases:
+
+### 交互字段（存在用户交互时必填）
+
+<!-- 仅当 User interactions 非空时填写以下区块 -->
 - Interaction Spec refs:
   - Interaction ids:
   - Action handlers:
   - Target changes:
   - Close/reset behavior:
   - Mutex rules:
+- Interaction states:
+
+### 强交互字段（转盘/抽奖/翻牌/滑动切换时必填）
+
+<!-- 仅当 Section 为强交互类型时填写 -->
 - Effect Spec refs:
   - Effect ids:
   - First frame:
@@ -61,13 +99,6 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
   - Target timing:
   - Blocking overlay:
   - Preview parity:
-- Image Asset refs:
-  - imageKeys:
-  - content fields:
-  - render methods:
-  - import paths:
-  - placeholders:
-  - fallback behavior:
 - Effect Reasoning:
   - Static view:
   - Trigger frame:
@@ -76,21 +107,27 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
   - Cross-section timing:
   - Disabled/mutex behavior:
   - Runtime vs phone-preview:
-- Content fields:
-- Static constants:
-- Async data source: yes/no
-- User interactions:
-- Actions:
-- UI states:
-- Business states:
-- Interaction states:
 - State transitions:
 - Animation binding:
   - Animated element:
   - DOM/CSS implementation:
   - Duration alignment:
   - Result/modal timing:
-- Edge cases:
+
+### 图片字段（命中 Image Asset Inventory 时必填）
+
+<!-- 仅当 structure.md 的 Image Asset Inventory 包含本 Section 的 imageKey 时填写 -->
+- Image Asset refs:
+  - imageKeys:
+  - content fields:
+  - render methods:
+  - import paths:
+  - placeholders:
+  - fallback behavior:
+
+### Acceptance Tests
+
+<!-- 按交互复杂度决定：静态展示可无测试，简单交互 vitest，强交互必须含 playwright 项 -->
 - Acceptance tests:
   - Spec source: `apps/<campaign-name>/.feedback/sections/<SectionName>.md`
   - Generated spec test: `apps/<campaign-name>/src/designer/sections/<SectionName>/__tests__/<SectionName>.spec.test.tsx`
@@ -252,7 +289,7 @@ tests:
 > 流程预览的场景分类、数据结构和数据流规则见 `docs/ai/development-rules.md` §流程预览规则。
 > 弹窗 Section 实现要求、phone-preview 完整页预览联动见 `agents/skills/section-implementation/SKILL.md`。
 
-## 禁止事项
+## <a id="forbidden-items"></a>禁止事项
 
 - 禁止批量实现多个 Section 后只运行 `--all`。
 - 禁止用最终 build 代替单组件验证。
@@ -262,9 +299,9 @@ tests:
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
 - 禁止在组件设计卡没有引用 Image Asset Inventory 的情况下实现图片类元素。
 - 禁止在组件设计卡没有引用 Effect Spec、没有完成 Effect Reasoning 的情况下实现强交互 Section。
-- 禁止用 div/CSS 方块/emoji 替代动态业务图片；头像、礼物、奖品、道具、房间头像、榜单头像等必须用 `<img>`，默认缺图使用目标 app 的 SVG 占位图。
-- 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）。
-- 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场。
+- 禁止用 div/CSS 方块/emoji 替代动态业务图片；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Image Asset Gate。
+- 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Animation Landing。
+- 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Modal Interaction Output。
 
 ## `apps/<campaign-name>/.feedback/progress.md` 实现阶段轻量模板
 
