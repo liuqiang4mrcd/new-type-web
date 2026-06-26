@@ -5,14 +5,16 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 # Visual Design Skill
 
-用于视觉细化和视觉修改。开始前必须读取：
+用于视觉细化和视觉修改。开始前按需读取：
 
-- `agents/shared/DESIGN.md`
-- `agents/shared/DESIGN_INPUT.md`
+- 当前 feedback 工作区的 `demand.md`
+- 当前 feedback 工作区的 `structure.md`
+- `agents/shared/DESIGN.md` 中与当前视觉问题相关的章节
+- 当存在原型图/视觉参考图冲突时，读取 `agents/shared/DESIGN_INPUT.md` 的冲突处理章节
 
 ## 输入
 
-从以下来源继承约束：
+从以下来源继承约束；若文件已在当前阶段读取且未变化，不重复读取全文：
 
 - 当前 feedback 工作区的 `demand.md`
 - 当前 feedback 工作区的 `structure.md`
@@ -38,7 +40,7 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 - 当前 feedback 工作区的 `design.md` 和对用户输出的视觉方案默认使用中文。
 - 颜色值、字体名、CSS/Tailwind 写法、文件路径、命令和代码标识符保留英文。
-- UI 文案策略默认以中文活动页为基准；仅当用户明确要求英文、多语言或素材必须英文还原时，才输出英文或多语言文案方案。
+- UI 文案策略默认以英文活动页为基准；仅当用户明确要求中文、多语言或素材必须按原文还原时，才输出中文、多语言或原文还原方案。
 
 ## 设计底线
 

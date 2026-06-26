@@ -7,16 +7,22 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 用于第 4 步代码实现。本模块只保留执行顺序和关键禁令；详细规则以引用文档为唯一真源。
 
-## 必读引用
+## 读取策略
 
-开始实现前必须读取：
+开始实现前必读：
 
-- `agents/shared/DESIGN_OUTPUT.md`：操作范围、Section 输出格式、Layout/Interaction 保真、弹窗、流程预览、Runtime 联动。
-- `docs/ai/section-implementation-gate.md`：组件设计卡、spec-first、逐 Section 门禁、实现阶段账本。
-- `docs/ai/development-rules.md`：目录边界、三层架构、状态声明、流程预览规则。
-- `docs/ai/i18n-rules.md`：国际化文案归属、URL 语言解析、LTR/RTL 方向规则。
-- `docs/ai/framework-map.md`：共享包引用地图。
-- `docs/campaign-template.md`：模板结构和 Playground/Runtime 注册方式。
+- 本文件全文。
+- 当前活动 feedback 工作区的 `progress.md`，以及 `demand.md`、`structure.md`、`design.md` 中与当前 Section / 当前门禁相关的内容；只有当前 Section 归属、交互、视觉约束不清楚时才全文复读这些产物。
+- `agents/shared/DESIGN_OUTPUT.md` 的操作范围、Section 输出格式、Layout/Interaction/Effect 保真和当前 Section 命中的实现规则。
+- `docs/ai/section-implementation-gate.md` 的组件设计卡、spec-first、逐 Section 门禁和当前 Section 验证规则。
+- `docs/ai/development-rules.md` 的目录边界、三层架构和状态声明相关章节。
+
+条件读取：
+
+- 新建活动、修改 i18n 架构、涉及 URL 语言、RTL 或 runtime 静态文案时，读取 `docs/ai/i18n-rules.md`。新建活动默认视为 i18n-ready 项目，即使当前只有一个语言。
+- 涉及共享包选择时，读取 `docs/ai/framework-map.md`。
+- 涉及模板目录、Playground/Runtime 注册方式不确定时，读取 `docs/campaign-template.md` 的相关章节。
+- 涉及弹窗、完整页预览、流程预览、跨 Section 联动、动态数据边界或强交互动效时，只读取 `agents/shared/DESIGN_OUTPUT.md` / `docs/ai/section-implementation-gate.md` 中对应章节，不为普通静态 Section 预读全部细则。
 
 ## 进入条件
 
@@ -36,7 +42,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 ## 执行顺序
 
 1. 读取 `apps/<campaign-name>/.feedback/progress.md`，确认 Current phase / Current gate。
-2. 在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加 `docs/ai/section-implementation-gate.md` 的实现阶段模板。
+2. 在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加实现阶段轻量账本；只记录当前 Section、状态、命令和 Final Closeout 勾选项，不复制大段规则说明。模板来源仍以 `docs/ai/section-implementation-gate.md` 为准。
 3. 按结构锁定表顺序逐个 Section 实施。
 4. 每个 Section 先写组件设计卡、`Effect Reasoning` 和 `## Acceptance Tests` YAML。
 5. 运行 `pnpm generate-spec-tests --campaign <campaign-name> <SectionName>`。
@@ -61,7 +67,8 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 
 - 组件设计卡、`apps/<campaign-name>/.feedback/progress.md` 实现阶段记录、验收记录和对用户的实现说明默认使用中文。
 - 代码文件中的变量名、类型名、Section 名、action 名、状态 key、命令和文件路径保留英文。
-- `content.ts` 中的用户可见默认文案，除非用户明确要求英文或多语言，否则默认使用中文。
+- `content.ts` 中的用户可见默认文案，除非用户明确要求中文、多语言或按素材原文还原，否则默认使用英文。
+- 新建活动默认保留 app-local i18n 架构；单语言项目也必须通过默认语言资源和 `getI18nMessages` 管理 runtime 静态文案。
 
 ## 硬禁令
 
@@ -72,6 +79,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 禁止在 `integrations/`、`activity/`、`runtime/` 中 import `designer/sections/*/content.ts` 或用 `defaultContent` 作为接口/mock/runtime fallback；`defaultContent` 只能用于 `designer/` 和 `playground/`。
 - 禁止在 `integrations/store.ts` 中手写等价于设计态 `defaultContent` 的假数据来填充 `apps/<campaign-name>/.feedback/structure.md` 标记为 `数据来源 = 动态数据` 的 Section；新活动未接入接口时，动态 Section 只能初始化为 `loading / empty / error` 或不渲染，完整视觉预览交给 `playground/preview-state.ts`。
 - 禁止视觉组件直接读取 URL、store 或 i18n 当前语言；需要国际化时，由 runtime container / adapter 使用当前 `ui.lang` 生成最终字符串后通过 `content` 传入。
+- 禁止因为当前只交付一个语言而删除 `src/i18n/`、移除 runtime `lang/dir`、跳过 URL locale 解析，或把 runtime 静态文案硬编码到 container/store/视觉组件。
 - 禁止 Runtime 中使用 `useStore((s) => selectXxxSection(s.appState))`；Zustand selector 只能订阅原始字段或 primitive。派生 content 放在组件 render/useMemo 或拆分订阅。
 - 禁止新增 `activity/selectors/*` 或 `phone-preview` 专用 `ACTION_WIRING`；完整页面预览必须通过 `preview-state` 初始化 `RuntimeViewState` 并复用 runtime container。
 - 禁止组件设计卡缺少 Layout Spec 或 Interaction Spec 引用时直接实现。
