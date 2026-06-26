@@ -91,10 +91,11 @@ agents/
 ├── designer.md          # AI 设计师助手 — H5 活动页流程编排者
 ├── integration.md       # API 数据集成助手 — 真实接口接入与联调
 ├── skills/              # designer 调用的项目内能力模块
-│   ├── design-input/SKILL.md          # 需求收集、素材分析、结构规划
-│   ├── visual-design/SKILL.md         # 视觉细化与视觉修改
-│   ├── section-implementation/SKILL.md # Section 实施、Playground/Runtime/Store 联动
-│   └── section-verification/SKILL.md  # 单 Section 验证与最终收尾
+│   ├── requirement-collection/SKILL.md  # 需求收集
+│   ├── structure-planning/SKILL.md      # 结构规划
+│   ├── visual-design/SKILL.md           # 视觉细化与视觉修改
+│   ├── section-implementation/SKILL.md  # Section 实施、Playground/Runtime/Store 联动
+│   └── section-verification/SKILL.md    # 单 Section 验证与最终收尾
 └── shared/
     ├── DESIGN.md        # H5 活动页设计规范（画布、布局、色彩、字体、组件尺寸等）
     ├── DESIGN_INPUT.md  # 设计素材输入规则（原型图/视觉参考图职责边界）
@@ -126,7 +127,8 @@ agents/
 
 设计依据：
 - `agents/designer.md` — designer agent 定义
-- `agents/skills/design-input/SKILL.md` — 需求收集、素材分析与结构规划
+- `agents/skills/requirement-collection/SKILL.md` — 需求收集
+- `agents/skills/structure-planning/SKILL.md` — 结构规划
 - `agents/skills/visual-design/SKILL.md` — 视觉细化
 - `agents/skills/section-implementation/SKILL.md` — Section 实施与联动
 - `agents/skills/section-verification/SKILL.md` — 验证与最终收尾
