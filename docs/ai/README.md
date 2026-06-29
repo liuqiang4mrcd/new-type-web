@@ -35,7 +35,11 @@ pnpm run install:agent
 
 ## Feedback 工作区
 
-新建活动在活动名和 app 目录确认前，使用 root draft 工作区：
+新建活动在用户书面确认“可以开始实现”前，默认不创建 root draft，也不写入 `.feedback/drafts/<task-id>/`。需求、结构和视觉方案先以对话内审批提案形式输出；用户确认实施后，创建 `apps/<campaign-name>/`，再一次性写入 `apps/<campaign-name>/.feedback/`。
+
+审批提案字段契约由 `agents/designer.md` §设计方案审批维护。确认后写入的 `demand.md`、`structure.md`、`design.md` 必须来自最后一次用户确认的审批提案，禁止落盘时凭记忆新增结构、交互、图片字段或视觉约束。
+
+只有当用户明确要求保留可恢复草稿，或任务必须跨会话暂停时，才使用 root draft 工作区：
 
 ```txt
 .feedback/drafts/<task-id>/
@@ -60,9 +64,10 @@ pnpm run install:agent
 
 规则：
 
-- app 创建前：只能写 `.feedback/drafts/<task-id>/`，禁止写根目录裸 `.feedback/progress.md`。
-- 活动名确认后：更新 `meta.json` 的 `campaignName` 和 `targetApp`。
-- `apps/<campaign-name>/` 创建成功后：立即迁移 draft 到 `apps/<campaign-name>/.feedback/`，并把 `meta.json.status` 改为 `active`。
+- app 创建前：默认不写 feedback；若启用草稿，只能写 `.feedback/drafts/<task-id>/`，禁止写根目录裸 `.feedback/progress.md`。
+- 若启用草稿，活动名确认后：更新 `meta.json` 的 `campaignName` 和 `targetApp`。
+- 若启用草稿，`apps/<campaign-name>/` 创建成功后：立即迁移 draft 到 `apps/<campaign-name>/.feedback/`，并把 `meta.json.status` 改为 `active`。
+- 若未启用草稿，`apps/<campaign-name>/` 创建成功后：直接创建 `apps/<campaign-name>/.feedback/`，按审批提案字段契约写入已确认的 `demand.md`、`structure.md`、`design.md` 和 `progress.md`。
 - 第 4 步实现、Final Closeout 和 Integration 阶段：只读写 `apps/<campaign-name>/.feedback/`。
 - 修改既有活动：直接使用 `apps/<campaign-name>/.feedback/`，不创建 root draft。
 

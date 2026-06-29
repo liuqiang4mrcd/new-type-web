@@ -171,7 +171,7 @@ Integration 依据：
 - `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
 - 写代码前必须先确认目标 app 目录；如果目标 app 不存在，必须优先使用 `pnpm create-campaign <campaign-name>` 创建项目。
 - 只有当 `pnpm create-campaign` 不可用或明确失败且原因已记录时，才允许手动复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
-- app 创建前的需求、结构和视觉设计账本写入 `.feedback/drafts/<task-id>/`；活动名确认并创建 app 后，必须立即迁移到 `apps/<campaign-name>/.feedback/`。
+- Feedback 工作区、审批前不落盘、可选 root draft 和确认后落盘规则以 `docs/ai/README.md` §Feedback 工作区为唯一权威源。
 - 实现阶段、Final Closeout 和 Integration 阶段禁止继续读取 root draft，只能使用 `apps/<campaign-name>/.feedback/`。
 - 业务 Section、runtime、store、playground 注册都只能写入目标 app。
 - 完成前必须检查 `apps/campaign-template` 无非预期 diff。

@@ -9,7 +9,7 @@ description: H5 活动页结构规划能力模块。用于 designer agent 的第
 
 ## 进入条件
 
-- `demand.md` 已存盘。
+- 需求摘要已完成；新项目审批前不要求 `demand.md` 已存盘。
 - 需求摘要已由 designer 确认。
 - 原型图/参考图素材已取得。
 
@@ -50,7 +50,7 @@ description: H5 活动页结构规划能力模块。用于 designer agent 的第
 
 ## 结构规划产物
 
-必须写入当前 feedback 工作区的 `structure.md`，并在新项目模式等待用户确认。
+必须形成 `agents/designer.md` §设计方案审批中 `sections`、`layoutSpec`、`interactionSpec`、`effectSpec`、`imageAssets` 和 `states` 字段的来源，并在新项目模式等待用户确认。审批前默认只在对话中呈现；用户确认实施并创建 app 后，再写入 `apps/<campaign-name>/.feedback/structure.md`。
 
 ### 结构归属推理（先于 Section 拆分）
 
@@ -86,7 +86,7 @@ description: H5 活动页结构规划能力模块。用于 designer agent 的第
 
 ### Image Asset Inventory（图片资产清单）
 
-凡原型图、视觉参考图或文字需求中出现图片类元素，必须在结构规划阶段输出 `Image Asset Inventory`，并写入当前 feedback 工作区的 `structure.md`。图片类元素包括但不限于：头像、礼物图、奖品图、道具图、房间头像、榜单头像、活动主视觉、背景图、卡片背景、装饰灯笼、金币、星光、边框纹理、图标。
+凡原型图、视觉参考图或文字需求中出现图片类元素，必须在结构规划阶段输出 `Image Asset Inventory`，并在审批后写入当前 feedback 工作区的 `structure.md`。图片类元素包括但不限于：头像、礼物图、奖品图、道具图、房间头像、榜单头像、活动主视觉、背景图、卡片背景、装饰灯笼、金币、星光、边框纹理、图标。
 
 禁止只在视觉描述中说"这里有图片"而不建模。实现阶段会以本清单作为图片字段、占位 SVG 和渲染方式的唯一上游依据。
 
@@ -259,8 +259,9 @@ Effect Spec 是用户可见效果的设计锁定表，用于补足 Interaction S
 
 ## 交付检查
 
-- 当前 feedback 工作区的 `structure.md` 已存盘。
+- 新项目审批前：审批提案的 `sections`、`layoutSpec`、`interactionSpec`、`effectSpec`、`imageAssets` 和 `states` 字段已完整呈现。
+- 审批后或修改模式：当前 feedback 工作区的 `structure.md` 已存盘。
 - `structure.md` 已包含所有图片类元素的 `Image Asset Inventory`；若素材无图片类元素，必须明确写"无图片资产"。
-- 当前 feedback 工作区的 `progress.md` 已更新。
+- 审批后或修改模式：当前 feedback 工作区的 `progress.md` 已更新。
 - 新项目模式下，结构锁定表、Layout Spec、Interaction Spec、Effect Spec 和 blocking 级不确定项已获得用户确认。
-- `pnpm validate-structure --feedback <feedback-workspace>` 已通过。
+- 用户确认实施并写入 feedback 后，`pnpm validate-structure --feedback <feedback-workspace>` 已通过。

@@ -4,15 +4,19 @@ import { join } from "path";
 
 interface Options {
   feedbackPath: string;
+  verbose: boolean;
 }
 
 function parseArgs(argv: string[]): Options {
   let feedbackPath = "";
+  let verbose = false;
 
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--feedback" && i + 1 < argv.length) {
       feedbackPath = argv[i + 1];
       i++;
+    } else if (argv[i] === "--verbose") {
+      verbose = true;
     }
   }
 
@@ -23,7 +27,7 @@ function parseArgs(argv: string[]): Options {
     process.exit(2);
   }
 
-  return { feedbackPath };
+  return { feedbackPath, verbose };
 }
 
 interface CheckResult {
@@ -41,8 +45,28 @@ function readFileSafe(path: string): string | null {
   }
 }
 
+function printResults(results: CheckResult[], verbose: boolean): void {
+  const outputResults = verbose ? results : results.filter((r) => !r.pass);
+
+  for (const r of outputResults) {
+    const icon = r.pass ? "✅" : "❌";
+    const detail = r.detail ? ` — ${r.detail}` : "";
+    process.stdout.write(`${icon} ${r.label}${detail}\n`);
+  }
+
+  const passCount = results.filter((r) => r.pass).length;
+  const failCount = results.length - passCount;
+  const prefix = outputResults.length > 0 ? "\n" : "";
+
+  process.stdout.write(`${prefix}结果: ${passCount}/${results.length} 通过`);
+  if (failCount > 0) {
+    process.stdout.write(`, ${failCount} 失败`);
+  }
+  process.stdout.write("\n");
+}
+
 function main(argv = process.argv.slice(2)): void {
-  const { feedbackPath } = parseArgs(argv);
+  const { feedbackPath, verbose } = parseArgs(argv);
 
   const resolvedPath = feedbackPath.startsWith("/")
     ? feedbackPath
@@ -175,25 +199,9 @@ function main(argv = process.argv.slice(2)): void {
       : "progress.md 中当前阶段未标记为 visual-design，或第 3 步未勾选",
   });
 
-  // Output
-  for (const r of results) {
-    const icon = r.pass ? "✅" : "❌";
-    const detail = r.detail ? ` — ${r.detail}` : "";
-    process.stdout.write(`${icon} ${r.label}${detail}\n`);
-  }
+  printResults(results, verbose);
 
-  const passCount = results.filter((r) => r.pass).length;
-  const failCount = results.filter((r) => !r.pass).length;
-
-  process.stdout.write(
-    `\n结果: ${passCount}/${results.length} 通过`,
-  );
-  if (failCount > 0) {
-    process.stdout.write(`, ${failCount} 失败`);
-  }
-  process.stdout.write("\n");
-
-  if (failCount > 0) {
+  if (results.some((r) => !r.pass)) {
     process.exit(1);
   }
 }

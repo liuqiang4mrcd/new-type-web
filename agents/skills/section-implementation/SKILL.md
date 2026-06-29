@@ -32,7 +32,7 @@ description: H5 活动页 Section 实施能力模块。用于 designer agent 在
 - 第 3.5 步完整设计方案摘要已呈现。
 - 用户已书面确认“可以开始实现”。
 - 目标 app 是 `apps/<campaign-name>/`；不存在时优先运行 `pnpm create-campaign <campaign-name>` 创建。
-- root draft 已迁移到 `apps/<campaign-name>/.feedback/`；实现阶段禁止继续读取 `.feedback/drafts/<task-id>/`。
+- `apps/<campaign-name>/.feedback/` 已由已确认方案初始化；若本任务启用了 root draft，则 draft 已迁移到目标 app。实现阶段禁止继续读取 `.feedback/drafts/<task-id>/`。
 
 修改模式必须满足：
 

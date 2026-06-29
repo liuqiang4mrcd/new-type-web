@@ -5,10 +5,10 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 # Visual Design Skill
 
-用于视觉细化和视觉修改。开始前按需读取：
+用于视觉细化和视觉修改。开始前按需读取；新项目审批前可使用审批提案中的需求摘要和结构规划字段，不要求对应文件已存盘：
 
-- 当前 feedback 工作区的 `demand.md`
-- 当前 feedback 工作区的 `structure.md`
+- 当前 feedback 工作区的 `demand.md`，或新项目审批前审批提案的 `project` / `inputs` 字段
+- 当前 feedback 工作区的 `structure.md`，或新项目审批前审批提案的 `sections` / `layoutSpec` / `interactionSpec` / `effectSpec` / `imageAssets` / `states` 字段
 - `agents/shared/DESIGN.md` 中与当前视觉问题相关的章节
 - 当存在原型图/视觉参考图冲突时，读取 `agents/shared/DESIGN_INPUT.md` 的冲突处理章节
 
@@ -16,8 +16,8 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 从以下来源继承约束；若文件已在当前阶段读取且未变化，不重复读取全文：
 
-- 当前 feedback 工作区的 `demand.md`
-- 当前 feedback 工作区的 `structure.md`
+- 当前 feedback 工作区的 `demand.md`，或新项目审批前审批提案的 `project` / `inputs` 字段
+- 当前 feedback 工作区的 `structure.md`，或新项目审批前审批提案的 `sections` / `layoutSpec` / `interactionSpec` / `effectSpec` / `imageAssets` / `states` 字段
 - 用户提供的视觉参考图、品牌规范、文字描述。
 - 用户显式指定的视觉方向。
 
@@ -25,7 +25,7 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 ## 视觉细化内容
 
-必须写入当前 feedback 工作区的 `design.md`：
+必须形成 `agents/designer.md` §设计方案审批中 `visual`、`implementationPlan` 和 `preflight` 字段的视觉来源；新项目审批前默认只在对话中呈现，用户确认实施并创建 app 后再写入当前 feedback 工作区的 `design.md`：
 
 - 配色：主色、辅助色、中性色、状态色、背景色。
 - 字体：字体族、字号层级、字重、行高。
@@ -82,8 +82,9 @@ description: H5 活动页视觉细化能力模块。用于 designer agent 的第
 
 ## 完成标准
 
-- 当前 feedback 工作区的 `design.md` 已存盘。
+- 新项目审批前：审批提案的 `visual` 字段以及相关 `implementationPlan` / `preflight` 结论已完整呈现。
+- 审批后或修改模式：当前 feedback 工作区的 `design.md` 已存盘。
 - `design.md` 已包含图片占位策略，并与 `structure.md` 的 `Image Asset Inventory` 对齐。
-- 当前 feedback 工作区的 `progress.md` 已更新。
+- 审批后或修改模式：当前 feedback 工作区的 `progress.md` 已更新。
 - 新项目模式下，用户已书面确认视觉设计。
 - 进入实现前，designer agent 已输出完整设计方案摘要并获得“可以开始实现”的书面确认。

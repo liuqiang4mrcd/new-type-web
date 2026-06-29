@@ -314,7 +314,7 @@ tests:
 ```md
 # Designer 任务进度
 
-<!-- 第 1-3.5 步的全局流程由 agents/designer.md 维护；以下内容为第 4 步轻量追加区块。规则细则以 docs/ai/section-implementation-gate.md 为准。 -->
+<!-- 第 1-3.5 步的全局流程由已确认审批提案和 docs/ai/README.md 的 Feedback 工作区规则初始化；以下内容为第 4 步轻量追加区块。规则细则以 docs/ai/section-implementation-gate.md 为准。 -->
 
 ## Section 实现进度
 

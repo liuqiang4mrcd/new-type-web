@@ -50,6 +50,59 @@ function appendLog(path: string, content: string): void {
   writeFileSync(path, content, { flag: "a" });
 }
 
+function stripAnsi(value: string): string {
+  return value.replace(/\u001b\[[0-9;]*m/g, "");
+}
+
+function summarizeFailureOutput(stdout: string, stderr: string): string {
+  const output = stripAnsi([stdout, stderr].filter(Boolean).join("\n"));
+  const lines = output.split(/\r?\n/);
+  const summary: string[] = [];
+  const seen = new Set<string>();
+  const important =
+    /(FAIL|Error:|TestingLibraryElementError|AssertionError|TypeError|ReferenceError|SyntaxError|Failed Tests|Failed Suites|Test Files|Tests\s+\d|Unable to find|Found multiple elements|expected|Received|src\/|apps\/.*:\d+:\d+|^\s*[×✕]\s)/;
+
+  let skippingDomDump = false;
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+
+    if (line.includes("Ignored nodes: comments, script, style")) {
+      skippingDomDump = true;
+      continue;
+    }
+
+    if (skippingDomDump) {
+      if (line.startsWith(" ❯ ") || line.includes(".tsx:") || line.includes(".ts:")) {
+        skippingDomDump = false;
+      } else {
+        continue;
+      }
+    }
+
+    if (!important.test(line)) continue;
+
+    const normalized = line.trim();
+    if (!normalized || seen.has(normalized)) continue;
+
+    seen.add(normalized);
+    summary.push(line);
+
+    if (summary.length >= 30) break;
+  }
+
+  if (summary.length === 0) {
+    for (const rawLine of lines) {
+      const line = rawLine.trimEnd();
+      if (!line.trim()) continue;
+      summary.push(line);
+      if (summary.length >= 12) break;
+    }
+  }
+
+  const text = summary.join("\n");
+  return text.length > 4000 ? `${text.slice(0, 4000)}\n...` : text;
+}
+
 function runStage(
   label: string,
   command: string,
@@ -77,11 +130,10 @@ function runStage(
     fatal(String(result.error));
   }
   if (result.status !== 0) {
-    if (stdout.trim()) {
-      process.stdout.write(stdout.trimEnd() + "\n");
-    }
-    if (stderr.trim()) {
-      process.stderr.write(stderr.trimEnd() + "\n");
+    process.stderr.write(`[${label}] failed with exit code ${result.status ?? 1}\n`);
+    const summary = summarizeFailureOutput(stdout, stderr);
+    if (summary.trim()) {
+      process.stderr.write(`${summary.trimEnd()}\n`);
     }
     process.stderr.write(`Full log: ${logFile}\n`);
     process.exit(result.status ?? 1);

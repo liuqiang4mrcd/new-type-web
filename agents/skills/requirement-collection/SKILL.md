@@ -23,7 +23,7 @@ description: H5 活动页需求收集能力模块。用于 designer agent 的第
 
 ### 需求收集
 
-必须明确并写入当前 feedback 工作区的 `demand.md`：
+必须明确并输出为 `agents/designer.md` §设计方案审批中 `project` / `inputs` 字段的来源；新项目审批前默认只在对话中呈现，用户确认实施后再写入目标 app 的 `demand.md`：
 
 - 活动类型：抽奖、充值、排行榜、品牌宣传等。
 - 输入素材：原型图、视觉参考图、文字描述。
@@ -49,8 +49,8 @@ description: H5 活动页需求收集能力模块。用于 designer agent 的第
 
 ## 输出
 
-- `demand.md`：需求摘要，活动类型、素材清单、视觉约束、目标受众、目标 app。
-- `progress.md`：按 `agents/designer.md` 的 Feedback 工作区规则创建或更新。
+- 审批前：审批提案的 `project` / `inputs` 部分，包含活动类型、素材清单、视觉约束、目标受众、目标 app。
+- 审批后：`demand.md`，内容同需求摘要；`progress.md` 按 `docs/ai/README.md` 的 Feedback 工作区规则创建或更新。
 
 ## 不输出
 
@@ -62,20 +62,20 @@ description: H5 活动页需求收集能力模块。用于 designer agent 的第
 
 ## 语言要求
 
-- 当前 feedback 工作区下的 `demand.md`、`progress.md` 和对用户输出的需求方案必须使用中文。
+- `demand.md`、`progress.md` 和对用户输出的需求方案必须使用中文。
 - 代码标识符、文件路径、命令和第三方术语保留英文。
 - 若素材中存在 UI 文案，必须区分"原图文案"和"建议最终文案"；除非用户明确要求中文、多语言或按素材原文还原，最终展示文案默认规划为英文。
 
 ## 写入要求
 
-- 第 1 步开始时按 `agents/designer.md` 的 Feedback 工作区规则创建或更新 `progress.md`。
-- 需求摘要确认后写入当前 feedback 工作区的 `demand.md`。
-- 更新当前 feedback 工作区 `progress.md` 的"全局流程""当前阶段"和"下一步动作"。
-- 禁止只在对话中输出内容而不写入文件。
+- 新项目审批前：禁止为了需求阶段单独创建 `.feedback/drafts`，除非用户明确要求可恢复草稿或任务必须跨会话暂停。
+- 用户确认“可以开始实现”并创建 app 后：将已确认需求摘要写入 `apps/<campaign-name>/.feedback/demand.md`。
+- 写入 `demand.md` 后，更新 `apps/<campaign-name>/.feedback/progress.md` 的"全局流程""当前阶段"和"下一步动作"。
+- 修改模式：按既有活动 `apps/<campaign-name>/.feedback/` 直接读写。
 
 ## 交付检查
 
-- 当前 feedback 工作区的 `demand.md` 已存盘。
-- 当前 feedback 工作区的 `progress.md` 已更新。
+- 新项目审批前：需求摘要已在设计方案提案中完整呈现。
+- 审批后或修改模式：当前 feedback 工作区的 `demand.md` 已存盘，`progress.md` 已更新。
 - 活动类型、素材清单、视觉约束、目标受众已明确。
 - 目标 app 已确认或标记为 pending。
