@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "nx dev campaign-template",
+    "install:agent": "bash scripts/install-deps.sh",
     "build": "nx affected:build",
     "test": "nx affected:test",
     "lint": "nx affected:lint",

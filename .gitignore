@@ -9,6 +9,7 @@ dist/
 .nx/
 .turbo/
 nx.log
+/.logs/
 
 # Local environment files
 *.local

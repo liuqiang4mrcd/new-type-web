@@ -23,6 +23,16 @@ AI 执行任务时按以下顺序读取规则：
 - 接口集成验证：以 `docs/ai/interface-integration-rules.md` 和 `scripts/validate-integration.ts` 为真源。
 - 架构背景和人类说明：只读 `docs/architecture.md`，不得把它覆盖为执行规范。
 
+## 依赖安装
+
+AI / Agent 需要安装或恢复依赖时，必须优先使用统一脚本：
+
+```bash
+pnpm run install:agent
+```
+
+禁止直接执行裸 `pnpm install`。该脚本会使用锁文件安装，并把完整日志写入 `.logs/pnpm-install.log`；失败时只回显末尾摘要，避免 Agent 上下文被安装日志淹没。
+
 ## Feedback 工作区
 
 新建活动在活动名和 app 目录确认前，使用 root draft 工作区：
@@ -59,6 +69,7 @@ AI 执行任务时按以下顺序读取规则：
 ## 常用门禁
 
 ```bash
+pnpm run install:agent
 pnpm create-campaign <campaign-name>
 pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 pnpm validate-section --campaign <campaign-name> --all
