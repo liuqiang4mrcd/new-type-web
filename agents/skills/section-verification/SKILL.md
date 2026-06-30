@@ -5,7 +5,7 @@ description: H5 活动页 Section 验证和最终收尾能力模块。用于 des
 
 # Section Verification Skill
 
-用于单 Section 验证和最终收尾。本模块只保留验证流程和失败处理；检查清单与 Final Closeout 细则以 `docs/ai/section-implementation-gate.md` 为唯一真源。
+用于单 Section 验证和最终收尾。本模块只保留验证流程和失败处理；具体检查项以 `validate-section`、`verify-section` 和 `final-closeout-check` 的脚本输出为准。
 
 ## 读取策略
 
@@ -13,7 +13,7 @@ description: H5 活动页 Section 验证和最终收尾能力模块。用于 des
 
 - 本文件全文。
 - 当前活动 feedback 工作区的 `status.json` 和当前 Section 组件设计卡；旧项目缺失 `status.json` 时先从 `progress.md` 和文件系统校正当前状态。
-- `docs/ai/section-implementation-gate.md` 中与当前验证动作相关的章节：单 Section 验证时读 Layer 0 / spec-first / 失败处理；最终收尾时读 Final Closeout Gate。
+- `docs/ai/section-implementation-gate.md` 中与当前验证动作相关的章节：单 Section 验证时读强制执行顺序 / 组件设计卡 / 自动门禁；最终收尾时读最终回复要求。
 
 条件读取：
 

@@ -11,7 +11,7 @@ AI 执行任务时按以下顺序读取规则：
 3. `agents/integration.md`：真实接口接入、adapter、fixture、联调和 integration 验证入口。
 4. `docs/ai/development-rules.md`：目录边界、数据流、Playground、Runtime 和 activity 规则。
 5. `docs/ai/framework-map.md`：共享包引用地图。
-6. `docs/ai/section-implementation-gate.md`：Section 实现阶段门禁、23 项 Layer 0 检查、Final Closeout Gate。
+6. `docs/ai/section-implementation-gate.md`：Section 实现阶段门禁、`validate-section` / `verify-section` / Final Closeout Gate。
 7. `docs/ai/interface-integration-rules.md`：接口接入边界、`defaultContent` 边界、`validate-integration` 规则。
 8. `docs/ai/i18n-rules.md`：多语言、RTL 和文案资源规则。
 
@@ -128,4 +128,4 @@ pnpm final-closeout-check --campaign <campaign-name>
 pnpm audit-feedback --campaign <campaign-name> --write-status
 ```
 
-`validate-section` 当前执行 23 项 Layer 0 检查。`verify-section` 是单 Section 闭环，不能用最终 `--all` 替代。
+`validate-section` 的具体检查项以脚本输出为准。`verify-section` 是单 Section 闭环，不能用最终 `--all` 替代。

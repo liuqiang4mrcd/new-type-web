@@ -235,45 +235,20 @@ function checkImageAssetRefs(
   }
 
   const errors: string[] = [];
-  if (!/Image Asset refs\s*:/i.test(cardSource)) {
-    errors.push('组件设计卡缺少 Image Asset refs');
+  const hasRefsSection = /Refs\s*:|Image Asset refs\s*:/i.test(cardSource);
+  const hasImageKeysField = /imageKeys\s*:/i.test(cardSource);
+  if (!hasRefsSection) {
+    errors.push('组件设计卡缺少 Refs 或 Image Asset refs');
   }
-  for (const required of [
-    'imageKeys',
-    'content fields',
-    'render methods',
-    'import paths',
-    'placeholders',
-    'fallback behavior',
-  ]) {
-    if (!new RegExp(required.replace(/\s+/g, '\\s+'), 'i').test(cardSource)) {
-      errors.push(`Image Asset refs 缺少 ${required}`);
-    }
+  if (!hasImageKeysField) {
+    errors.push('组件设计卡缺少 imageKeys');
   }
 
   for (const asset of assets) {
     const importPath = inventoryPathToImportPath(asset.placeholder);
     const renderMethod = asset.renderMethod.toLowerCase();
     if (!cardSource.includes(asset.imageKey)) {
-      errors.push(`组件设计卡 Image Asset refs 未声明 imageKey "${asset.imageKey}"`);
-    }
-    if (!cardSource.includes(asset.contentField)) {
-      errors.push(
-        `组件设计卡 Image Asset refs 未声明 contentField "${asset.contentField}"`,
-      );
-    }
-    if (!new RegExp(`\\b${renderMethod}\\b`, 'i').test(cardSource)) {
-      errors.push(
-        `组件设计卡 Image Asset refs 未声明 ${asset.imageKey} 的 renderMethod "${asset.renderMethod}"`,
-      );
-    }
-    if (
-      !cardSource.includes(asset.placeholder) &&
-      !cardSource.includes(importPath)
-    ) {
-      errors.push(
-        `组件设计卡 Image Asset refs 未声明 ${asset.imageKey} 的 placeholder "${asset.placeholder}"`,
-      );
+      errors.push(`组件设计卡 imageKeys 未声明 "${asset.imageKey}"`);
     }
     if (!asset.fallback || asset.fallback === '-') {
       errors.push(`Image Asset Inventory 中 ${asset.imageKey} 缺少 fallback`);

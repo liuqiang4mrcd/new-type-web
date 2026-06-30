@@ -265,7 +265,7 @@ pnpm validate-section --campaign <campaign> --all
 
 | 层                     | 工具                          | 覆盖范围                                                               | 触发时机                    |
 | ---------------------- | ----------------------------- | ---------------------------------------------------------------------- | --------------------------- |
-| Layer 0 — AST 静态检查 | `scripts/validate-section.ts` | 17 项检查：文件完整性、类型声明、状态覆盖、Playground 注册、Runtime 联动、分层边界等 | 每次 Section 改动后立即执行 |
+| Layer 0 — AST 静态检查 | `scripts/validate-section.ts` | 文件完整性、类型声明、状态覆盖、Playground 注册、Runtime 联动、分层边界、图片和动效等，具体项以脚本输出为准 | 每次 Section 改动后立即执行 |
 | Layer 1 — 单元测试     | Vitest + jsdom                | 组件渲染、状态转换逻辑、事件处理边界                                   | Section 含交互逻辑时        |
 | Layer 2 — 集成测试     | Playwright                    | 交互全链路、动效验证、多 Section 协作                                  | Section 交互逻辑稳定后      |
 
@@ -275,7 +275,7 @@ pnpm validate-section --campaign <campaign> --all
 pnpm validate-section --campaign <campaign-name> <SectionName>
 ```
 
-> 17 项检查清单、单 Section 验证流程和 `--all` 总验收见 `docs/ai/section-implementation-gate.md`。
+> 具体检查项以 `validate-section` 输出为准；单 Section 验证流程和 `--all` 总验收见 `docs/ai/section-implementation-gate.md`。
 
 ### 交互状态机与 Actions Props 模式
 

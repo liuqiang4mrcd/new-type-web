@@ -63,6 +63,24 @@ function rootDraftsForCampaign(rootFeedbackDir: string, campaign: string): strin
   return matches;
 }
 
+function listSectionDirs(appDir: string): string[] {
+  const sectionsDir = join(appDir, 'src', 'designer', 'sections');
+  if (!existsSync(sectionsDir)) return [];
+  return readdirSync(sectionsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function listRegisteredSections(appDir: string): string[] {
+  const registryPath = join(appDir, 'src', 'playground', 'section-registry.ts');
+  if (!existsSync(registryPath)) return [];
+  const source = readFileSync(registryPath, 'utf-8');
+  return [...source.matchAll(/name\s*:\s*['"]([^'"]+)['"]/g)]
+    .map((match) => match[1])
+    .sort();
+}
+
 function main(argv = process.argv.slice(2)): void {
   const { campaign } = parseArgs(argv);
   const rootDir = process.cwd();
@@ -106,7 +124,7 @@ function main(argv = process.argv.slice(2)): void {
         campaignName?: unknown;
         targetApp?: unknown;
         phase?: unknown;
-        sections?: unknown;
+        sections?: Array<{ name?: unknown; status?: unknown }>;
       };
       if (status.campaignName !== campaign) {
         errors.push(`status.json campaignName 不匹配：期望 ${campaign}`);
@@ -119,6 +137,50 @@ function main(argv = process.argv.slice(2)): void {
       }
       if (!Array.isArray(status.sections)) {
         errors.push('status.json 缺少 sections[]');
+      } else {
+        const sectionDirs = listSectionDirs(appDir);
+        const registeredSections = listRegisteredSections(appDir);
+        const statusNames = status.sections
+          .map((section) => section.name)
+          .filter((name): name is string => typeof name === 'string')
+          .sort();
+        const missingInStatus = sectionDirs.filter(
+          (name) => !statusNames.includes(name),
+        );
+        const missingInRegistry = sectionDirs.filter(
+          (name) => !registeredSections.includes(name),
+        );
+        const notValidated = status.sections
+          .filter(
+            (section) =>
+              typeof section.name === 'string' &&
+              section.status !== 'validated',
+          )
+          .map((section) => `${section.name}:${String(section.status)}`);
+
+        if (missingInStatus.length > 0) {
+          errors.push(
+            `status.json 缺少 Section 状态：${missingInStatus.join(', ')}`,
+          );
+        }
+        if (missingInRegistry.length > 0) {
+          errors.push(
+            `Playground 未注册 Section：${missingInRegistry.join(', ')}`,
+          );
+        }
+        if (notValidated.length > 0) {
+          errors.push(
+            `仍有 Section 未 validated：${notValidated.join(', ')}`,
+          );
+        }
+        if (
+          typeof status.phase === 'string' &&
+          !['final-closeout', 'completed'].includes(status.phase)
+        ) {
+          errors.push(
+            `status.json phase 尚未进入最终收尾：${status.phase}`,
+          );
+        }
       }
     } catch {
       errors.push('status.json 格式错误，无法解析');
