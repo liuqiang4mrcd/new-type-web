@@ -55,7 +55,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 ## 最终收尾
 
-所有 Section 单独验证通过后，必须执行 `docs/ai/section-implementation-gate.md` 的 Final Closeout Gate。完成最后一个 Section 的单组件验证不代表第 4 步完成；`validate-section --all` 只是收尾门禁的一项。
+所有 Section 单独验证通过后，必须执行 `docs/ai/section-implementation-gate.md` 的 Final Closeout Gate。完成最后一个 Section 的单组件验证不代表第 4 步完成；`validate-section --all` 只是收尾门禁的一项。优先运行 `pnpm final-closeout --campaign <campaign-name>`，完整输出会写入当前活动 `.feedback/logs/final-closeout-*.log`，失败时先用 `rg` 检索 log。
 
 最终回复必须逐项说明 Final Closeout Gate 结果；若任何命令未运行或失败，必须说明原因和当前阻塞点。
 

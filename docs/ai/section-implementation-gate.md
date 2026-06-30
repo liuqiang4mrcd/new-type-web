@@ -129,13 +129,10 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 总体验收：
 
 ```bash
-pnpm validate-section --campaign <campaign-name> --all
-pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src
-pnpm --filter @new-type/<campaign-name> build
-pnpm final-closeout-check --campaign <campaign-name>
+pnpm final-closeout --campaign <campaign-name>
 ```
 
-脚本失败时，以脚本输出的检查名和错误详情为修复依据，不把检查清单复制回 agent 上下文。
+`final-closeout` 会顺序执行 `validate-section --all`、当前活动 Vitest、当前活动 build 和 `final-closeout-check`，并把完整 stdout/stderr 写入 `apps/<campaign-name>/.feedback/logs/final-closeout-*.log`。脚本失败时，以终端摘要和 log 中的错误详情为修复依据，不把完整日志复制回 agent 上下文。
 
 ## 脚本化覆盖
 
