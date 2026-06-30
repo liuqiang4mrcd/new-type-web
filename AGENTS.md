@@ -50,6 +50,8 @@ packages/
 
 > **覆盖规则**：对于 Designer agent（`agents/designer.md`），当用户需求明确定义了**设计方向（视觉风格、布局偏好、色彩方案）**时，以用户的显式输入为准，覆盖本仓库任何默认设定。非设计类 agent 依然遵循本优先级规则。
 
+> **元任务例外**：当用户明确要求创建、修改、评审或优化 `AGENTS.md`、`agents/*.md`、`agents/skills/*/SKILL.md`、`.opencode/` skill/agent 配置，或显式调用 `$skill-creator` / skill 创建类能力时，该请求属于 agent/skill 规则维护任务，不自动触发 `designer` 或 `integration`。此时可以使用对应的外部 skill；但如果元任务同时要求实际创建活动页、修改视觉或接入接口，则实际业务部分仍必须回到本仓库的 `designer` / `integration` 流程。
+
 ## 决策前置检查（强制）
 
 在调用任何 skill 或 agent 之前，必须按顺序完成以下三项检查。这是优先级规则的具体执行保障，禁止跳过。
@@ -62,12 +64,15 @@ packages/
 | Q2 | AGENTS.md 的自动触发规则是否命中当前需求？ | 命中 → 按规则自动调用对应 agent |
 | Q3 | 项目 agent 的工作流程是否已覆盖我想做的事？ | 已覆盖 → 使用项目 agent 的内置流程，不额外加载外部 skill |
 
+若命中“元任务例外”，Q1-Q3 的判断对象是 agent/skill 文档维护本身，而不是文档中提到的业务场景。例如“改进 designer agent”应修改 `agents/designer.md`，不应把 designer 当作活动页创建 agent 调用。
+
 ### 核心原则
 
 - **项目优先**：任何时候项目 `agents/*.md` 中的 agent 能覆盖当前需求，就不应加载外部 skill。
 - **项目内 skill 例外**：`designer` agent 可按自身编排流程加载 `agents/skills/*/SKILL.md`，这些是项目 agent 的内部能力模块，不属于外部 skill。
 - **不绕路**：项目 agent 的工作流程（如 designer 的第 1 步需求收集）已经内嵌了需求探索能力，不需要用 brainstorming / grill 等外部 skill 替代其职责。
 - **自问自答**：在执行任何 skill 加载前，先过一遍 Q1→Q2→Q3，确认项目 agent 确实无法处理，再考虑外部 skill。
+- **业务和元任务分离**：修改调度规则、优化 agent 提示词、创建 skill、写 eval 属于元任务；创建活动页、修改活动视觉、接口接入属于业务任务。单个用户请求同时包含两者时，先完成规则维护，再按本文件重新分流业务任务。
 
 ### 反例
 
@@ -111,6 +116,16 @@ agents/
 
 以下场景必须自动调用对应的 agent，无需用户手动 @指定：
 
+### 调度判定顺序
+
+收到用户请求后先按以下顺序判定，避免 designer / integration / 外部 skill 互相抢占：
+
+1. **元任务**：如果请求目标是修改 agent、skill、AGENTS 或提示词规则，按“元任务例外”处理。
+2. **接口集成**：如果请求明确包含接口接入、后端联调、DTO/adapter、fixture、真实数据 store action、`defaultContent` 泄漏检查或 `validate-integration`，且不是创建新活动页的一部分，调用 `integration`。
+3. **活动设计/实现**：如果请求涉及 H5 活动页创建、修改、视觉调整、布局结构、Section 组件或 Playground/Runtime 视觉实现，调用 `designer`。
+4. **混合请求**：如果用户同时要求“新建活动 + 接接口”，先由 `designer` 完成新项目设计、实现和 Final Closeout；接口接入作为后续阶段，必须在用户再次确认或明确要求时交给 `integration`。
+5. **不命中项目 agent**：只有确认不属于以上场景，才考虑工作区、用户级或内置 / 插件 skill。
+
 ### designer — H5 活动页设计与修改
 
 当用户需求涉及 H5 活动页的**创建、修改或视觉调整**时，自动调用 `designer` agent：
@@ -123,7 +138,13 @@ agents/
 | 视觉细节调整 | "标题字体再大一点"、"背景换成金色" |
 | 活动模板相关 | "创建新的活动模板"、"基于这个模板改" |
 
-> **新项目创建门禁**：当触发场景为**"创建新活动页面"**（含基于图片/原型图创建）时，`designer` agent 必须先输出完整的设计方案提案（包含项目目录、Section 拆分方案、结构锁定表、视觉方向），**等待用户书面确认后**，才能进入代码实现阶段。禁止跳过方案确认直接写代码。
+Designer 调用要求：
+
+- 调用 `designer` 后，必须先遵循 `agents/designer.md` 的“入口判定协议”，再加载其内部 skill。
+- 当触发场景为**创建新活动页面**（含基于图片/原型图创建）时，`designer` 必须先输出完整的设计方案提案（包含项目目录、Section 拆分方案、结构锁定表、视觉方向），等待用户书面确认后，才能进入代码实现阶段。
+- 书面确认必须是明确可执行信号，例如“可以开始实现”“按这个方案做”“确认，开始写代码”。“看起来不错”“继续”“再优化一下”不等于进入实现。
+- 修改既有活动时，不走新项目快速通道；必须由 `designer` 按 L0-L4 修改分级处理。
+- 若目标 app 不明确且需要读写文件，必须先定位或询问目标 app；禁止把最近创建或最近修改的 app 当作默认目标。
 
 设计依据：
 - `agents/designer.md` — designer agent 定义
@@ -153,7 +174,12 @@ agents/
 
 `integration` 不覆盖以下场景：创建活动页、视觉修改、布局/样式调整、Playground 视觉预览、Section 视觉组件实现。这些仍归 `designer` agent。
 
-> **人工阶段边界**：Designer Final Closeout 后不会自动进入 Integration。只有当用户另起请求或明确提出接口接入类任务时，才触发 `integration` agent。
+Integration 调用要求：
+
+- Designer Final Closeout 后不会自动进入 Integration。只有当用户另起请求或明确提出接口接入类任务时，才触发 `integration`。
+- `integration` 禁止创建新活动项目；目标 app 不存在时，必须停止并要求先走 `designer` 新项目流程。
+- 如果接口现实要求改变视觉契约、Section `types.ts`、布局结构或用户可见信息结构，`integration` 必须停止实现并输出契约变更请求，等待用户或 Designer 确认。
+- 接口接入必须有接口文档、响应样例或真实联调依据；缺少依据时最多进入 skeleton 状态，不能声称接入完成。
 
 Integration 依据：
 - `agents/integration.md` — integration agent 定义
@@ -168,8 +194,10 @@ Integration 依据：
 当用户需求包含"新建项目 / 新活动 / 创建活动 / 生成新项目"时：
 
 - 必须在 `apps/<campaign-name>/` 下创建独立项目。
+- 如果用户只提供活动主题或页面描述，没有明确 `campaign-name`，必须先提出目录名建议并等待确认。
 - `apps/campaign-template/` 只能作为复制源，禁止作为业务实现目录。
 - 写代码前必须先确认目标 app 目录；如果目标 app 不存在，必须优先使用 `pnpm create-campaign <campaign-name>` 创建项目。
+- 用户书面确认实现前，默认不创建目标 app、不写业务代码、不写 `.feedback`；可恢复 root draft 只有在用户明确要求或任务必须跨会话暂停时使用。
 - 只有当 `pnpm create-campaign` 不可用或明确失败且原因已记录时，才允许手动复制 `apps/campaign-template` 到 `apps/<campaign-name>`。
 - Feedback 工作区、审批前不落盘、可选 root draft 和确认后落盘规则以 `docs/ai/README.md` §Feedback 工作区为唯一权威源。
 - 实现阶段、Final Closeout 和 Integration 阶段禁止继续读取 root draft，只能使用 `apps/<campaign-name>/.feedback/`。
