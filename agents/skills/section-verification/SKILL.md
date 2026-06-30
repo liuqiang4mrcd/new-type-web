@@ -12,7 +12,7 @@ description: H5 活动页 Section 验证和最终收尾能力模块。用于 des
 开始验证前必读：
 
 - 本文件全文。
-- 当前活动 feedback 工作区的 `progress.md` 和当前 Section 组件设计卡。
+- 当前活动 feedback 工作区的 `status.json` 和当前 Section 组件设计卡；旧项目缺失 `status.json` 时先从 `progress.md` 和文件系统校正当前状态。
 - `docs/ai/section-implementation-gate.md` 中与当前验证动作相关的章节：单 Section 验证时读 Layer 0 / spec-first / 失败处理；最终收尾时读 Final Closeout Gate。
 
 条件读取：
@@ -40,8 +40,8 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 
 通过后必须：
 
-- 在 `apps/<campaign-name>/.feedback/progress.md` 中将该 Section 标记为 `validated`。
-- 记录命令和结果。
+- 在 `apps/<campaign-name>/.feedback/status.json` 中将该 Section 标记为 `validated`，并推进 `currentSection` / `gate`。
+- 向 `apps/<campaign-name>/.feedback/progress.md` 追加命令和结果，作为审计日志。
 - 对话中报告：`<SectionName> 单组件校验通过：validate-section + spec tests + 动画一致性确认`。
 - `apps/<campaign-name>/.feedback/progress.md` 中的验证记录和对用户报告默认使用中文；命令、Section 名、状态 key 和测试名称按实际英文输出保留。
 

@@ -50,14 +50,14 @@ pnpm generate-spec-tests --campaign <campaign-name> <SectionName>
 pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 ```
 
-11. 单组件结构检查和规格测试全部通过后，更新 `apps/<campaign-name>/.feedback/progress.md`。
+11. 单组件结构检查和规格测试全部通过后，更新 `apps/<campaign-name>/.feedback/status.json`，并向 `progress.md` 追加一条审计记录。
 12. 再开始下一个 Section。
 
 ## 组件设计卡
 
-实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `apps/<campaign-name>/.feedback/progress.md` 或 `apps/<campaign-name>/.feedback/sections/<SectionName>.md`。
+实际输出任何 Section 代码前，必须先完成组件设计卡。组件设计卡写入 `apps/<campaign-name>/.feedback/sections/<SectionName>.md`；`progress.md` 只追加审计记录，不再承载卡片正文。
 
-组件设计卡必须继承第 2 步结构规划中的 Layout Spec、Interaction Spec、Effect Spec 和 Image Asset Inventory。若当前 Section 对应的几何约束、关键元素约束、交互链路、用户可见效果或图片资产语义缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
+组件设计卡采用 refs-first 格式：卡片只保留当前 Section 的必要实现事实和对结构/视觉产物的引用，不复制全局 Layout Spec、Interaction Spec、Effect Spec 或 Image Asset Inventory。若 refs 指向的几何约束、关键元素约束、交互链路、用户可见效果或图片资产语义缺失，必须先补齐结构规划或向设计师确认，禁止直接实现。
 
 组件设计卡字段分为**核心必填**（所有 Section 必须填写）和**条件必填**（命中特定条件才填写）。字段分层如下：
 
@@ -67,38 +67,32 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 ### 核心字段（所有 Section 必填）
 
 - Purpose:
-- Display:
 - Content fields:
-- Static constants:
 - Async data source: yes/no
-- User interactions:
 - Actions:
 - UI states:
 - Business states:
 - Edge cases:
+- Refs:
+  - layout:
+  - interactions:
+  - effects:
+  - imageKeys:
+  - visual:
 
 ### 交互字段（存在用户交互时必填）
 
 <!-- 仅当 User interactions 非空时填写以下区块 -->
-- Interaction Spec refs:
-  - Interaction ids:
-  - Action handlers:
-  - Target changes:
-  - Close/reset behavior:
-  - Mutex rules:
 - Interaction states:
+- Action wiring:
+  - handler:
+  - targetChange:
+  - close/reset:
+  - mutex:
 
 ### 强交互字段（转盘/抽奖/翻牌/滑动切换时必填）
 
 <!-- 仅当 Section 为强交互类型时填写 -->
-- Effect Spec refs:
-  - Effect ids:
-  - First frame:
-  - During effect:
-  - End state:
-  - Target timing:
-  - Blocking overlay:
-  - Preview parity:
 - Effect Reasoning:
   - Static view:
   - Trigger frame:
@@ -119,11 +113,7 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 <!-- 仅当 structure.md 的 Image Asset Inventory 包含本 Section 的 imageKey 时填写 -->
 - Image Asset refs:
   - imageKeys:
-  - content fields:
-  - render methods:
-  - import paths:
-  - placeholders:
-  - fallback behavior:
+  - overrides:
 
 ### Acceptance Tests
 
@@ -135,11 +125,22 @@ pnpm --silent verify-section --campaign <campaign-name> <SectionName>
 - Validation command: `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`
 ```
 
+字段解释：
+
+| 字段 | 说明 |
+| --- | --- |
+| `Refs.layout` | 指向 `structure.md` 中 Section 级和关键元素级 Layout 记录，例如 `Layout:RoomProgressSection`、`Element:progress bar` |
+| `Refs.interactions` | 当前 Section 相关 Interaction Spec id，例如 `I04`、`I05` |
+| `Refs.effects` | 当前 Section 相关 Effect Spec id，例如 `E03` |
+| `Refs.imageKeys` | 当前 Section 使用的 Image Asset Inventory key |
+| `Refs.visual` | 指向 `design.md` 中的视觉规则名称或小节 |
+| `Image Asset refs.overrides` | 只记录偏离资产清单的实现选择；无偏离写 `none` |
+
 如果组件设计卡无法判断布局、关键元素归属、状态、交互或用户可见效果，必须先补充分析，不能先写代码。
 
-如果当前 Section 含头像、礼物、奖品、道具、主视觉、背景图、装饰图或图标等图片类元素，组件设计卡必须填写 `Image Asset refs`。动态业务图片必须声明 `<img>` 渲染、语义化 `Content` 字段、本地 SVG placeholder 和加载失败 fallback；静态装饰图片必须声明 `css-background` 或 `<img aria-hidden="true">`。缺少这些信息时禁止实现。
+如果当前 Section 含头像、礼物、奖品、道具、主视觉、背景图、装饰图或图标等图片类元素，组件设计卡必须填写 `Refs.imageKeys`。动态业务图片的 `<img>` 渲染、语义化 `Content` 字段、本地 SVG placeholder 和加载失败 fallback 默认追溯 `structure.md` 的 Image Asset Inventory；若实现需要偏离，写入 `Image Asset refs.overrides`。
 
-强交互 Section 没有 `Effect Spec refs` 和 `Effect Reasoning` 时禁止实现。`Effect Reasoning` 必须说明代码如何保证效果真的发生，而不是复述 Interaction Spec。若推演发现 `apps/<campaign-name>/.feedback/structure.md` 的 Effect Spec 不完整，必须先回到结构规划补齐，再继续实现。
+强交互 Section 没有 `Refs.effects` 和 `Effect Reasoning` 时禁止实现。`Effect Reasoning` 必须说明代码如何保证效果真的发生，而不是复述 Interaction Spec。若推演发现 `apps/<campaign-name>/.feedback/structure.md` 的 Effect Spec 不完整，必须先回到结构规划补齐，再继续实现。
 
 ## Spec-First 组件测试
 
@@ -294,7 +295,7 @@ tests:
 - 禁止批量实现多个 Section 后只运行 `--all`。
 - 禁止用最终 build 代替单组件验证。
 - 禁止当前 Section 单独验证失败时继续实现下一个 Section。
-- 禁止只在对话中口头说明进度而不更新 `apps/<campaign-name>/.feedback/progress.md`。
+- 禁止只在对话中口头说明进度而不更新 `apps/<campaign-name>/.feedback/status.json`。
 - 禁止在组件设计卡没有引用 Layout Spec 的情况下实现关键布局。
 - 禁止在组件设计卡没有引用 Interaction Spec 的情况下实现交互 Section。
 - 禁止在组件设计卡没有引用 Image Asset Inventory 的情况下实现图片类元素。
@@ -303,75 +304,54 @@ tests:
 - 禁止 `stateTransitions` 声明了 `animation` 但 `index.tsx` 没有对应的 DOM/CSS/motion 实现（包括 easing/duration 未对齐）；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Animation Landing。
 - 禁止弹窗 Section 使用 `if (!content.isOpen) return null` 硬切；必须用 `<AnimatePresence>` + `motion.div` 实现入场/退场；见权威源 `agents/shared/DESIGN_OUTPUT.md` §Modal Interaction Output。
 
-## `apps/<campaign-name>/.feedback/progress.md` 实现阶段轻量模板
+## `status.json` 和 `progress.md` 实现阶段记录
 
-`apps/<campaign-name>/.feedback/progress.md` 是 designer 任务的全局 process ledger。第 4 步进入实现阶段时，必须在既有 `apps/<campaign-name>/.feedback/progress.md` 中追加轻量实现阶段账本，并预置后续所有 Final Closeout Gate 任务。
+`apps/<campaign-name>/.feedback/status.json` 是 designer 任务的当前状态真源。第 4 步进入实现阶段时，必须更新 `status.json` 的 `phase`、`gate`、`currentSection` 和 `sections[]` 状态。
 
-当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `apps/<campaign-name>/.feedback/progress.md`，按全局“当前阶段”、实现阶段“当前门禁”和下方检查清单恢复，不得凭对话记忆继续执行。恢复时不需要全文读取本文件；只在当前门禁涉及组件设计卡、单 Section 验证或 Final Closeout 时读取对应章节。
+`progress.md` 是人类可读审计日志，只追加关键事件、命令和结果，不作为恢复真源，不预置大段 checklist。
 
-模板写入要求：除命令、路径、Section 名、状态 key 和代码标识符外，`progress.md` 的标题、字段说明、状态说明和验收记录必须使用中文。账本只写状态和结果，不复制规则解释、示例代码或长段验收说明。
+当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `status.json`。若缺失或与文件系统冲突，再读取 `progress.md` 并运行 `pnpm audit-feedback --campaign <campaign-name>` 校正。
+
+`status.json` 实现阶段最小结构：
+
+```json
+{
+  "campaignName": "<campaign-name>",
+  "targetApp": "apps/<campaign-name>",
+  "mode": "new-project",
+  "phase": "section-implementation",
+  "gate": "verify-section",
+  "currentSection": "HeroSection",
+  "confirmedForImplementation": true,
+  "sections": [
+    { "name": "HeroSection", "status": "validated" },
+    { "name": "PrizeSection", "status": "planned" }
+  ],
+  "closeout": {
+    "validateSectionAll": "pending",
+    "vitest": "pending",
+    "build": "pending",
+    "feedbackCheck": "pending"
+  },
+  "updatedAt": "2026-06-30T00:00:00.000Z"
+}
+```
+
+`progress.md` 追加记录格式：
 
 ```md
-# Designer 任务进度
+## 审计记录
 
-<!-- 第 1-3.5 步的全局流程由已确认审批提案和 docs/ai/README.md 的 Feedback 工作区规则初始化；以下内容为第 4 步轻量追加区块。规则细则以 docs/ai/section-implementation-gate.md 为准。 -->
-
-## Section 实现进度
-
-## 执行上下文
-
-- 活动名称：`<campaign-name>`
-- 目标应用：`apps/<campaign-name>`
-- 复制源模板：`apps/campaign-template`
-- 模式：`new-project`
-- 设计方案已确认：yes
-- 当前阶段：`section-implementation | final-closeout | completed`
-- 恢复规则：从全局当前阶段和实现阶段当前门禁继续；如果代码和本文件冲突，先审计并更新本文件，再继续实现。
-
-| 顺序 | Section            | 已实现 | 单 Section 验证 | 命令                                                                    | 结果 |
-| ---: | ------------------ | ------ | --------------- | ----------------------------------------------------------------------- | ---- |
-|    1 | HeroSection        | [ ]    | [ ]             | `pnpm --silent verify-section --campaign <campaign> HeroSection`        | 待执行 |
-|    2 | UserBalanceSection | [ ]    | [ ]             | `pnpm --silent verify-section --campaign <campaign> UserBalanceSection` | 待执行 |
-|    3 | PrizeSection       | [ ]    | [ ]             | `pnpm --silent verify-section --campaign <campaign> PrizeSection`       | 待执行 |
-
-## 当前门禁
-
-- 当前 Section：`<SectionName>`
-- 状态：`planned | implementing | implemented | validating | validated`
-- 最近验证输出：`待执行`
-
-## Section 循环检查清单
-
-- [ ] 所有组件设计卡已写入 `apps/<campaign-name>/.feedback/sections/` 或本文件。
-- [ ] 所有规格测试已从组件设计卡生成。
-- [ ] 所有 Section 已实现。
-- [ ] 所有 Section 已按结构锁定顺序注册到 Playground。
-- [ ] 所有 Runtime Container 已创建，并按结构锁定顺序渲染。
-- [ ] 所有必需 Store actions 已实现。
-- [ ] `phone-preview` 已通过 `preview-state` 初始化 `RuntimeViewState` 并复用 Runtime Container。
-- [ ] 每个 Section 均已通过自己的 `pnpm --silent verify-section --campaign <campaign-name> <SectionName>`。
-
-## Final Closeout Gate
-
-- [ ] 渲染顺序已检查：`playground/section-registry.ts` 与 `runtime/app.tsx` 符合结构锁定顺序。
-- [ ] Layout Spec 已检查：已实现的 Section 顺序、关键元素位置、间距、对齐和层级规则符合 Layout Spec。
-- [ ] 单组件预览已检查：`?mode=designer` 的 single 模式下，每个 Section 在预览面板内完整可见或可滚动，不被 Playground 容器、`max-width`、`overflow-hidden`、fixed 定位或弹窗遮罩错误裁切。
-- [ ] 移动端完整页预览背景已检查：`runtime/app.tsx` 与 `playground/phone-preview.tsx` 的页面根背景一致，`?mode=phone-preview` 不露出模板默认底色。
-- [ ] Playground 联动已检查：每条 Interaction Spec 都映射到 defaultActions / preview-state / stateTransitions / Runtime actions，且无 TODO 占位。
-- [ ] 交互动效已检查：所有 `stateTransitions.animation` 均有 DOM/CSS 落地；抽奖/转盘类动画不会被结果弹窗首帧遮挡。
-- [ ] Runtime 联动已检查：每个跨 Section targetChange 都有 Store action，且每个 Runtime Container 已绑定该 action；console.log-only 只允许用于外部或无目标交互。
-- [ ] 全部 Section 验证通过：`pnpm validate-section --campaign <campaign-name> --all`
-- [ ] 单元规格测试通过：`pnpm test:unit --reporter=minimal --silent=passed-only apps/<campaign-name>/src`
-- [ ] 构建通过：`pnpm --filter @new-type/<campaign-name> build`
-- [ ] Feedback 工作区检查完成：目标活动账本位于 `apps/<campaign-name>/.feedback/`，且目标活动无 root draft。
-- [ ] Feedback 工作区机器检查通过：`pnpm final-closeout-check --campaign <campaign-name>`
+| 时间 | 阶段 | Section | 命令/动作 | 结果 |
+|---|---|---|---|---|
+| 2026-06-30 12:00 | section-implementation | HeroSection | `pnpm --silent verify-section --campaign <campaign-name> HeroSection` | 通过 |
 ```
 
 ## 最终验收
 
 所有 Section 均完成单独验证后，必须进入最终收尾门禁。**单 Section 全部通过后不能直接宣布完成；`--all` 只是收尾门禁中的一项。**
 
-Final Closeout Gate 必须已在进入第 4 步时预置到 `apps/<campaign-name>/.feedback/progress.md`。执行最终验收时逐项勾选并记录结果，禁止等到最后才追加 checklist。
+Final Closeout Gate 的当前结果必须写入 `status.json.closeout`，关键命令和人工检查结果追加到 `progress.md` 审计记录。
 
 逐项执行：
 
@@ -412,6 +392,7 @@ pnpm final-closeout-check --campaign <campaign-name>
 该命令至少检查：
 
 - `apps/<campaign-name>/.feedback/` 已存在。
+- `apps/<campaign-name>/.feedback/status.json` 已存在。
 - `apps/<campaign-name>/.feedback/progress.md` 已存在。
 - 目标活动不存在 root draft；允许 `.feedback/drafts/` 下保留其他未创建 app 的任务草稿。
 
