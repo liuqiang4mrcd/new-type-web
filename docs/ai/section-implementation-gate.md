@@ -310,7 +310,7 @@ tests:
 
 `progress.md` 是人类可读审计日志，只追加关键事件、命令和结果，不作为恢复真源，不预置大段 checklist。
 
-当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `status.json`。若缺失或与文件系统冲突，再读取 `progress.md` 并运行 `pnpm audit-feedback --campaign <campaign-name>` 校正。
+当上下文被压缩、对话中断或 AI 不确定当前阶段时，必须先读取 `status.json`。若缺失或与文件系统冲突，再读取 `progress.md` 并运行 `pnpm audit-feedback --campaign <campaign-name>` 校正；旧项目缺少 `status.json` 时运行 `pnpm audit-feedback --campaign <campaign-name> --write-status` 生成迁移状态。
 
 `status.json` 实现阶段最小结构：
 

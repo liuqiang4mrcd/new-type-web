@@ -76,6 +76,7 @@ function main(argv = process.argv.slice(2)): void {
   const demandPath = join(resolvedPath, "demand.md");
   const structurePath = join(resolvedPath, "structure.md");
   const progressPath = join(resolvedPath, "progress.md");
+  const statusPath = join(resolvedPath, "status.json");
   const metaPath = join(resolvedPath, "meta.json");
 
   const results: CheckResult[] = [];
@@ -199,19 +200,44 @@ function main(argv = process.argv.slice(2)): void {
       : "structure.md 中未找到状态适配分析（Section 类型 + UI/business/interaction 状态声明）",
   });
 
-  // 9. progress.md phase marker
+  // 9. status.json phase marker, with legacy progress.md fallback
+  const statusContent = readFileSafe(statusPath);
+  let statusPhasePass = false;
+  let statusDetail = "status.json 不存在或未标记结构阶段";
+  if (statusContent) {
+    try {
+      const status = JSON.parse(statusContent) as {
+        phase?: unknown;
+        gate?: unknown;
+      };
+      const phase = typeof status.phase === "string" ? status.phase : "";
+      const gate = typeof status.gate === "string" ? status.gate : "";
+      statusPhasePass =
+        /structure|visual-design|section-implementation|final-closeout|completed/.test(
+          phase,
+        ) || /validate-structure/.test(gate);
+      statusDetail = statusPhasePass
+        ? `phase=${phase || "n/a"}, gate=${gate || "n/a"}`
+        : `phase=${phase || "missing"}, gate=${gate || "missing"}`;
+    } catch {
+      statusDetail = "status.json 格式错误，无法解析";
+    }
+  }
+
   const progressContent = readFileSafe(progressPath);
-  const hasPhaseMarker =
+  const hasLegacyPhaseMarker =
     progressContent !== null &&
     (/当前阶段.*structure/i.test(progressContent) ||
       /第 2 步.*已.*勾选|\[x\].*第 2 步/i.test(progressContent));
   results.push({
     id: "9",
-    label: "progress.md 阶段标记",
-    pass: hasPhaseMarker || false,
-    detail: hasPhaseMarker
-      ? undefined
-      : "progress.md 中当前阶段未标记为 structure，或第 2 步未勾选",
+    label: "status.json 阶段标记",
+    pass: statusPhasePass || hasLegacyPhaseMarker,
+    detail: statusPhasePass
+      ? statusDetail
+      : hasLegacyPhaseMarker
+        ? "旧项目通过 progress.md 阶段标记"
+        : "status.json 未标记结构阶段，且 progress.md 中第 2 步未勾选",
   });
 
   // 10. meta.json consistency

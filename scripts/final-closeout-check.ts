@@ -69,6 +69,7 @@ function main(argv = process.argv.slice(2)): void {
   const appDir = join(rootDir, 'apps', campaign);
   const rootFeedbackDir = join(rootDir, '.feedback');
   const appFeedbackDir = join(appDir, '.feedback');
+  const statusFile = join(appFeedbackDir, 'status.json');
   const progressFile = join(appFeedbackDir, 'progress.md');
 
   const errors: string[] = [];
@@ -94,7 +95,34 @@ function main(argv = process.argv.slice(2)): void {
   }
 
   if (!existsSync(progressFile)) {
-    errors.push(`缺少进度账本：apps/${campaign}/.feedback/progress.md`);
+    errors.push(`缺少审计日志：apps/${campaign}/.feedback/progress.md`);
+  }
+
+  if (!existsSync(statusFile)) {
+    errors.push(`缺少状态真源：apps/${campaign}/.feedback/status.json`);
+  } else {
+    try {
+      const status = JSON.parse(readFileSync(statusFile, 'utf-8')) as {
+        campaignName?: unknown;
+        targetApp?: unknown;
+        phase?: unknown;
+        sections?: unknown;
+      };
+      if (status.campaignName !== campaign) {
+        errors.push(`status.json campaignName 不匹配：期望 ${campaign}`);
+      }
+      if (status.targetApp !== `apps/${campaign}`) {
+        errors.push(`status.json targetApp 不匹配：期望 apps/${campaign}`);
+      }
+      if (typeof status.phase !== 'string') {
+        errors.push('status.json 缺少 phase');
+      }
+      if (!Array.isArray(status.sections)) {
+        errors.push('status.json 缺少 sections[]');
+      }
+    } catch {
+      errors.push('status.json 格式错误，无法解析');
+    }
   }
 
   if (errors.length > 0) {

@@ -1,18 +1,22 @@
 #!/usr/bin/env tsx
-import { existsSync, readdirSync, readFileSync, statSync } from "fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 
 interface Options {
   campaign: string;
+  writeStatus: boolean;
 }
 
 function parseArgs(argv: string[]): Options {
   let campaign = "";
+  let writeStatus = false;
 
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--campaign" && i + 1 < argv.length) {
       campaign = argv[i + 1];
       i++;
+    } else if (argv[i] === "--write-status") {
+      writeStatus = true;
     }
   }
 
@@ -23,12 +27,19 @@ function parseArgs(argv: string[]): Options {
     process.exit(2);
   }
 
-  return { campaign };
+  return { campaign, writeStatus };
 }
 
 interface AuditResult {
   feedbackWorkspace: string;
   files: Record<string, { exists: boolean; size?: number }>;
+  status: {
+    exists: boolean;
+    phase?: string;
+    gate?: string;
+    currentSection?: string;
+    sectionStatuses: Record<string, string>;
+  };
   sections: {
     created: string[];
     registered: string[];
@@ -47,6 +58,7 @@ interface AuditResult {
     sectionsRegisteredButNotVerified: string[];
     feedbackMissingSectionCards: string[];
   };
+  wroteStatus: boolean;
 }
 
 function readFileSafe(path: string): string | null {
@@ -57,8 +69,90 @@ function readFileSafe(path: string): string | null {
   }
 }
 
+function readStatus(feedbackDir: string): AuditResult["status"] {
+  const statusPath = join(feedbackDir, "status.json");
+  const content = readFileSafe(statusPath);
+  const status: AuditResult["status"] = {
+    exists: content !== null,
+    sectionStatuses: {},
+  };
+
+  if (!content) return status;
+
+  try {
+    const parsed = JSON.parse(content) as {
+      phase?: unknown;
+      gate?: unknown;
+      currentSection?: unknown;
+      sections?: Array<{ name?: unknown; status?: unknown }>;
+    };
+    if (typeof parsed.phase === "string") status.phase = parsed.phase;
+    if (typeof parsed.gate === "string") status.gate = parsed.gate;
+    if (typeof parsed.currentSection === "string") {
+      status.currentSection = parsed.currentSection;
+    }
+    if (Array.isArray(parsed.sections)) {
+      for (const section of parsed.sections) {
+        if (
+          typeof section.name === "string" &&
+          typeof section.status === "string"
+        ) {
+          status.sectionStatuses[section.name] = section.status;
+        }
+      }
+    }
+  } catch {
+    // Keep exists=true; malformed status will be visible to the caller via empty fields.
+  }
+
+  return status;
+}
+
+function fileInfo(path: string): { exists: boolean; size?: number } {
+  const exists = existsSync(path);
+  return {
+    exists,
+    ...(exists ? { size: statSync(path).size } : {}),
+  };
+}
+
+function inferPhase(progressContent: string | null, allVerified: boolean): string {
+  if (progressContent && /Final Closeout Gate[\s\S]*\[[xX]\]/.test(progressContent)) {
+    return allVerified ? "completed" : "final-closeout";
+  }
+  return allVerified ? "final-closeout" : "section-implementation";
+}
+
+function writeStatusFile(
+  feedbackDir: string,
+  campaign: string,
+  sectionNames: string[],
+  verified: string[],
+  progressContent: string | null,
+): void {
+  const allVerified =
+    sectionNames.length > 0 && sectionNames.every((name) => verified.includes(name));
+  const firstPending = sectionNames.find((name) => !verified.includes(name)) ?? null;
+  const phase = inferPhase(progressContent, allVerified);
+  const status = {
+    campaignName: campaign,
+    targetApp: `apps/${campaign}`,
+    mode: "new-project",
+    phase,
+    gate: allVerified ? "final-closeout" : "verify-section",
+    currentSection: firstPending,
+    confirmedForImplementation: true,
+    sections: sectionNames.map((name) => ({
+      name,
+      status: verified.includes(name) ? "validated" : "planned",
+    })),
+    updatedAt: new Date().toISOString(),
+  };
+  writeFileSync(join(feedbackDir, "status.json"), JSON.stringify(status, null, 2) + "\n");
+}
+
 function main(argv = process.argv.slice(2)): void {
-  const { campaign } = parseArgs(argv);
+  const { campaign, writeStatus } = parseArgs(argv);
   const rootDir = process.cwd();
   const appDir = join(rootDir, "apps", campaign);
   const appSrc = join(appDir, "src");
@@ -69,6 +163,7 @@ function main(argv = process.argv.slice(2)): void {
   const result: AuditResult = {
     feedbackWorkspace: feedbackDir,
     files: {},
+    status: readStatus(feedbackDir),
     sections: { created: [], registered: [], verified: [] },
     playground: { registeredSections: [], scenarios: [] },
     runtime: { containers: [], appRenders: [] },
@@ -77,16 +172,19 @@ function main(argv = process.argv.slice(2)): void {
       sectionsRegisteredButNotVerified: [],
       feedbackMissingSectionCards: [],
     },
+    wroteStatus: false,
   };
 
   // 1. Scan feedback workspace files
-  for (const f of ["demand.md", "structure.md", "design.md", "progress.md"]) {
+  for (const f of [
+    "demand.md",
+    "structure.md",
+    "design.md",
+    "status.json",
+    "progress.md",
+  ]) {
     const path = join(feedbackDir, f);
-    const exists = existsSync(path);
-    result.files[f] = {
-      exists,
-      ...(exists ? { size: statSync(path).size } : {}),
-    };
+    result.files[f] = fileInfo(path);
   }
 
   // 2. Scan sections feedback cards
@@ -116,9 +214,10 @@ function main(argv = process.argv.slice(2)): void {
   const registryPath = join(appSrc, "playground", "section-registry.ts");
   const registrySrc = readFileSafe(registryPath);
   if (registrySrc) {
-    const idMatches = registrySrc.matchAll(/id:\s*['"]([^'"]+)['"]/g);
-    for (const m of idMatches) {
+    const nameMatches = registrySrc.matchAll(/name:\s*['"]([^'"]+)['"]/g);
+    for (const m of nameMatches) {
       result.playground.registeredSections.push(m[1]);
+      result.sections.registered.push(m[1]);
     }
   }
 
@@ -147,12 +246,19 @@ function main(argv = process.argv.slice(2)): void {
     }
   }
 
-  // 7. Parse progress.md for verification status
+  // 7. Prefer status.json for verification status; fall back to legacy progress.md
+  for (const [section, status] of Object.entries(result.status.sectionStatuses)) {
+    if (status === "validated" && !result.sections.verified.includes(section)) {
+      result.sections.verified.push(section);
+    }
+  }
+
   const progressContent = readFileSafe(join(feedbackDir, "progress.md"));
   if (progressContent) {
     for (const section of result.sections.created) {
+      if (result.sections.verified.includes(section)) continue;
       const validatedPattern = new RegExp(
-        `${section}.*\\[x\\].*验证|${section}.*✅|${section}.*validated`,
+        `${section}.*\\[x\\].*\\[x\\]|${section}.*\\[x\\].*验证|${section}.*✅|${section}.*validated|${section}.*通过`,
         "i",
       );
       if (validatedPattern.test(progressContent)) {
@@ -185,6 +291,19 @@ function main(argv = process.argv.slice(2)): void {
         result.diffs.feedbackMissingSectionCards.push(s);
       }
     }
+  }
+
+  if (writeStatus) {
+    writeStatusFile(
+      feedbackDir,
+      campaign,
+      result.sections.created,
+      result.sections.verified,
+      progressContent,
+    );
+    result.wroteStatus = true;
+    result.status = readStatus(feedbackDir);
+    result.files["status.json"] = fileInfo(join(feedbackDir, "status.json"));
   }
 
   // Output as JSON

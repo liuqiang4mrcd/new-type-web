@@ -111,7 +111,7 @@ pnpm run install:agent
 恢复任务时：
 
 1. 优先读取 `status.json`。
-2. 若 `status.json` 缺失，读取 `progress.md` 和文件系统状态，生成或校正 `status.json`。
+2. 若 `status.json` 缺失，读取 `progress.md` 和文件系统状态，或运行 `pnpm audit-feedback --campaign <campaign-name> --write-status` 生成 `status.json`。
 3. 若 `status.json` 与实际文件、验证日志冲突，先运行 `pnpm audit-feedback --campaign <campaign-name>`，修正状态后再继续。
 4. 每次 Section 验证或 Final Closeout 后，更新 `status.json` 并向 `progress.md` 追加一条审计记录。
 
@@ -125,6 +125,7 @@ pnpm validate-section --campaign <campaign-name> --all
 pnpm validate-integration --campaign <campaign-name>
 pnpm validate-integration --campaign <campaign-name> --section <SectionName>
 pnpm final-closeout-check --campaign <campaign-name>
+pnpm audit-feedback --campaign <campaign-name> --write-status
 ```
 
 `validate-section` 当前执行 23 项 Layer 0 检查。`verify-section` 是单 Section 闭环，不能用最终 `--all` 替代。

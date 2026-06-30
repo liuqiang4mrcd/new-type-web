@@ -75,6 +75,7 @@ function main(argv = process.argv.slice(2)): void {
   const designPath = join(resolvedPath, "design.md");
   const structurePath = join(resolvedPath, "structure.md");
   const progressPath = join(resolvedPath, "progress.md");
+  const statusPath = join(resolvedPath, "status.json");
 
   const results: CheckResult[] = [];
 
@@ -183,20 +184,45 @@ function main(argv = process.argv.slice(2)): void {
       : "design.md 中设计底线覆盖不足（需包含首屏焦点、可读性、可点击性、风格统一中的至少 2 项）",
   });
 
-  // 7. progress.md phase marker
+  // 7. status.json phase marker, with legacy progress.md fallback
+  const statusContent = readFileSafe(statusPath);
+  let statusPhasePass = false;
+  let statusDetail = "status.json 不存在或未标记视觉阶段";
+  if (statusContent) {
+    try {
+      const status = JSON.parse(statusContent) as {
+        phase?: unknown;
+        gate?: unknown;
+      };
+      const phase = typeof status.phase === "string" ? status.phase : "";
+      const gate = typeof status.gate === "string" ? status.gate : "";
+      statusPhasePass =
+        /visual-design|section-implementation|final-closeout|completed/.test(
+          phase,
+        ) || /validate-design/.test(gate);
+      statusDetail = statusPhasePass
+        ? `phase=${phase || "n/a"}, gate=${gate || "n/a"}`
+        : `phase=${phase || "missing"}, gate=${gate || "missing"}`;
+    } catch {
+      statusDetail = "status.json 格式错误，无法解析";
+    }
+  }
+
   const progressContent = readFileSafe(progressPath);
-  const hasPhaseMarker =
+  const hasLegacyPhaseMarker =
     progressContent !== null &&
     (/当前阶段.*visual-design/i.test(progressContent) ||
       /当前阶段.*design/i.test(progressContent) ||
       /第 3 步.*已.*勾选|\[x\].*第 3 步/i.test(progressContent));
   results.push({
     id: "7",
-    label: "progress.md 阶段标记",
-    pass: hasPhaseMarker || false,
-    detail: hasPhaseMarker
-      ? undefined
-      : "progress.md 中当前阶段未标记为 visual-design，或第 3 步未勾选",
+    label: "status.json 阶段标记",
+    pass: statusPhasePass || hasLegacyPhaseMarker,
+    detail: statusPhasePass
+      ? statusDetail
+      : hasLegacyPhaseMarker
+        ? "旧项目通过 progress.md 阶段标记"
+        : "status.json 未标记视觉阶段，且 progress.md 中第 3 步未勾选",
   });
 
   printResults(results, verbose);

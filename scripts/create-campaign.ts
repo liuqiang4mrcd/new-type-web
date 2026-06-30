@@ -4,7 +4,7 @@ import { dirname, relative, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import prompts from 'prompts';
 
-const { copy, pathExists } = fsExtra;
+const { copy, ensureDir, pathExists } = fsExtra;
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -61,7 +61,54 @@ async function main() {
   pkg.name = `@new-type/${campaignName}`;
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
+  const feedbackDir = `${targetDir}/.feedback`;
+  await ensureDir(feedbackDir);
+  const createdAt = new Date().toISOString();
+  writeFileSync(
+    `${feedbackDir}/meta.json`,
+    JSON.stringify(
+      {
+        status: 'active',
+        campaignName,
+        targetApp: `apps/${campaignName}`,
+        createdAt,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  writeFileSync(
+    `${feedbackDir}/status.json`,
+    JSON.stringify(
+      {
+        campaignName,
+        targetApp: `apps/${campaignName}`,
+        mode: 'new-project',
+        phase: 'created',
+        gate: 'feedback-init',
+        currentSection: null,
+        confirmedForImplementation: false,
+        sections: [],
+        updatedAt: createdAt,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  writeFileSync(
+    `${feedbackDir}/progress.md`,
+    [
+      '# Designer 审计记录',
+      '',
+      '| 时间 | 阶段 | Section | 命令/动作 | 结果 |',
+      '|---|---|---|---|---|',
+      `| ${createdAt} | created | - | pnpm create-campaign ${campaignName} | 已初始化 feedback 工作区 |`,
+      '',
+    ].join('\n'),
+  );
+
   console.log(`活动页 "${campaignName}" 已创建: ${targetDir}`);
+  console.log(`Feedback 工作区已初始化: ${feedbackDir}`);
   console.log('运行 "pnpm install" 安装依赖后即可开发');
 }
 
